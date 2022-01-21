@@ -1,6 +1,11 @@
 use adw::prelude::*;
-use adw::{ActionRow, ApplicationWindow, CenteringPolicy, HeaderBar, ViewStack, ViewSwitcherTitle};
-use gtk::{Align, Application, Box, Button, Label, ListBox, MenuButton, Orientation};
+use adw::{
+    ActionRow, ApplicationWindow, CenteringPolicy, HeaderBar, ViewStack, ViewSwitcherBar,
+    ViewSwitcherTitle,
+};
+use gtk::{
+    Align, Application, Box, Button, Label, ListBox, MenuButton, Orientation, ScrolledWindow,
+};
 
 fn main() {
     let app = Application::builder()
@@ -16,7 +21,7 @@ fn main() {
     app.run();
 }
 
-fn build_header_bar(stack: &ViewStack) -> HeaderBar {
+fn build_header_bar(view_switcher_title: &ViewSwitcherTitle) -> HeaderBar {
     let header_bar = HeaderBar::builder()
         .centering_policy(CenteringPolicy::Strict)
         .build();
@@ -29,34 +34,43 @@ fn build_header_bar(stack: &ViewStack) -> HeaderBar {
     header_bar.pack_start(&btn_add);
     header_bar.pack_end(&btn_menu);
 
-    let view_switcher_title = ViewSwitcherTitle::builder()
-        .stack(stack)
-        .title("Buttercream")
-        .build();
-
-    header_bar.set_title_widget(Some(&view_switcher_title));
+    header_bar.set_title_widget(Some(view_switcher_title));
 
     header_bar
 }
 
 fn build_ui(app: &Application) {
-    let view_stack = ViewStack::builder().build();
-    let header_bar = build_header_bar(&view_stack);
+    let view_stack = ViewStack::builder().vexpand(true).build();
+    let view_switcher_title = ViewSwitcherTitle::builder()
+        .stack(&view_stack)
+        .title("Buttercream")
+        .build();
+
+    let header_bar = build_header_bar(&view_switcher_title);
+
+    let view_switcher_bar = ViewSwitcherBar::builder().stack(&view_stack).build();
+    view_switcher_title
+        .bind_property("title-visible", &view_switcher_bar, "reveal")
+        .build();
 
     let snapshot_list = ListBox::builder().build();
 
-    let remove_btn = Button::builder()
-        .icon_name("edit-delete-symbolic")
-        .valign(Align::Center)
-        .css_classes(vec!["circular".to_string(), "flat".to_string()])
-        .build();
-    let snapshot_row1 = ActionRow::builder()
-        .title("2022-01-17 22:00")
-        .subtitle("13 GB")
-        .build();
-    snapshot_row1.add_suffix(&remove_btn);
-    snapshot_list.append(&snapshot_row1);
-    let snapshot_page = view_stack.add(&snapshot_list);
+    for i in 0..5 {
+        let r = ActionRow::builder()
+            .title(format!("{} {}", "2022-01-17 22:00", i + 1).as_str())
+            .subtitle("13 GB")
+            .build();
+        r.add_suffix(
+            &Button::builder()
+                .icon_name("edit-delete-symbolic")
+                .valign(Align::Center)
+                .css_classes(vec!["circular".to_string(), "flat".to_string()])
+                .build(),
+        );
+        snapshot_list.append(&r);
+    }
+
+    let snapshot_page = view_stack.add(&ScrolledWindow::builder().child(&snapshot_list).build());
     snapshot_page.set_name(Some("snapshot"));
     snapshot_page.set_title(Some("Snapshot"));
     snapshot_page.set_icon_name(Some("insert-object-symbolic"));
@@ -69,6 +83,7 @@ fn build_ui(app: &Application) {
     let content = Box::builder().orientation(Orientation::Vertical).build();
     content.append(&header_bar);
     content.append(&view_stack);
+    content.append(&view_switcher_bar);
 
     let window = ApplicationWindow::builder()
         .application(app)
