@@ -1,0 +1,30 @@
+<interface>
+
+  <object class="AdwHeaderBar" id="header_bar">
+    <property name="centering_policy">strict</property>
+    <child>
+      <object class="GtkButton">
+        <property name="icon_name">list-add-symbolic</property>
+      </object>
+    </child>
+    <child type="end">
+      <object class="GtkMenuButton" id="menu_button">
+        <property name="icon_name">open-menu-symbolic</property>
+        <property name="menu_model">primary_menu</property>
+      </object>
+    </child>
+  </object>
+
+  <menu id="primary_menu">
+    <section>
+      <item>
+        <attribute name="label">Preferences</attribute>
+        <attribute name="action">app.preferences</attribute>
+      </item>
+      <item>
+        <attribute name="label">About Buttercream</attribute>
+        <attribute name="action">app.about</attribute>
+      </item>
+    </section>
+  </menu>
+</interface>
