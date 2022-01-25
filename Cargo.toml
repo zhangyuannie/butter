@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 gtk = { version = "0.4", package = "gtk4" }
 adw = { version = "0.1", package = "libadwaita" }
+regex = "1.5"
