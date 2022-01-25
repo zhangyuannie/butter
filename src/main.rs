@@ -2,6 +2,8 @@ mod application;
 mod btrfs;
 mod config;
 mod ui;
+mod window;
+mod snapshot_view;
 
 use adw::prelude::*;
 

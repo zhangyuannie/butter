@@ -1,21 +1,22 @@
 use adw::prelude::*;
-use adw::{ActionRow, ApplicationWindow, HeaderBar, ViewStack, ViewSwitcherBar, ViewSwitcherTitle};
+use adw::{ActionRow, HeaderBar, ViewSwitcherTitle};
 use gtk::gio;
-use gtk::{Align, Box, Button, Label, ListBox, Orientation, ScrolledWindow};
+use gtk::{Align, Button};
 
 use crate::application::Application;
 use crate::config;
+use crate::window::Window;
 
 pub fn build_ui(app: &Application) {
-    let view_stack = ViewStack::builder().vexpand(true).build();
+    let window = Window::new(&app);
+    let view_stack = window.view_stack();
     let view_switcher_title = ViewSwitcherTitle::builder()
         .stack(&view_stack)
         .title(config::APP_NAME)
         .build();
 
-    let view_switcher_bar = ViewSwitcherBar::builder().stack(&view_stack).build();
     view_switcher_title
-        .bind_property("title-visible", &view_switcher_bar, "reveal")
+        .bind_property("title-visible", &window.switcher_bar(), "reveal")
         .build();
 
     let header_bar_builder =
@@ -24,7 +25,7 @@ pub fn build_ui(app: &Application) {
     let header_bar: HeaderBar = header_bar_builder.object("header_bar").unwrap();
     header_bar.set_title_widget(Some(&view_switcher_title));
 
-    let snapshot_list = ListBox::builder().build();
+    let snapshot_list = window.snapshot_view().snapshot_list();
 
     for i in 0..5 {
         let r = ActionRow::builder()
@@ -41,26 +42,7 @@ pub fn build_ui(app: &Application) {
         snapshot_list.append(&r);
     }
 
-    let snapshot_page = view_stack.add(&ScrolledWindow::builder().child(&snapshot_list).build());
-    snapshot_page.set_name(Some("snapshot"));
-    snapshot_page.set_title(Some("Snapshot"));
-    snapshot_page.set_icon_name(Some("insert-object-symbolic"));
-
-    let schedule_page = view_stack.add(&Label::new(Some("test")));
-    schedule_page.set_name(Some("schedule"));
-    schedule_page.set_title(Some("Schedule"));
-    schedule_page.set_icon_name(Some("alarm-symbolic"));
-
-    let content = Box::builder().orientation(Orientation::Vertical).build();
-    content.append(&header_bar);
-    content.append(&view_stack);
-    content.append(&view_switcher_bar);
-
-    let window = ApplicationWindow::builder()
-        .application(app)
-        .title(config::APP_NAME)
-        .content(&content)
-        .build();
+    window.content_box().prepend(&header_bar);
     window.present();
 
     let about_action = gio::SimpleAction::new("about", None);

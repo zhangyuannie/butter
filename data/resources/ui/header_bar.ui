@@ -1,5 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <interface>
-
   <object class="AdwHeaderBar" id="header_bar">
     <property name="centering_policy">strict</property>
     <child>

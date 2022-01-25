@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="SnapshotView" parent="AdwBin">
+    <child>
+      <object class="GtkScrolledWindow">
+        <child>
+          <object class="GtkListBox" id="snapshot_list" />
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>
