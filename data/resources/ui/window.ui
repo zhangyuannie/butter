@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <template class="ButterWindow" parent="AdwApplicationWindow">
-    <property name="title">Buttercream</property>
+    <property name="title">Butter</property>
     <child>
       <object class="GtkBox" id="content_box">
         <property name="orientation">vertical</property>

@@ -22,7 +22,7 @@
         <attribute name="action">app.preferences</attribute>
       </item>
       <item>
-        <attribute name="label">About Buttercream</attribute>
+        <attribute name="label">About Butter</attribute>
         <attribute name="action">app.about</attribute>
       </item>
     </section>

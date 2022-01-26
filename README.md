@@ -1,6 +1,6 @@
-# Buttercream
+# Butter
 
-Buttercream is a simple GTK application for BTRFS snapshot management.
+Butter is a simple GTK application for BTRFS snapshot management.
 
 ## Build Instructions
 
