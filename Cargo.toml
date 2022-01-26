@@ -5,7 +5,17 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[[bin]]
+name = "butterd"
+path = "src/daemon/main.rs"
+
+[[bin]]
+name = "butter"
+path = "src/main.rs"
+
 [dependencies]
 gtk = { version = "0.4", package = "gtk4" }
 adw = { version = "0.1", package = "libadwaita" }
 regex = "1.5"
+dbus = "^0.9.5"
+dbus-crossroads = "0.5"

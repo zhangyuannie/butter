@@ -9,11 +9,12 @@ Dependencies:
 - cargo
 - libadwaita >= 1.0.0
 - gtk >= 4.4.0
+- dbus >= 1.6.0
 - btrfs-progs >= 5.0.0
 
 On Fedora Linux 35+, you can install the required packages with:
 ```
-# dnf install gtk4-devel libadwaita-devel cargo btrfs-progs
+# dnf install gtk4-devel libadwaita-devel dbus-devel cargo btrfs-progs
 ```
 
 To build and install:
