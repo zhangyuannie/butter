@@ -8,6 +8,7 @@ datarootdir = $(prefix)/share
 datadir =  $(datarootdir)
 
 polkitdir = $(datadir)/polkit-1/actions
+dbusdir = $(datadir)/dbus-1/system.d
 
 all: app
 
@@ -23,8 +24,10 @@ install:
 	install -m 0755 target/release/butter "$(DESTDIR)$(libexecdir)"
 
 	install -m 0644 data/org.zhangyuannie.butter.policy "$(DESTDIR)$(polkitdir)"
+	install -m 0644 data/org.zhangyuannie.butter.conf "$(DESTDIR)$(dbusdir)"
 
 uninstall:
 	rm -f "$(DESTDIR)$(bindir)/butter"
 	rm -f "$(DESTDIR)$(libexecdir)/butter"
 	rm -f "$(DESTDIR)$(polkitdir)/org.zhangyuannie.butter.policy"
+	rm -f "$(DESTDIR)$(dbusdir)/org.zhangyuannie.butter.conf"
