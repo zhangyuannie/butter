@@ -4,7 +4,8 @@
     <child>
       <object class="GtkScrolledWindow">
         <child>
-          <object class="GtkListBox" id="snapshot_list" />
+          <object class="GtkColumnView" id="snapshot_column_view">
+          </object>
         </child>
       </object>
     </child>

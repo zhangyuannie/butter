@@ -1,7 +1,6 @@
 use adw::prelude::*;
-use adw::{ActionRow, HeaderBar, ViewSwitcherTitle};
+use adw::{HeaderBar, ViewSwitcherTitle};
 use gtk::gio;
-use gtk::{Align, Button};
 
 use crate::application::Application;
 use crate::config;
@@ -24,23 +23,6 @@ pub fn build_ui(app: &Application) {
 
     let header_bar: HeaderBar = header_bar_builder.object("header_bar").unwrap();
     header_bar.set_title_widget(Some(&view_switcher_title));
-
-    let snapshot_list = window.snapshot_view().snapshot_list();
-
-    for i in 0..5 {
-        let r = ActionRow::builder()
-            .title(format!("{} {}", "2022-01-17 22:00", i + 1).as_str())
-            .subtitle("13 GB")
-            .build();
-        r.add_suffix(
-            &Button::builder()
-                .icon_name("edit-delete-symbolic")
-                .valign(Align::Center)
-                .css_classes(vec!["circular".into(), "flat".into()])
-                .build(),
-        );
-        snapshot_list.append(&r);
-    }
 
     window.content_box().prepend(&header_bar);
     window.present();

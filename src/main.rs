@@ -4,6 +4,7 @@ mod config;
 mod ui;
 mod window;
 mod snapshot_view;
+mod snapshot_object;
 
 use adw::prelude::*;
 

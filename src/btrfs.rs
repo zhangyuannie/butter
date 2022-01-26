@@ -1,12 +1,9 @@
 use regex::Regex;
 use std::process::Command;
-pub struct Snapshot {
-    path: String,
-    parent_path: String,
-    creation_time: String,
-}
 
-pub fn snapshots() -> Vec<Snapshot> {
+use crate::snapshot_object::SnapshotData;
+
+pub fn snapshots() -> Vec<SnapshotData> {
     let res = Command::new("btrfs")
         .args(["subvolume", "list", "-sq", "/"])
         .output()
@@ -16,12 +13,14 @@ pub fn snapshots() -> Vec<Snapshot> {
     let re = Regex::new(r"otime (.*) parent_uuid (\S*) .*path (.*)").unwrap();
     let mut ret = Vec::new();
     for line in s.split("\n") {
-        let captures = re.captures(line).unwrap();
-        ret.push(Snapshot {
-            parent_path: uuid_to_path(captures.get(2).unwrap().as_str()),
-            creation_time: captures.get(1).unwrap().as_str().into(),
-            path: captures.get(3).unwrap().as_str().into(),
-        })
+        if !line.is_empty() {
+            let captures = re.captures(line).unwrap();
+            ret.push(SnapshotData {
+                parent_path: uuid_to_path(captures.get(2).unwrap().as_str()),
+                creation_time: captures.get(1).unwrap().as_str().into(),
+                path: captures.get(3).unwrap().as_str().into(),
+            })
+        }
     }
     ret
 }
