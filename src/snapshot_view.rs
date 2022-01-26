@@ -36,6 +36,8 @@ mod imp {
             self.parent_constructed(obj);
             obj.setup_models();
             obj.setup_column("path", "Path");
+            obj.setup_column("creation-time", "Created");
+            obj.setup_column("parent-path", "Source");
         }
     }
     impl WidgetImpl for SnapshotView {}
