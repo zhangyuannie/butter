@@ -1,15 +1,16 @@
+use gtk::subclass::prelude::*;
 use gtk::{gio, glib};
 
 use crate::config;
 
 mod imp {
+    use super::*;
     use adw::subclass::prelude::*;
-    use gtk::{glib, subclass::prelude::*};
 
     use crate::ui::build_ui;
 
     #[derive(Default)]
-    pub struct Application {}
+    pub struct Application;
 
     #[glib::object_subclass]
     impl ObjectSubclass for Application {

@@ -1,10 +1,9 @@
-use dbus::blocking::Connection;
-use dbus_crossroads::{Crossroads, IfaceBuilder};
+use std::io::Write;
 use std::os::unix::process::ExitStatusExt;
-use std::process::Command;
+use std::{io, process};
 
 fn run(cmd: &str, args: Vec<String>) -> (i32, String) {
-    Command::new(cmd)
+    process::Command::new(cmd)
         .args(args)
         .output()
         .map_or((127, "".into()), |r| {
@@ -18,25 +17,16 @@ fn run(cmd: &str, args: Vec<String>) -> (i32, String) {
 }
 
 fn main() {
-    let c = Connection::new_system().unwrap();
-    c.request_name("org.zhangyuannie.butter", false, true, false)
-        .unwrap();
-
-    let mut cr = Crossroads::new();
-
-    let iface_token = cr.register(
-        "org.zhangyuannie.butter",
-        |builder: &mut IfaceBuilder<()>| {
-            builder.method(
-                "RunBtrfs",
-                ("args",),
-                ("status", "stdout"),
-                move |_, _, (args,): (Vec<String>,)| Ok(run("btrfs", args)),
-            );
-        },
-    );
-    cr.insert("/", &[iface_token], ());
-
-    cr.serve(&c).unwrap();
-    unreachable!()
+    let stdin = io::stdin();
+    let mut stdout = io::stdout();
+    loop {
+        let mut req = String::new();
+        let len = stdin.read_line(&mut req).unwrap();
+        if len == 0 {
+            break;
+        }
+        let args: Vec<String> = serde_json::from_str(&req).unwrap();
+        let reply = run("btrfs", args);
+        writeln!(stdout, "{}", serde_json::to_string(&reply).unwrap()).unwrap();
+    }
 }

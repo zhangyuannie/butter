@@ -1,7 +1,7 @@
 use adw::subclass::prelude::*;
 use gtk::{gio, glib, prelude::*, ColumnViewColumn, MultiSelection, SignalListItemFactory};
 
-use crate::{btrfs::snapshots, snapshot_object::SnapshotObject};
+use crate::{requester::daemon, snapshot_object::SnapshotObject};
 
 mod imp {
     use adw::subclass::prelude::*;
@@ -57,7 +57,7 @@ impl SnapshotView {
     fn setup_models(&self) {
         let model = gio::ListStore::new(SnapshotObject::static_type());
 
-        let snapshots = snapshots();
+        let snapshots = daemon().snapshots();
         for snapshot in snapshots {
             model.append(&SnapshotObject::from(snapshot));
         }
