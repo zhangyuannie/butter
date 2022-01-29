@@ -12,7 +12,7 @@ polkitdir = $(datadir)/polkit-1/actions
 all: app
 
 src/config.rs: src/config.rs.in
-target/org.zhangyuannie.butter.policy: src/org.zhangyuannie.butter.policy.in
+target/org.zhangyuannie.butter.policy: data/org.zhangyuannie.butter.policy.in
 
 src/config.rs target/org.zhangyuannie.butter.policy:
 	sed "s|@LIBEXEC_DIR@|${libexecdir}|g" $< > $@
