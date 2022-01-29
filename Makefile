@@ -8,11 +8,16 @@ datarootdir = $(prefix)/share
 datadir =  $(datarootdir)
 
 polkitdir = $(datadir)/polkit-1/actions
-dbusdir = $(datadir)/dbus-1/system.d
 
 all: app
 
-app:
+src/config.rs: src/config.rs.in
+target/org.zhangyuannie.butter.policy: src/org.zhangyuannie.butter.policy.in
+
+src/config.rs target/org.zhangyuannie.butter.policy:
+	sed "s|@LIBEXEC_DIR@|${libexecdir}|g" $< > $@
+
+app: src/config.rs target/org.zhangyuannie.butter.policy
 	cargo build --release
 
 install:
@@ -20,14 +25,12 @@ install:
 	mkdir -p "$(DESTDIR)$(libexecdir)"
 	mkdir -p "$(DESTDIR)$(polkitdir)"
 
-	install -m 0755 -T data/launch.sh "$(DESTDIR)$(bindir)/butter"
-	install -m 0755 target/release/butter "$(DESTDIR)$(libexecdir)"
+	install -m 0755 target/release/butter "$(DESTDIR)$(bindir)"
+	install -m 0755 target/release/butterd "$(DESTDIR)$(libexecdir)"
 
-	install -m 0644 data/org.zhangyuannie.butter.policy "$(DESTDIR)$(polkitdir)"
-	install -m 0644 data/org.zhangyuannie.butter.conf "$(DESTDIR)$(dbusdir)"
+	install -m 0644 target/org.zhangyuannie.butter.policy "$(DESTDIR)$(polkitdir)"
 
 uninstall:
 	rm -f "$(DESTDIR)$(bindir)/butter"
-	rm -f "$(DESTDIR)$(libexecdir)/butter"
+	rm -f "$(DESTDIR)$(libexecdir)/butterd"
 	rm -f "$(DESTDIR)$(polkitdir)/org.zhangyuannie.butter.policy"
-	rm -f "$(DESTDIR)$(dbusdir)/org.zhangyuannie.butter.conf"

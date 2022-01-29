@@ -13,7 +13,7 @@ use std::process::{Command, Stdio};
 
 fn main() {
     let daemon_process = Command::new("pkexec")
-        .arg("butterd")
+        .arg(config::DAEMON_EXEC_PATH)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()
