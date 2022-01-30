@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Butter
+Type=Application
+Exec=butter
+Categories=System;Filesystem;GTK;
+Icon=org.zhangyuannie.butter
+StartupNotify=true

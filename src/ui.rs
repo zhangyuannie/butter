@@ -30,6 +30,7 @@ pub fn build_ui(app: &Application) {
     let about_action = gio::SimpleAction::new("about", None);
     about_action.connect_activate(move |_, _| {
         let dialog = gtk::AboutDialog::builder()
+            .logo_icon_name(config::APP_ID)
             .copyright("© 2022 Zhangyuan Nie")
             .license_type(gtk::License::Gpl30Only)
             .program_name(config::APP_NAME)
