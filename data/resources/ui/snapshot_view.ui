@@ -5,6 +5,7 @@
       <object class="GtkScrolledWindow">
         <child>
           <object class="GtkColumnView" id="snapshot_column_view">
+            <property name="reorderable">true</property>
           </object>
         </child>
       </object>

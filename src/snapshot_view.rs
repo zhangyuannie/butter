@@ -35,9 +35,9 @@ mod imp {
         fn constructed(&self, obj: &Self::Type) {
             self.parent_constructed(obj);
             obj.setup_models();
-            obj.setup_column("path", "Path");
-            obj.setup_column("creation-time", "Created");
-            obj.setup_column("parent-path", "Source");
+            obj.setup_column("path", "Path", false);
+            obj.setup_column("creation-time", "Created", false);
+            obj.setup_column("parent-path", "Source", true);
         }
     }
     impl WidgetImpl for SnapshotView {}
@@ -68,7 +68,7 @@ impl SnapshotView {
         imp.column_view.set_model(Some(&selection_model));
     }
 
-    fn setup_column(&self, property: &'static str, title: &str) {
+    fn setup_column(&self, property: &'static str, title: &str, is_last: bool) {
         let column_view = self.imp().column_view.get();
 
         let factory = SignalListItemFactory::new();
@@ -91,7 +91,8 @@ impl SnapshotView {
         let cvc = ColumnViewColumn::builder()
             .title(title)
             .factory(&factory)
-            .expand(true)
+            .expand(is_last)
+            .resizable(!is_last)
             .build();
         column_view.append_column(&cvc);
     }
