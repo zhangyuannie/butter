@@ -5,7 +5,9 @@ mod imp {
     use std::{cell::RefCell, rc::Rc};
 
     use gtk::{
-        glib::{self, once_cell::sync::Lazy, ParamFlags, ParamSpec, ParamSpecString, Value},
+        glib::{
+            self, once_cell::sync::Lazy, Binding, ParamFlags, ParamSpec, ParamSpecString, Value,
+        },
         prelude::*,
         subclass::prelude::*,
     };
@@ -13,6 +15,7 @@ mod imp {
     #[derive(Default)]
     pub struct SnapshotObject {
         pub data: Rc<RefCell<super::SnapshotData>>,
+        pub binding: RefCell<Option<Binding>>,
     }
 
     #[glib::object_subclass]

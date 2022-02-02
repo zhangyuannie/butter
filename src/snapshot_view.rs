@@ -80,13 +80,23 @@ impl SnapshotView {
                 .expect("Item must be SnapshotObject");
 
             let lbl = gtk::Label::new(None);
-            // TODO: cleanup
-            let _binding = obj
+            let binding = obj
                 .bind_property(property, &lbl, "label")
                 .flags(glib::BindingFlags::SYNC_CREATE)
                 .build();
 
+            obj.imp().binding.borrow_mut().replace(binding);
+
             list_item.set_child(Some(&lbl));
+        });
+        factory.connect_unbind(move |_, list_item| {
+            let obj = list_item
+                .item()
+                .expect("Item must exist")
+                .downcast::<SnapshotObject>()
+                .expect("Item must be SnapshotObject");
+
+            obj.imp().binding.borrow().as_ref().unwrap().unbind();
         });
         let cvc = ColumnViewColumn::builder()
             .title(title)
