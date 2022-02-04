@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <menu id="selection_menu_model">
+    <section>
+      <item>
+        <attribute name="label">Open</attribute>
+        <attribute name="action">view.open</attribute>
+      </item>
+      <item>
+        <attribute name="label">Rename</attribute>
+        <attribute name="action">view.rename</attribute>
+      </item>
+      <item>
+        <attribute name="label">Delete</attribute>
+        <attribute name="action">view.delete</attribute>
+      </item>
+    </section>
+  </menu>
+
+  <object class="GtkPopoverMenu" id="selection_menu">
+    <property name="has-arrow">false</property>
+    <property name="menu-model">selection_menu_model</property>
+    <property name="halign">start</property>
+  </object>
+</interface>
