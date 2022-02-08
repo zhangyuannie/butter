@@ -1,6 +1,6 @@
 use adw::subclass::prelude::*;
 use gtk::{
-    gdk, gio, glib, prelude::*, ColumnView, ColumnViewColumn, MultiSelection,
+    gdk, gio::{self, SimpleActionGroup}, glib, prelude::*, ColumnView, ColumnViewColumn, MultiSelection,
     SignalListItemFactory, Widget,
 };
 
@@ -119,10 +119,28 @@ impl SnapshotView {
     }
 
     fn setup_menu(&self) {
+        let model = self.model();
+        let col_view = &self.imp().column_view.get();
+        let actions = SimpleActionGroup::new();
         let open_action = gio::SimpleAction::new("open", None);
-        // self.insert_action_group(name, group)
-        let rename_action = gio::SimpleAction::new("rename", None);
-        let delete_action = gio::SimpleAction::new("delete", None);
+        open_action.connect_activate(glib::clone!(@weak model, @weak col_view => move |_, _| {
+            let selection_model = col_view.model().unwrap();
+            let selection = selection_model.selection();
+            if selection.size() != 1 {
+                println!("open: selection size should be 1");
+            }
+            let idx = selection.nth(0);
+            let obj = selection_model.item(idx).expect("Item must exist");
+            gtk::show_uri(
+                None::<&gtk::Window>,
+                format!("file:///{}", obj.property::<String>("path")).as_str(),
+                gdk::CURRENT_TIME,
+            );
+        }));
+        actions.add_action(&open_action);
+        actions.add_action(&gio::SimpleAction::new("rename", None));
+        actions.add_action(&gio::SimpleAction::new("delete", None));
+        self.insert_action_group("view", Some(&actions));
 
     }
 
