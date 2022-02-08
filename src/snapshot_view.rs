@@ -42,6 +42,7 @@ mod imp {
             obj.setup_column("path", "Path", false);
             obj.setup_column("creation-time", "Created", false);
             obj.setup_column("parent-path", "Source", true);
+            obj.setup_menu();
             obj.setup_clicks();
         }
         fn dispose(&self, obj: &Self::Type) {
@@ -117,6 +118,14 @@ impl SnapshotView {
         column_view.append_column(&cvc);
     }
 
+    fn setup_menu(&self) {
+        let open_action = gio::SimpleAction::new("open", None);
+        // self.insert_action_group(name, group)
+        let rename_action = gio::SimpleAction::new("rename", None);
+        let delete_action = gio::SimpleAction::new("delete", None);
+
+    }
+
     fn setup_clicks(&self) {
         let imp = self.imp();
         let col_view = imp.column_view.get();
@@ -149,9 +158,14 @@ impl SnapshotView {
                     gesture.set_state(gtk::EventSequenceState::Claimed);
                     let col_list_view = gesture.widget();
                     assert_eq!(col_list_view.widget_name(), "GtkColumnListView");
-                    let _col_view = col_list_view.parent().unwrap().downcast::<ColumnView>();
-
+                    
                     if let Some(idx) = extract_row_from_column_list_view(&col_list_view, y) {
+                        let col_view = col_list_view.parent().unwrap().downcast::<ColumnView>().unwrap();
+                        let model = col_view.model().unwrap();
+                        if !model.is_selected(idx) {
+                            model.select_item(idx, true);
+                        }
+                        
                         let rect = gdk::Rectangle::new(x as i32, y as i32, 1, 1);
                         selection_menu.set_pointing_to(Some(&rect));
                         selection_menu.popup();
