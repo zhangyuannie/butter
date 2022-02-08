@@ -1,7 +1,10 @@
 use adw::subclass::prelude::*;
 use gtk::{
-    gdk, gio::{self, SimpleActionGroup}, glib, prelude::*, ColumnView, ColumnViewColumn, MultiSelection,
-    SignalListItemFactory, Widget,
+    gdk,
+    gio::{self, SimpleActionGroup},
+    glib,
+    prelude::*,
+    ColumnView, ColumnViewColumn, MultiSelection, SignalListItemFactory, Widget,
 };
 
 use crate::{requester::daemon, snapshot_object::SnapshotObject};
@@ -9,7 +12,14 @@ use crate::{requester::daemon, snapshot_object::SnapshotObject};
 mod imp {
     use adw::subclass::prelude::*;
     use glib::once_cell::sync::OnceCell;
-    use gtk::{gio, glib, prelude::*, subclass::prelude::*, CompositeTemplate};
+    use gtk::{
+        gio::{self, SimpleAction},
+        glib,
+        prelude::*,
+        subclass::prelude::*,
+        CompositeTemplate,
+    };
+    use std::cell::RefCell;
 
     #[derive(CompositeTemplate, Default)]
     #[template(file = "../data/resources/ui/snapshot_view.ui")]
@@ -18,6 +28,7 @@ mod imp {
         pub column_view: TemplateChild<gtk::ColumnView>,
         pub selection_menu: OnceCell<gtk::PopoverMenu>,
         pub model: OnceCell<gio::ListStore>,
+        pub single_select_actions: RefCell<Vec<SimpleAction>>,
     }
 
     #[glib::object_subclass]
@@ -63,6 +74,12 @@ glib::wrapper! {
 impl SnapshotView {
     fn model(&self) -> &gio::ListStore {
         self.imp().model.get().expect("Failed to get model")
+    }
+
+    fn set_single_select_actions_availability(&self, enable: bool) {
+        for action in self.imp().single_select_actions.borrow().iter() {
+            action.set_enabled(enable);
+        }
     }
 
     fn setup_models(&self) {
@@ -119,8 +136,9 @@ impl SnapshotView {
     }
 
     fn setup_menu(&self) {
+        let imp = self.imp();
         let model = self.model();
-        let col_view = &self.imp().column_view.get();
+        let col_view = &imp.column_view.get();
         let actions = SimpleActionGroup::new();
         let open_action = gio::SimpleAction::new("open", None);
         open_action.connect_activate(glib::clone!(@weak model, @weak col_view => move |_, _| {
@@ -138,10 +156,10 @@ impl SnapshotView {
             );
         }));
         actions.add_action(&open_action);
+        imp.single_select_actions.borrow_mut().push(open_action);
         actions.add_action(&gio::SimpleAction::new("rename", None));
         actions.add_action(&gio::SimpleAction::new("delete", None));
         self.insert_action_group("view", Some(&actions));
-
     }
 
     fn setup_clicks(&self) {
@@ -172,18 +190,20 @@ impl SnapshotView {
             .button(gdk::BUTTON_SECONDARY)
             .build();
         gesture.connect_pressed(
-            glib::clone!(@weak selection_menu => move |gesture, _, x, y| {
+            glib::clone!(@weak selection_menu, @weak self as view => move |gesture, _, x, y| {
                     gesture.set_state(gtk::EventSequenceState::Claimed);
                     let col_list_view = gesture.widget();
                     assert_eq!(col_list_view.widget_name(), "GtkColumnListView");
-                    
+
                     if let Some(idx) = extract_row_from_column_list_view(&col_list_view, y) {
                         let col_view = col_list_view.parent().unwrap().downcast::<ColumnView>().unwrap();
                         let model = col_view.model().unwrap();
                         if !model.is_selected(idx) {
                             model.select_item(idx, true);
                         }
-                        
+
+                        view.set_single_select_actions_availability(model.selection().size() <= 1);
+
                         let rect = gdk::Rectangle::new(x as i32, y as i32, 1, 1);
                         selection_menu.set_pointing_to(Some(&rect));
                         selection_menu.popup();
