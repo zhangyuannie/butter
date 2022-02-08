@@ -1,5 +1,6 @@
 use glib::Object;
 use gtk::glib;
+use serde::Deserialize;
 
 mod imp {
     use std::{cell::RefCell, path::Path, rc::Rc};
@@ -104,7 +105,7 @@ impl From<SnapshotData> for SnapshotObject {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Deserialize)]
 pub struct SnapshotData {
     pub path: String,
     pub parent_path: String,

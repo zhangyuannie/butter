@@ -24,43 +24,17 @@ impl Requester {
         self.writer = Some(writer);
     }
 
-    pub fn run_btrfs(&mut self, args: &[&str]) -> (i32, String) {
+    pub fn run_btrfs(&mut self, args: &[&str]) -> String {
         let req = serde_json::to_string(args).unwrap();
         writeln!(self.writer.as_ref().unwrap(), "{}", req).unwrap();
         let mut reply = String::new();
         self.reader.as_mut().unwrap().read_line(&mut reply).unwrap();
-        serde_json::from_str(&reply).unwrap()
+        reply
     }
 
     pub fn snapshots(&mut self) -> Vec<SnapshotData> {
-        let (status, s) = self.run_btrfs(&["subvolume", "list", "-sq", "/"]);
-        assert_eq!(status, 0);
-
-        let re = Regex::new(r"otime (.*) parent_uuid (\S*) .*path (.*)").unwrap();
-        let mut ret = Vec::new();
-        for line in s.lines() {
-            let captures = re.captures(line).unwrap();
-            ret.push(SnapshotData {
-                parent_path: self.uuid_to_path(captures.get(2).unwrap().as_str()),
-                creation_time: captures.get(1).unwrap().as_str().into(),
-                path: captures.get(3).unwrap().as_str().into(),
-            })
-        }
-        ret
-    }
-
-    fn uuid_to_path(&mut self, uuid: &str) -> String {
-        let (status, s) = self.run_btrfs(&["subvolume", "list", "-u", "/"]);
-        assert_eq!(status, 0);
-
-        let re = Regex::new(r"uuid (\S*) path (.*)").unwrap();
-        for line in s.lines() {
-            let captures = re.captures(line).unwrap();
-            if captures.get(1).unwrap().as_str() == uuid {
-                return captures.get(2).unwrap().as_str().into();
-            }
-        }
-        "Unknown".into()
+        let reply_json = self.run_btrfs(&["list_snapshots"]);
+        serde_json::from_str(&reply_json).unwrap()
     }
 }
 
