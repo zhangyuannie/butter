@@ -5,7 +5,6 @@ use std::{
 };
 
 use gtk::glib::once_cell::sync::Lazy;
-use regex::Regex;
 
 use crate::snapshot_object::SnapshotData;
 

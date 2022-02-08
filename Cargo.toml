@@ -7,14 +7,6 @@ license = "GPL-3.0-only"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[[bin]]
-name = "butterd"
-path = "src/daemon/main.rs"
-
-[[bin]]
-name = "butter"
-path = "src/main.rs"
-
 [dependencies]
 gtk = { version = "0.4", package = "gtk4" }
 adw = { version = "0.1", package = "libadwaita" }

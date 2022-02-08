@@ -108,6 +108,7 @@ impl From<SnapshotData> for SnapshotObject {
 #[derive(Default, Deserialize)]
 pub struct SnapshotData {
     pub path: String,
+    pub absolute_path: String,
     pub parent_path: String,
     pub creation_time: String,
 }
