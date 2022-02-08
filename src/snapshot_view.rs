@@ -50,6 +50,7 @@ mod imp {
         fn constructed(&self, obj: &Self::Type) {
             self.parent_constructed(obj);
             obj.setup_models();
+            obj.setup_column("name", "Name", false);
             obj.setup_column("path", "Path", false);
             obj.setup_column("creation-time", "Created", false);
             obj.setup_column("parent-path", "Source", true);

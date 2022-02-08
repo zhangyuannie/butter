@@ -2,7 +2,7 @@ use glib::Object;
 use gtk::glib;
 
 mod imp {
-    use std::{cell::RefCell, rc::Rc};
+    use std::{cell::RefCell, path::Path, rc::Rc};
 
     use gtk::{
         glib::{
@@ -28,6 +28,7 @@ mod imp {
         fn properties() -> &'static [ParamSpec] {
             static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
                 vec![
+                    ParamSpecString::new("name", "name", "name", None, ParamFlags::READABLE),
                     ParamSpecString::new("path", "path", "path", None, ParamFlags::READWRITE),
                     ParamSpecString::new(
                         "parent-path",
@@ -68,6 +69,11 @@ mod imp {
 
         fn property(&self, _obj: &Self::Type, _id: usize, pspec: &ParamSpec) -> Value {
             match pspec.name() {
+                "name" => Path::new(&self.data.borrow().path)
+                    .file_name()
+                    .unwrap()
+                    .to_str()
+                    .to_value(),
                 "path" => self.data.borrow().path.to_value(),
                 "parent-path" => self.data.borrow().parent_path.to_value(),
                 "creation-time" => self.data.borrow().creation_time.to_value(),
