@@ -45,6 +45,13 @@ mod imp {
                         None,
                         ParamFlags::READWRITE,
                     ),
+                    ParamSpecString::new(
+                        "absolute-path",
+                        "absolute-path",
+                        "absolute-path",
+                        None,
+                        ParamFlags::READWRITE,
+                    ),
                 ]
             });
             PROPERTIES.as_ref()
@@ -64,6 +71,10 @@ mod imp {
                     let input_value = value.get().expect("Value must be String");
                     self.data.borrow_mut().creation_time = input_value;
                 }
+                "absolute-path" => {
+                    let input_value = value.get().expect("Value must be String");
+                    self.data.borrow_mut().absolute_path = input_value;
+                }
                 _ => unimplemented!(),
             }
         }
@@ -78,6 +89,7 @@ mod imp {
                 "path" => self.data.borrow().path.to_value(),
                 "parent-path" => self.data.borrow().parent_path.to_value(),
                 "creation-time" => self.data.borrow().creation_time.to_value(),
+                "absolute-path" => self.data.borrow().absolute_path.to_value(),
                 _ => unimplemented!(),
             }
         }
@@ -89,11 +101,17 @@ glib::wrapper! {
 }
 
 impl SnapshotObject {
-    pub fn new(path: String, parent_path: String, creation_time: String) -> Self {
+    pub fn new(
+        path: String,
+        absolute_path: String,
+        parent_path: String,
+        creation_time: String,
+    ) -> Self {
         Object::new(&[
             ("path", &path),
             ("parent-path", &parent_path),
             ("creation-time", &creation_time),
+            ("absolute-path", &absolute_path),
         ])
         .expect("Failed to create SnapshotObject")
     }
@@ -101,7 +119,12 @@ impl SnapshotObject {
 
 impl From<SnapshotData> for SnapshotObject {
     fn from(item: SnapshotData) -> Self {
-        SnapshotObject::new(item.path, item.parent_path, item.creation_time)
+        SnapshotObject::new(
+            item.path,
+            item.absolute_path,
+            item.parent_path,
+            item.creation_time,
+        )
     }
 }
 
