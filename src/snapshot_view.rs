@@ -4,7 +4,7 @@ use gtk::{
     gio::{self, SimpleActionGroup},
     glib,
     prelude::*,
-    ColumnView, ColumnViewColumn, MultiSelection, SignalListItemFactory, Widget,
+    BitsetIter, ColumnView, ColumnViewColumn, MultiSelection, SignalListItemFactory, Widget,
 };
 
 use crate::{requester::daemon, snapshot_object::SnapshotObject};
@@ -136,26 +136,50 @@ impl SnapshotView {
         column_view.append_column(&cvc);
     }
 
+    fn open_snapshot(&self, idx: u32) {
+        let obj = self.model().item(idx).expect("Item must exist");
+        let uri = format!("file://{}", obj.property::<String>("absolute-path"));
+        println!("open_snapshot: show_uri: {}", uri);
+        gtk::show_uri(None::<&gtk::Window>, uri.as_str(), gdk::CURRENT_TIME);
+    }
+
     fn setup_menu(&self) {
         let imp = self.imp();
-        let model = self.model();
         let col_view = &imp.column_view.get();
         let actions = SimpleActionGroup::new();
+
         let open_action = gio::SimpleAction::new("open", None);
-        open_action.connect_activate(glib::clone!(@weak model, @weak col_view => move |_, _| {
-            let selection_model = col_view.model().unwrap();
+        open_action.connect_activate(glib::clone!(@weak self as view => move |_, _| {
+            let selection_model = view.imp().column_view.get().model().unwrap();
             let selection = selection_model.selection();
             if selection.size() != 1 {
                 println!("open: selection size should be 1");
             }
             let idx = selection.nth(0);
-            let obj = selection_model.item(idx).expect("Item must exist");
-            gtk::show_uri(
-                None::<&gtk::Window>,
-                format!("file:///{}", obj.property::<String>("path")).as_str(),
-                gdk::CURRENT_TIME,
-            );
+            view.open_snapshot(idx);
         }));
+
+        let rename_action = gio::SimpleAction::new("rename", None);
+        rename_action.connect_activate(glib::clone!(@weak col_view => move |_, _| {
+            let selection_model = col_view.model().unwrap();
+            let selection = selection_model.selection();
+            if selection.size() != 1 {
+                println!("rename: selection size should be 1");
+            }
+            let idx = selection.nth(0);
+            let _obj = selection_model.item(idx).expect("Item must exist");
+
+            println!("Not implemented");
+        }));
+
+        let delete_action = gio::SimpleAction::new("delete", None);
+        delete_action.connect_activate(glib::clone!(@weak col_view => move |_, _| {
+            let selection_model = col_view.model().unwrap();
+            let selection = selection_model.selection();
+            for _idx in BitsetIter::init_first(&selection) {}
+            println!("Not implemented");
+        }));
+
         actions.add_action(&open_action);
         imp.single_select_actions.borrow_mut().push(open_action);
         actions.add_action(&gio::SimpleAction::new("rename", None));
@@ -175,16 +199,9 @@ impl SnapshotView {
         let selection_menu = imp.selection_menu.get().unwrap();
 
         // double click
-        col_view.connect_activate(|cv, idx| {
-            let model = cv.model().unwrap();
-            let obj = model.item(idx).expect("Item must exist");
-
-            gtk::show_uri(
-                None::<&gtk::Window>,
-                format!("file:///{}", obj.property::<String>("path")).as_str(),
-                gdk::CURRENT_TIME,
-            );
-        });
+        col_view.connect_activate(glib::clone!(@weak self as view => move |_, idx| {
+            view.open_snapshot(idx);
+        }));
 
         // right click
         let gesture = gtk::GestureClick::builder()
@@ -200,7 +217,10 @@ impl SnapshotView {
                         let col_view = col_list_view.parent().unwrap().downcast::<ColumnView>().unwrap();
                         let model = col_view.model().unwrap();
                         if !model.is_selected(idx) {
+                            println!("gesture_pressed: select {} only", idx);
                             model.select_item(idx, true);
+                        }else {
+                            println!("gesture_pressed: already selected");
                         }
 
                         view.set_single_select_actions_availability(model.selection().size() <= 1);
@@ -208,7 +228,6 @@ impl SnapshotView {
                         let rect = gdk::Rectangle::new(x as i32, y as i32, 1, 1);
                         selection_menu.set_pointing_to(Some(&rect));
                         selection_menu.popup();
-                        println!("{}", idx);
                     }
             }),
         );
