@@ -2,6 +2,10 @@
 
 Butter is a simple GTK application for BTRFS snapshot management.
 
+> WIP. DO NOT USE.
+
+![Screenshot](https://znie.org/images/butter/screenshot.png)
+
 ## Build & Install
 
 Dependencies:
@@ -11,6 +15,7 @@ Dependencies:
 - gtk >= 4.4.0
 - python3-btrfsutil >= 5.10.0
 - kernel >= 4.18
+- polkit >= 0.100
 
 On Fedora Linux 35+, you can install the required packages with:
 ```
@@ -27,3 +32,7 @@ To uninstall:
 ```
 # make uninstall
 ```
+
+## Contributing
+
+Unfortunately, this project is closed to contributions right now.

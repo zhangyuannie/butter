@@ -15,6 +15,7 @@ src/config.rs: src/config.rs.in
 target/org.zhangyuannie.butter.policy: data/org.zhangyuannie.butter.policy.in
 
 src/config.rs target/org.zhangyuannie.butter.policy:
+	mkdir -p target
 	sed "s|@LIBEXEC_DIR@|$(libexecdir)|g" $< > $@
 
 app: src/config.rs target/org.zhangyuannie.butter.policy
