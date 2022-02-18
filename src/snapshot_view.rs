@@ -209,41 +209,47 @@ impl SnapshotView {
             .build();
         gesture.connect_pressed(
             glib::clone!(@weak selection_menu, @weak self as view => move |gesture, _, x, y| {
-                    gesture.set_state(gtk::EventSequenceState::Claimed);
-                    let col_list_view = gesture.widget();
-                    assert_eq!(col_list_view.widget_name(), "GtkColumnListView");
+                gesture.set_state(gtk::EventSequenceState::Claimed);
+                let col_view: ColumnView = gesture.widget().downcast().unwrap();
 
-                    if let Some(idx) = extract_row_from_column_list_view(&col_list_view, y) {
-                        let col_view = col_list_view.parent().unwrap().downcast::<ColumnView>().unwrap();
-                        let model = col_view.model().unwrap();
-                        if !model.is_selected(idx) {
-                            println!("gesture_pressed: select {} only", idx);
-                            model.select_item(idx, true);
-                        }else {
-                            println!("gesture_pressed: already selected");
-                        }
+                let header_rect = extract_header(&col_view).allocation();
+                let clv_y = y - header_rect.y() as f64 - header_rect.height() as f64;
 
-                        view.set_single_select_actions_availability(model.selection().size() <= 1);
-
-                        let rect = gdk::Rectangle::new(x as i32, y as i32, 1, 1);
-                        selection_menu.set_pointing_to(Some(&rect));
-                        selection_menu.popup();
+                if let Some(idx) = extract_row_from_column_list_view(&extract_column_list_view(&col_view), clv_y) {
+                    let model = col_view.model().unwrap();
+                    if !model.is_selected(idx) {
+                        println!("gesture_pressed: select {} only", idx);
+                        model.select_item(idx, true);
+                    } else {
+                        println!("gesture_pressed: already selected");
                     }
+
+                    view.set_single_select_actions_availability(model.selection().size() <= 1);
+
+                    let rect = gdk::Rectangle::new(x as i32, y as i32, 1, 1);
+                    selection_menu.set_pointing_to(Some(&rect));
+                    selection_menu.popup();
+                }
             }),
         );
-        let clv = extract_column_list_view(&col_view);
-        selection_menu.set_parent(&clv);
-        clv.add_controller(&gesture);
+        selection_menu.set_parent(&col_view);
+        col_view.add_controller(&gesture);
     }
 }
 
 // TODO: hope there is a better way
+fn extract_header(col_view: &ColumnView) -> Widget {
+    let ret = col_view.first_child().unwrap();
+    assert_eq!(ret.widget_name(), "GtkListItemWidget");
+    ret
+}
 fn extract_column_list_view(col_view: &ColumnView) -> Widget {
-    let col_list_view = col_view.first_child().unwrap().next_sibling().unwrap();
-    assert_eq!(col_list_view.widget_name(), "GtkColumnListView");
-    col_list_view
+    let ret = col_view.first_child().unwrap().next_sibling().unwrap();
+    assert_eq!(ret.widget_name(), "GtkColumnListView");
+    ret
 }
 
+/// y: relative to column_list_view, not column_view
 fn extract_row_from_column_list_view(column_list_view: &Widget, y: f64) -> Option<u32> {
     let mut cur = column_list_view.first_child()?;
     let mut idx = 0;
