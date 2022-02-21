@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="RenamePopover" parent="GtkPopover">
+    <child>
+      <object class="GtkBox" id="content_box">
+        <property name="spacing">8</property>
+        <child>
+          <object class="GtkEntry"></object>
+        </child>
+        <child>
+          <object class="GtkButton">
+            <property name="label">Rename</property>
+            <style>
+              <class name="suggested-action"/>
+            </style>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>
