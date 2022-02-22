@@ -1,13 +1,15 @@
+use std::path::PathBuf;
+
 use adw::subclass::prelude::*;
 use gtk::{
     gdk,
     gio::{self, SimpleActionGroup},
-    glib,
+    glib::{self, closure_local},
     prelude::*,
     BitsetIter, ColumnView, ColumnViewColumn, MultiSelection, SignalListItemFactory, Widget,
 };
 
-use crate::{requester::daemon, snapshot_object::SnapshotObject};
+use crate::{rename_popover::RenamePopover, requester::daemon, snapshot_object::SnapshotObject};
 
 mod imp {
     use adw::subclass::prelude::*;
@@ -21,12 +23,15 @@ mod imp {
     };
     use std::cell::RefCell;
 
+    use crate::rename_popover::RenamePopover;
+
     #[derive(CompositeTemplate, Default)]
     #[template(file = "../data/resources/ui/snapshot_view.ui")]
     pub struct SnapshotView {
         #[template_child(id = "snapshot_column_view")]
         pub column_view: TemplateChild<gtk::ColumnView>,
         pub selection_menu: OnceCell<gtk::PopoverMenu>,
+        pub rename_popover: RenamePopover,
         pub model: OnceCell<gio::ListStore>,
         pub single_select_actions: RefCell<Vec<SimpleAction>>,
     }
@@ -56,8 +61,10 @@ mod imp {
             obj.setup_column("parent-path", "Source", true);
             obj.setup_menu();
             obj.setup_clicks();
+            obj.setup_rename_popover();
         }
         fn dispose(&self, obj: &Self::Type) {
+            obj.teardown_rename_popover();
             if let Some(widget) = obj.imp().selection_menu.get() {
                 widget.unparent()
             }
@@ -85,16 +92,20 @@ impl SnapshotView {
 
     fn setup_models(&self) {
         let model = gio::ListStore::new(SnapshotObject::static_type());
+        let imp = self.imp();
+        imp.model.set(model).expect("Failed to set model");
+        self.refresh_model();
+        let selection_model = MultiSelection::new(Some(self.model()));
+        imp.column_view.set_model(Some(&selection_model));
+    }
 
+    fn refresh_model(&self) {
+        let model = self.model();
+        model.remove_all();
         let snapshots = daemon().snapshots();
         for snapshot in snapshots {
             model.append(&SnapshotObject::from(snapshot));
         }
-
-        let imp = self.imp();
-        imp.model.set(model).expect("Failed to set model");
-        let selection_model = MultiSelection::new(Some(self.model()));
-        imp.column_view.set_model(Some(&selection_model));
     }
 
     fn setup_column(&self, property: &'static str, title: &str, is_last: bool) {
@@ -160,16 +171,21 @@ impl SnapshotView {
         }));
 
         let rename_action = gio::SimpleAction::new("rename", None);
-        rename_action.connect_activate(glib::clone!(@weak col_view => move |_, _| {
+        rename_action.connect_activate(glib::clone!(@weak self as view => move |_, _| {
+            let imp = view.imp();
+            let col_view = imp.column_view.get();
+            let rename_popover = &imp.rename_popover;
             let selection_model = col_view.model().unwrap();
             let selection = selection_model.selection();
             if selection.size() != 1 {
                 println!("rename: selection size should be 1");
             }
             let idx = selection.nth(0);
-            let _obj = selection_model.item(idx).expect("Item must exist");
 
-            println!("Not implemented");
+            let item = extract_ith_list_item(&col_view, idx).unwrap();
+            rename_popover.set_target(idx);
+            rename_popover.set_pointing_to(Some(&item.allocation()));
+            rename_popover.popup();
         }));
 
         let delete_action = gio::SimpleAction::new("delete", None);
@@ -181,10 +197,48 @@ impl SnapshotView {
         }));
 
         actions.add_action(&open_action);
-        imp.single_select_actions.borrow_mut().push(open_action);
-        actions.add_action(&gio::SimpleAction::new("rename", None));
+        actions.add_action(&rename_action);
+
+        let mut single_actions = imp.single_select_actions.borrow_mut();
+        single_actions.push(open_action);
+        single_actions.push(rename_action);
+
         actions.add_action(&gio::SimpleAction::new("delete", None));
         self.insert_action_group("view", Some(&actions));
+    }
+
+    fn setup_rename_popover(&self) {
+        let imp = self.imp();
+        let popover = &imp.rename_popover;
+        let col_view = imp.column_view.get();
+        let view = self.clone();
+        popover.set_parent(&extract_column_list_view(&col_view));
+        popover.connect_closure(
+            "clicked",
+            false,
+            closure_local!(move |popover: RenamePopover, new_name: String| {
+                let idx = popover.target();
+                let obj = col_view
+                    .model()
+                    .unwrap()
+                    .item(idx)
+                    .expect("Item must exist");
+                let absolute_path: String = obj.property("absolute-path");
+
+                let mut new_path = PathBuf::from(&absolute_path);
+                new_path.set_file_name(new_name);
+
+                daemon().rename_snapshot(absolute_path.as_str(), new_path.to_str().unwrap());
+
+                view.refresh_model();
+
+                popover.popdown();
+            }),
+        );
+    }
+
+    fn teardown_rename_popover(&self) {
+        self.imp().rename_popover.unparent();
     }
 
     fn setup_clicks(&self) {
@@ -247,6 +301,14 @@ fn extract_column_list_view(col_view: &ColumnView) -> Widget {
     let ret = col_view.first_child().unwrap().next_sibling().unwrap();
     assert_eq!(ret.widget_name(), "GtkColumnListView");
     ret
+}
+fn extract_ith_list_item(col_view: &ColumnView, idx: u32) -> Option<Widget> {
+    let list_view = extract_column_list_view(col_view);
+    let mut cur = list_view.first_child()?;
+    for _ in 0..idx {
+        cur = cur.next_sibling()?;
+    }
+    return Some(cur);
 }
 
 /// y: relative to column_list_view, not column_view
