@@ -5,6 +5,7 @@
     <child>
       <object class="GtkButton">
         <property name="icon_name">list-add-symbolic</property>
+        <property name="action_name">win.new</property>
       </object>
     </child>
     <child type="end">

@@ -6,7 +6,7 @@ use gtk::{gio, glib};
 mod imp {
     use adw::prelude::*;
     use adw::subclass::prelude::*;
-    use gtk::{glib, subclass::prelude::*, CompositeTemplate};
+    use gtk::{gio, glib, subclass::prelude::*, CompositeTemplate};
 
     use crate::snapshot_view::SnapshotView;
 
@@ -38,7 +38,27 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for Window {}
+    impl ObjectImpl for Window {
+        fn constructed(&self, obj: &Self::Type) {
+            self.parent_constructed(obj);
+
+            let new_action = gio::SimpleAction::new("new", None);
+
+            let win = obj.clone();
+            new_action.connect_activate(move |_, _| {
+                let imp = win.imp();
+                let cur_view = imp.view_stack.visible_child_name().unwrap();
+                if cur_view == "snapshot" {
+                    let view = imp.snapshot_view.get();
+                    view.present_creation_window();
+                } else {
+                    todo!();
+                }
+            });
+
+            obj.add_action(&new_action);
+        }
+    }
     impl WidgetImpl for Window {}
     impl WindowImpl for Window {}
     impl ApplicationWindowImpl for Window {}

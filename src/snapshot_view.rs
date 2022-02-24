@@ -9,7 +9,10 @@ use gtk::{
     BitsetIter, ColumnView, ColumnViewColumn, MultiSelection, SignalListItemFactory, Widget,
 };
 
-use crate::{rename_popover::RenamePopover, requester::daemon, snapshot_object::SnapshotObject};
+use crate::{
+    rename_popover::RenamePopover, requester::daemon,
+    snapshot_creation_window::SnapshotCreationWindow, snapshot_object::SnapshotObject,
+};
 
 mod imp {
     use adw::subclass::prelude::*;
@@ -23,7 +26,7 @@ mod imp {
     };
     use std::cell::RefCell;
 
-    use crate::{rename_popover::RenamePopover, snapshot_creation_window::SnapshotCreationWindow};
+    use crate::rename_popover::RenamePopover;
 
     #[derive(CompositeTemplate, Default)]
     #[template(file = "../data/resources/ui/snapshot_view.ui")]
@@ -32,7 +35,6 @@ mod imp {
         pub column_view: TemplateChild<gtk::ColumnView>,
         pub selection_menu: OnceCell<gtk::PopoverMenu>,
         pub rename_popover: RenamePopover,
-        pub creation_window: SnapshotCreationWindow,
         pub model: OnceCell<gio::ListStore>,
         pub single_select_actions: RefCell<Vec<SimpleAction>>,
     }
@@ -289,6 +291,11 @@ impl SnapshotView {
         );
         selection_menu.set_parent(&col_view);
         col_view.add_controller(&gesture);
+    }
+
+    pub fn present_creation_window(&self) {
+        let win = SnapshotCreationWindow::new();
+        win.present();
     }
 }
 
