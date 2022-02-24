@@ -1,5 +1,5 @@
 use glib::Object;
-use gtk::glib;
+use gtk::{glib, prelude::ObjectExt};
 use serde::Deserialize;
 
 mod imp {
@@ -114,6 +114,10 @@ impl SnapshotObject {
             ("absolute-path", &absolute_path),
         ])
         .expect("Failed to create SnapshotObject")
+    }
+
+    pub fn absolute_path(&self) -> String {
+        self.property("absolute-path")
     }
 }
 

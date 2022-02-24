@@ -192,21 +192,30 @@ impl SnapshotView {
         }));
 
         let delete_action = gio::SimpleAction::new("delete", None);
-        delete_action.connect_activate(glib::clone!(@weak col_view => move |_, _| {
+        delete_action.connect_activate(glib::clone!(@weak col_view, @weak self as view => move |_, _| {
             let selection_model = col_view.model().unwrap();
             let selection = selection_model.selection();
-            for _idx in BitsetIter::init_first(&selection) {}
-            println!("Not implemented");
+            for (_, idx) in BitsetIter::init_first(&selection) {
+                let obj: SnapshotObject = selection_model
+                    .item(idx)
+                    .expect("Item must exist")
+                    .downcast()
+                    .unwrap();
+                let absolute_path: String = obj.absolute_path();
+                daemon().delete_snapshot(&absolute_path);
+                println!("delete: {}", &absolute_path);
+            }
+            view.refresh_model();
         }));
 
         actions.add_action(&open_action);
         actions.add_action(&rename_action);
+        actions.add_action(&delete_action);
 
         let mut single_actions = imp.single_select_actions.borrow_mut();
         single_actions.push(open_action);
         single_actions.push(rename_action);
 
-        actions.add_action(&gio::SimpleAction::new("delete", None));
         self.insert_action_group("view", Some(&actions));
     }
 
@@ -221,12 +230,14 @@ impl SnapshotView {
             false,
             closure_local!(move |popover: RenamePopover, new_name: String| {
                 let idx = popover.target();
-                let obj = col_view
+                let obj: SnapshotObject = col_view
                     .model()
                     .unwrap()
                     .item(idx)
-                    .expect("Item must exist");
-                let absolute_path: String = obj.property("absolute-path");
+                    .expect("Item must exist")
+                    .downcast()
+                    .unwrap();
+                let absolute_path: String = obj.absolute_path();
 
                 let mut new_path = PathBuf::from(&absolute_path);
                 new_path.set_file_name(new_name);

@@ -42,7 +42,7 @@ impl Requester {
     }
 
     pub fn delete_snapshot(&mut self, path: &str) -> bool {
-        let reply_json = self.run_btrfs(&["delete_snapshots", path]);
+        let reply_json = self.run_btrfs(&["delete_snapshot", path]);
         serde_json::from_str(&reply_json).unwrap()
     }
 }
