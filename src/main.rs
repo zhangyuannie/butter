@@ -2,6 +2,7 @@ mod application;
 mod config;
 mod rename_popover;
 mod requester;
+mod snapshot_creation_window;
 mod snapshot_object;
 mod snapshot_view;
 mod ui;

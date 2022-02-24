@@ -23,7 +23,7 @@ mod imp {
     };
     use std::cell::RefCell;
 
-    use crate::rename_popover::RenamePopover;
+    use crate::{rename_popover::RenamePopover, snapshot_creation_window::SnapshotCreationWindow};
 
     #[derive(CompositeTemplate, Default)]
     #[template(file = "../data/resources/ui/snapshot_view.ui")]
@@ -32,6 +32,7 @@ mod imp {
         pub column_view: TemplateChild<gtk::ColumnView>,
         pub selection_menu: OnceCell<gtk::PopoverMenu>,
         pub rename_popover: RenamePopover,
+        pub creation_window: SnapshotCreationWindow,
         pub model: OnceCell<gio::ListStore>,
         pub single_select_actions: RefCell<Vec<SimpleAction>>,
     }
