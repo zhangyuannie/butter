@@ -3,6 +3,8 @@ use gtk::subclass::prelude::*;
 use gtk::{glib, prelude::*, CompositeTemplate};
 
 mod imp {
+    use crate::requester::daemon;
+
     use super::*;
 
     #[derive(CompositeTemplate, Default)]
@@ -27,7 +29,14 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for SnapshotCreationWindow {}
+    impl ObjectImpl for SnapshotCreationWindow {
+        fn constructed(&self, obj: &Self::Type) {
+            self.parent_constructed(obj);
+            obj.imp().create_button.connect_clicked(|_| {
+                daemon().create_snapshot("/home", "/var/snapshots/test");
+            });
+        }
+    }
     impl WidgetImpl for SnapshotCreationWindow {}
     impl WindowImpl for SnapshotCreationWindow {}
 }

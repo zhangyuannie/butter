@@ -52,10 +52,21 @@ def delete_snapshot(args):
         return False
 
 
+def create_snapshot(args):
+    try:
+        src, dest = args
+        btrfsutil.create_snapshot(src, dest, read_only=True)
+        return True
+    except btrfsutil.BtrfsUtilError as e:
+        print(f"butterd: {e}", file=sys.stderr)
+        return False
+
+
 CMDS = {
     "list_snapshots": list_snapshots,
     "rename_snapshot": rename_snapshot,
     "delete_snapshot": delete_snapshot,
+    "create_snapshot": create_snapshot,
 }
 
 
@@ -66,7 +77,9 @@ if __name__ == "__main__":
             break
         cmd, *args = json.loads(req)
         if cmd in CMDS:
+            print(cmd, file=sys.stderr)
             reply = CMDS[cmd](args)
+            print(reply, file=sys.stderr)
             sys.stdout.write(json.dumps(reply))
             sys.stdout.write("\n")
             sys.stdout.flush()

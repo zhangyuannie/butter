@@ -45,6 +45,11 @@ impl Requester {
         let reply_json = self.run_btrfs(&["delete_snapshot", path]);
         serde_json::from_str(&reply_json).unwrap()
     }
+
+    pub fn create_snapshot(&mut self, src: &str, dest: &str) -> bool {
+        let reply_json = self.run_btrfs(&["create_snapshot", src, dest]);
+        serde_json::from_str(&reply_json).unwrap()
+    }
 }
 
 static DAEMON: Lazy<Mutex<Requester>> = Lazy::new(|| Mutex::default());
