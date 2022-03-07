@@ -1,6 +1,6 @@
 use std::{
     io::{BufRead, BufReader, Write},
-    process::{ChildStdin, ChildStdout},
+    process::{self, ChildStdin, ChildStdout},
     sync::{Mutex, MutexGuard},
 };
 
@@ -27,7 +27,11 @@ impl Requester {
         let req = serde_json::to_string(args).unwrap();
         writeln!(self.writer.as_ref().unwrap(), "{}", req).unwrap();
         let mut reply = String::new();
-        self.reader.as_mut().unwrap().read_line(&mut reply).unwrap();
+        let byte_count = self.reader.as_mut().unwrap().read_line(&mut reply).unwrap();
+        if byte_count == 0 {
+            println!("Daemon exited unexpectedly!");
+            process::exit(1);
+        }
         reply
     }
 
