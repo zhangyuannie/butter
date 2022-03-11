@@ -16,21 +16,23 @@ Dependencies:
 - python3-btrfsutil >= 5.10.0
 - kernel >= 4.18
 - polkit >= 0.100
+- meson >= 0.59
 
 On Fedora Linux 35+, you can install the required packages with:
 ```
-# dnf install gtk4-devel libadwaita-devel cargo python3-btrfsutil
+# dnf install gtk4-devel libadwaita-devel cargo python3-btrfsutil meson
 ```
 
 To build and install:
 ```
-$ make
-# make install
+$ meson --prefix=/usr build
+$ ninja -C build
+$ sudo ninja -C build install
 ```
 
 To uninstall:
 ```
-# make uninstall
+# sudo ninja -C build uninstall
 ```
 
 ## Contributing

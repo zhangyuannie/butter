@@ -1,4 +1,6 @@
-pub const APP_ID: &str = "org.zhangyuannie.butter";
+pub const APP_ID: &str = @ID@;
 pub const APP_NAME: &str = "Butter";
-pub const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
-pub const DAEMON_EXEC_PATH: &str = "@LIBEXEC_DIR@/butterd";
+pub const APP_VERSION: &str = @VERSION@;
+pub const GETTEXT_PACKAGE: &str = @GETTEXT_PACKAGE@;
+pub const LOCALEDIR: &str = @LOCALEDIR@;
+pub const DAEMON_EXEC_PATH: &str = concat!(@LIBEXECDIR@, "/butterd");
