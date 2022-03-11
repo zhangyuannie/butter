@@ -9,7 +9,7 @@
         </child>
         <child>
           <object class="GtkButton" id="rename_button">
-            <property name="label">Rename</property>
+            <property name="label" translatable="yes">Rename</property>
             <style>
               <class name="suggested-action"/>
             </style>

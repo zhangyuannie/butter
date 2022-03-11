@@ -26,6 +26,13 @@ fn main() {
         d.set_writer(daemon_process.stdin.unwrap())
     }
 
+    gettext::setlocale(gettext::LocaleCategory::LcAll, "");
+    gettext::bindtextdomain(config::GETTEXT_PACKAGE, config::LOCALEDIR)
+        .expect("Unable to bind the text domain");
+    gettext::bind_textdomain_codeset(config::GETTEXT_PACKAGE, "UTF-8")
+        .expect("Unable to bind text domain codeset");
+    gettext::textdomain(config::GETTEXT_PACKAGE).expect("Unable to switch to the text domain");
+
     let app = application::Application::new();
     app.run();
 }

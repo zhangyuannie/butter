@@ -19,11 +19,11 @@
   <menu id="primary_menu">
     <section>
       <item>
-        <attribute name="label">Preferences</attribute>
+        <attribute name="label" translatable="yes">Preferences</attribute>
         <attribute name="action">app.preferences</attribute>
       </item>
       <item>
-        <attribute name="label">About Butter</attribute>
+        <attribute name="label" translatable="yes">About Butter</attribute>
         <attribute name="action">app.about</attribute>
       </item>
     </section>
