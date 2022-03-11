@@ -8,7 +8,7 @@ mod imp {
     use super::*;
 
     #[derive(CompositeTemplate, Default)]
-    #[template(file = "../data/resources/ui/snapshot_creation_window.ui")]
+    #[template(resource = "/org/zhangyuannie/butter/ui/snapshot_creation_window.ui")]
     pub struct SnapshotCreationWindow {
         #[template_child]
         pub create_button: TemplateChild<gtk::Button>,

@@ -18,6 +18,8 @@ localedir = prefix / get_option('localedir')
 libexecdir = prefix / get_option('libexecdir')
 datadir = prefix / get_option('datadir')
 
+pkgdatadir = datadir / meson.project_name()
+
 subdir('data')
 subdir('po')
 subdir('src')

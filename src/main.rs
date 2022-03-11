@@ -9,6 +9,7 @@ mod ui;
 mod window;
 
 use adw::prelude::*;
+use gtk::gio;
 use requester::daemon;
 use std::io;
 use std::process::{Command, Stdio};
@@ -32,6 +33,9 @@ fn main() {
     gettext::bind_textdomain_codeset(config::GETTEXT_PACKAGE, "UTF-8")
         .expect("Unable to bind text domain codeset");
     gettext::textdomain(config::GETTEXT_PACKAGE).expect("Unable to switch to the text domain");
+
+    let res = gio::Resource::load(config::GRESOURCE_FILE).expect("Unable to load gresource file");
+    gio::resources_register(&res);
 
     let app = application::Application::new();
     app.run();

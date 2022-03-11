@@ -15,3 +15,4 @@ install_data(
 )
 
 subdir('icons')
+subdir('resources')

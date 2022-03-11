@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/zhangyuannie/butter/">
+    <file compressed="true" preprocess="xml-stripblanks">ui/window.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">ui/snapshot_creation_window.ui</file>
+  </gresource>
+</gresources>

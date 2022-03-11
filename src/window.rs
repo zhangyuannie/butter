@@ -11,7 +11,7 @@ mod imp {
     use crate::snapshot_view::SnapshotView;
 
     #[derive(CompositeTemplate, Default)]
-    #[template(file = "../data/resources/ui/window.ui")]
+    #[template(resource = "/org/zhangyuannie/butter/ui/window.ui")]
     pub struct Window {
         #[template_child]
         pub content_box: TemplateChild<gtk::Box>,
