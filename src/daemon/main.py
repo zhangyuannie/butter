@@ -55,6 +55,10 @@ def delete_snapshot(args):
 def create_snapshot(args):
     try:
         src, dest = args
+
+        # Make sure target directory exists
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+
         btrfsutil.create_snapshot(src, dest, read_only=True)
         return True
     except btrfsutil.BtrfsUtilError as e:
