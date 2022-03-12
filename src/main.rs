@@ -1,5 +1,6 @@
 mod application;
 mod config;
+mod file_chooser_entry;
 mod rename_popover;
 mod requester;
 mod snapshot_creation_window;

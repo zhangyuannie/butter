@@ -4,8 +4,6 @@
     <property name="title">New Snapshot</property>
     <property name="modal">True</property>
     <property name="destroy_with_parent">True</property>
-    <property name="default_width">800</property>
-    <property name="default_height">600</property>
     <child type="titlebar">
       <object class="GtkHeaderBar">
         <property name="show_title_buttons">False</property>
@@ -29,6 +27,95 @@
     <child>
       <object class="GtkBox">
         <property name="orientation">vertical</property>
+        <property name="valign">center</property>
+        <child>
+          <object class="GtkGrid">
+            <property name="halign">center</property>
+            <property name="row-spacing">10</property>
+            <property name="column-spacing">10</property>
+            <property name="margin-top">20</property>
+            <property name="margin-bottom">20</property>
+            <property name="margin-start">20</property>
+            <property name="margin-end">20</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="label" translatable="yes">Snapshot Name</property>
+                <property name="halign">end</property>
+                <layout>
+                  <property name="column">0</property>
+                  <property name="row">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="GtkEntry" id="name_entry">
+                <layout>
+                  <property name="column">1</property>
+                  <property name="row">0</property>
+                </layout>
+              </object>
+            </child>
+
+            <child>
+              <object class="GtkLabel">
+                <property name="label" translatable="yes">Snapshot Location</property>
+                <property name="halign">end</property>
+                <layout>
+                  <property name="column">0</property>
+                  <property name="row">1</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="FileChooserEntry" id="location_entry">
+                <layout>
+                  <property name="column">1</property>
+                  <property name="row">1</property>
+                </layout>
+              </object>
+            </child>
+
+            <child>
+              <object class="GtkLabel">
+                <property name="label" translatable="yes">Subvolume</property>
+                <property name="halign">end</property>
+                <layout>
+                  <property name="column">0</property>
+                  <property name="row">2</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="GtkDropDown" id="subvol_dropdown">
+                <layout>
+                  <property name="column">1</property>
+                  <property name="row">2</property>
+                </layout>
+              </object>
+            </child>
+
+            <child>
+              <object class="GtkLabel">
+                <property name="label" translatable="yes">Readonly</property>
+                <property name="halign">end</property>
+                <layout>
+                  <property name="column">0</property>
+                  <property name="row">3</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="GtkSwitch" id="readonly_switch">
+                <property name="halign">start</property>
+                <property name="active">true</property>
+                <layout>
+                  <property name="column">1</property>
+                  <property name="row">3</property>
+                </layout>
+              </object>
+            </child>
+          </object>
+        </child>
       </object>
     </child>
   </template>

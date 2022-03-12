@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="FileChooserEntry" parent="AdwBin">
+    <child>
+      <object class="GtkEntry" id="entry">
+      </object>
+    </child>
+  </template>
+</interface>

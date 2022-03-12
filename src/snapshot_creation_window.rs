@@ -3,6 +3,7 @@ use gtk::subclass::prelude::*;
 use gtk::{glib, prelude::*, CompositeTemplate};
 
 mod imp {
+    use crate::file_chooser_entry::FileChooserEntry;
     use crate::requester::daemon;
 
     use super::*;
@@ -12,6 +13,14 @@ mod imp {
     pub struct SnapshotCreationWindow {
         #[template_child]
         pub create_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub name_entry: TemplateChild<gtk::Entry>,
+        #[template_child]
+        pub location_entry: TemplateChild<FileChooserEntry>,
+        #[template_child]
+        pub subvol_dropdown: TemplateChild<gtk::DropDown>,
+        #[template_child]
+        pub readonly_switch: TemplateChild<gtk::Switch>,
     }
 
     #[glib::object_subclass]
