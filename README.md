@@ -17,24 +17,32 @@ Dependencies:
 - kernel >= 4.18
 - polkit >= 0.100
 - meson >= 0.59
+- python >= 3.6
 
-On Fedora Linux 35+, you can install the required packages with:
-```
-# dnf install gtk4-devel libadwaita-devel cargo python3-btrfsutil meson
-```
+You can install the required packages with:
+
+- Fedora Linux 35 and newer
+
+  ```
+  # dnf install meson cargo gtk4-devel libadwaita-devel python3-btrfsutil
+  ```
+
+- openSUSE Tumbleweed
+
+  ```
+  # zypper install meson cargo gtk4-devel libadwaita-devel python-btrfsutil
+  ```
 
 To build and install:
+
 ```
 $ meson --prefix=/usr build
 $ ninja -C build
-$ sudo ninja -C build install
+# ninja -C build install
 ```
 
 To uninstall:
-```
-# sudo ninja -C build uninstall
-```
 
-## Contributing
-
-Unfortunately, this project is closed to contributions right now.
+```
+# ninja -C build uninstall
+```
