@@ -15,7 +15,7 @@ mod imp {
 
     #[derive(Default)]
     pub struct SnapshotObject {
-        pub data: Rc<RefCell<super::SnapshotData>>,
+        pub data: Rc<RefCell<super::SubvolumeData>>,
         pub binding: RefCell<Option<Binding>>,
     }
 
@@ -65,7 +65,7 @@ mod imp {
                 }
                 "parent-path" => {
                     let input_value = value.get().expect("Value must be String");
-                    self.data.borrow_mut().parent_path = input_value;
+                    self.data.borrow_mut().snapshot_source_path = input_value;
                 }
                 "creation-time" => {
                     let input_value = value.get().expect("Value must be String");
@@ -87,7 +87,7 @@ mod imp {
                     .to_str()
                     .to_value(),
                 "path" => self.data.borrow().path.to_value(),
-                "parent-path" => self.data.borrow().parent_path.to_value(),
+                "parent-path" => self.data.borrow().snapshot_source_path.to_value(),
                 "creation-time" => self.data.borrow().creation_time.to_value(),
                 "absolute-path" => self.data.borrow().absolute_path.to_value(),
                 _ => unimplemented!(),
@@ -104,7 +104,7 @@ impl SnapshotObject {
     pub fn new(
         path: String,
         absolute_path: String,
-        parent_path: String,
+        parent_path: Option<String>,
         creation_time: String,
     ) -> Self {
         Object::new(&[
@@ -121,21 +121,21 @@ impl SnapshotObject {
     }
 }
 
-impl From<SnapshotData> for SnapshotObject {
-    fn from(item: SnapshotData) -> Self {
+impl From<SubvolumeData> for SnapshotObject {
+    fn from(item: SubvolumeData) -> Self {
         SnapshotObject::new(
             item.path,
             item.absolute_path,
-            item.parent_path,
+            item.snapshot_source_path,
             item.creation_time,
         )
     }
 }
 
 #[derive(Default, Deserialize)]
-pub struct SnapshotData {
+pub struct SubvolumeData {
     pub path: String,
     pub absolute_path: String,
-    pub parent_path: String,
+    pub snapshot_source_path: Option<String>,
     pub creation_time: String,
 }

@@ -105,9 +105,11 @@ impl SnapshotView {
     fn refresh_model(&self) {
         let model = self.model();
         model.remove_all();
-        let snapshots = daemon().snapshots();
-        for snapshot in snapshots {
-            model.append(&SnapshotObject::from(snapshot));
+        let subvols = daemon().subvolumes();
+        for subvol in subvols {
+            if subvol.snapshot_source_path.is_some() {
+                model.append(&SnapshotObject::from(subvol));
+            }
         }
     }
 
@@ -192,21 +194,23 @@ impl SnapshotView {
         }));
 
         let delete_action = gio::SimpleAction::new("delete", None);
-        delete_action.connect_activate(glib::clone!(@weak col_view, @weak self as view => move |_, _| {
-            let selection_model = col_view.model().unwrap();
-            let selection = selection_model.selection();
-            for (_, idx) in BitsetIter::init_first(&selection) {
-                let obj: SnapshotObject = selection_model
-                    .item(idx)
-                    .expect("Item must exist")
-                    .downcast()
-                    .unwrap();
-                let absolute_path: String = obj.absolute_path();
-                daemon().delete_snapshot(&absolute_path);
-                println!("delete: {}", &absolute_path);
-            }
-            view.refresh_model();
-        }));
+        delete_action.connect_activate(
+            glib::clone!(@weak col_view, @weak self as view => move |_, _| {
+                let selection_model = col_view.model().unwrap();
+                let selection = selection_model.selection();
+                for (_, idx) in BitsetIter::init_first(&selection) {
+                    let obj: SnapshotObject = selection_model
+                        .item(idx)
+                        .expect("Item must exist")
+                        .downcast()
+                        .unwrap();
+                    let absolute_path: String = obj.absolute_path();
+                    daemon().delete_snapshot(&absolute_path);
+                    println!("delete: {}", &absolute_path);
+                }
+                view.refresh_model();
+            }),
+        );
 
         actions.add_action(&open_action);
         actions.add_action(&rename_action);

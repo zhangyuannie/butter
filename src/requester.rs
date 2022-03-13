@@ -6,7 +6,7 @@ use std::{
 
 use gtk::glib::once_cell::sync::Lazy;
 
-use crate::snapshot_object::SnapshotData;
+use crate::snapshot_object::SubvolumeData;
 
 #[derive(Debug, Default)]
 pub struct Requester {
@@ -35,8 +35,8 @@ impl Requester {
         reply
     }
 
-    pub fn snapshots(&mut self) -> Vec<SnapshotData> {
-        let reply_json = self.run_btrfs(&["list_snapshots"]);
+    pub fn subvolumes(&mut self) -> Vec<SubvolumeData> {
+        let reply_json = self.run_btrfs(&["list_subvolumes"]);
         serde_json::from_str(&reply_json).unwrap()
     }
 

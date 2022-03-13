@@ -33,6 +33,10 @@ class Subvolume:
         # https://github.com/python/cpython/commit/47abf240365ddd54a91c6ac167900d4bf6806c4f
         return normpath[1:] if normpath.startswith("//") else normpath
 
+    @property
+    def is_snapshot(self) -> str:
+        return self.snapshot_source != None
+
     @staticmethod
     def enumerate_all() -> List["Subvolume"]:
         mounted_path_by_subvol_path = find_subvol_mnt()
@@ -78,7 +82,7 @@ def find_subvol_mnt() -> Dict[str, str]:
     return ret
 
 
-def list_snapshots(_):
+def list_subvolumes(_):
     subvols = Subvolume.enumerate_all()
 
     return [
@@ -88,10 +92,11 @@ def list_snapshots(_):
             "creation_time": datetime.fromtimestamp(subvol.info.otime).isoformat(
                 " ", "minutes"
             ),
-            "parent_path": subvol.snapshot_source.path,
+            "snapshot_source_path": subvol.snapshot_source.path
+            if subvol.snapshot_source
+            else None,
         }
         for subvol in subvols
-        if subvol.snapshot_source != None
     ]
 
 
@@ -128,7 +133,7 @@ def create_snapshot(args):
 
 
 CMDS = {
-    "list_snapshots": list_snapshots,
+    "list_subvolumes": list_subvolumes,
     "rename_snapshot": rename_snapshot,
     "delete_snapshot": delete_snapshot,
     "create_snapshot": create_snapshot,
