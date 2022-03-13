@@ -4,15 +4,19 @@ use gtk::subclass::prelude::*;
 use gtk::{glib, prelude::*, CompositeTemplate};
 
 mod imp {
-    use adw::subclass::prelude::BinImpl;
-
     use super::*;
+    use adw::subclass::prelude::*;
+    use std::cell::RefCell;
+    use std::rc::Rc;
 
     #[derive(CompositeTemplate, Default)]
     #[template(resource = "/org/zhangyuannie/butter/ui/file_chooser_entry.ui")]
     pub struct FileChooserEntry {
         #[template_child]
         pub entry: TemplateChild<gtk::Entry>,
+        #[template_child]
+        pub browse_button: TemplateChild<gtk::Button>,
+        pub file_chooser: Rc<RefCell<Option<gtk::FileChooserNative>>>,
     }
 
     #[glib::object_subclass]
@@ -33,9 +37,30 @@ mod imp {
     impl ObjectImpl for FileChooserEntry {
         fn constructed(&self, obj: &Self::Type) {
             self.parent_constructed(obj);
-            // obj.imp().create_button.connect_clicked(|_| {
-            //     daemon().create_snapshot("/home", "/var/snapshots/test");
-            // });
+            self.browse_button
+                .connect_clicked(glib::clone!(@weak obj => move |_| {
+                    let window = obj.root().unwrap().downcast::<gtk::Window>().unwrap();
+                    let file_chooser = gtk::FileChooserNative::builder()
+                        .transient_for(&window)
+                        .action(gtk::FileChooserAction::SelectFolder)
+                        .build();
+
+                    file_chooser.connect_response(glib::clone!(@weak obj => move |chooser, resp_type| {
+                        match resp_type {
+                            gtk::ResponseType::Accept => {
+                                if let Some(file) = chooser.file() {
+                                    let path = file.path().unwrap();
+                                    obj.set_text(path.to_str().unwrap());
+                                }
+                            },
+                            _ => {},
+                        };
+                        obj.imp().file_chooser.take();
+                    }));
+
+                    file_chooser.show();
+                    obj.imp().file_chooser.replace(Some(file_chooser));
+                }));
         }
     }
     impl WidgetImpl for FileChooserEntry {}
@@ -55,6 +80,10 @@ impl FileChooserEntry {
 
     pub fn text(&self) -> glib::GString {
         self.imp().entry.text()
+    }
+
+    pub fn set_text(&self, text: &str) {
+        self.imp().entry.set_text(text);
     }
 }
 

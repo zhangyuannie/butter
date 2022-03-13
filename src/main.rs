@@ -1,9 +1,9 @@
-mod snapshot_column_cell;
 mod application;
 mod config;
 mod file_chooser_entry;
 mod rename_popover;
 mod requester;
+mod snapshot_column_cell;
 mod snapshot_creation_window;
 mod snapshot_view;
 mod subvolume;

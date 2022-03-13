@@ -1,10 +1,16 @@
+use std::path::PathBuf;
+
 use glib::Object;
 use gtk::subclass::prelude::*;
-use gtk::{glib, prelude::*, CompositeTemplate};
+use gtk::{gio, glib, prelude::*, CompositeTemplate};
+
+use crate::requester::daemon;
+use crate::subvolume::Subvolume;
 
 mod imp {
     use crate::file_chooser_entry::FileChooserEntry;
     use crate::requester::daemon;
+    use crate::subvolume::Subvolume;
 
     use super::*;
 
@@ -41,9 +47,13 @@ mod imp {
     impl ObjectImpl for SnapshotCreationWindow {
         fn constructed(&self, obj: &Self::Type) {
             self.parent_constructed(obj);
-            obj.imp().create_button.connect_clicked(|_| {
-                daemon().create_snapshot("/home", "/var/snapshots/test");
-            });
+            obj.setup_dropdown();
+            self.location_entry.set_text("/var/snapshots");
+            self.create_button.connect_clicked(glib::clone!(@weak obj => move |_| {
+                let imp = obj.imp();
+                let item = imp.subvol_dropdown.selected_item().unwrap().downcast::<Subvolume>().unwrap();
+                daemon().create_snapshot(item.mounted_path().as_str(), obj.target_path().to_str().unwrap());
+            }));
         }
     }
     impl WidgetImpl for SnapshotCreationWindow {}
@@ -60,6 +70,30 @@ glib::wrapper! {
 impl SnapshotCreationWindow {
     pub fn new() -> Self {
         Object::new(&[]).expect("Failed to create SnapshotCreationWindow")
+    }
+
+    fn setup_dropdown(&self) {
+        let subvols = daemon().subvolumes();
+        let model = gio::ListStore::new(Subvolume::static_type());
+        for subvol in subvols {
+            if subvol.snapshot_source_path.is_none() {
+                model.append(&Subvolume::from(subvol));
+            }
+        }
+        let exp = gtk::ClosureExpression::new::<String, _, gtk::ClosureExpression>(
+            None,
+            glib::closure!(|sv: Subvolume| sv.name()),
+        );
+        let imp = self.imp();
+        imp.subvol_dropdown.set_expression(Some(&exp));
+        imp.subvol_dropdown.set_model(Some(&model));
+    }
+
+    fn target_path(&self) -> PathBuf {
+        let imp = self.imp();
+        let mut ret = PathBuf::from(imp.location_entry.text().to_string());
+        ret.push(imp.name_entry.text().to_string());
+        ret
     }
 }
 

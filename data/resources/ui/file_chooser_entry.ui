@@ -2,7 +2,18 @@
 <interface>
   <template class="FileChooserEntry" parent="AdwBin">
     <child>
-      <object class="GtkEntry" id="entry">
+      <object class="GtkBox">
+        <style>
+          <class name="linked"/>
+        </style>
+        <child>
+          <object class="GtkEntry" id="entry"/>
+        </child>
+        <child>
+          <object class="GtkButton" id="browse_button">
+            <property name="label" translatable="yes">Browse…</property>
+          </object>
+        </child>
       </object>
     </child>
   </template>
