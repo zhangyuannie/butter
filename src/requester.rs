@@ -6,7 +6,7 @@ use std::{
 
 use gtk::glib::once_cell::sync::Lazy;
 
-use crate::snapshot_object::SubvolumeData;
+use crate::subvolume::SubvolumeData;
 
 #[derive(Debug, Default)]
 pub struct Requester {

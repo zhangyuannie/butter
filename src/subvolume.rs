@@ -1,31 +1,30 @@
+use std::path::Path;
+
 use glib::Object;
-use gtk::{glib, prelude::ObjectExt};
+use gtk::{glib, subclass::prelude::*};
 use serde::Deserialize;
 
 mod imp {
-    use std::{cell::RefCell, path::Path, rc::Rc};
+    use std::{cell::RefCell, rc::Rc};
 
     use gtk::{
-        glib::{
-            self, once_cell::sync::Lazy, Binding, ParamFlags, ParamSpec, ParamSpecString, Value,
-        },
+        glib::{self, once_cell::sync::Lazy, ParamFlags, ParamSpec, ParamSpecString, Value},
         prelude::*,
         subclass::prelude::*,
     };
 
     #[derive(Default)]
-    pub struct SnapshotObject {
+    pub struct Subvolume {
         pub data: Rc<RefCell<super::SubvolumeData>>,
-        pub binding: RefCell<Option<Binding>>,
     }
 
     #[glib::object_subclass]
-    impl ObjectSubclass for SnapshotObject {
-        const NAME: &'static str = "SnapshotObject";
-        type Type = super::SnapshotObject;
+    impl ObjectSubclass for Subvolume {
+        const NAME: &'static str = "Subvolume";
+        type Type = super::Subvolume;
     }
 
-    impl ObjectImpl for SnapshotObject {
+    impl ObjectImpl for Subvolume {
         fn properties() -> &'static [ParamSpec] {
             static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
                 vec![
@@ -79,17 +78,13 @@ mod imp {
             }
         }
 
-        fn property(&self, _obj: &Self::Type, _id: usize, pspec: &ParamSpec) -> Value {
+        fn property(&self, obj: &Self::Type, _id: usize, pspec: &ParamSpec) -> Value {
             match pspec.name() {
-                "name" => Path::new(&self.data.borrow().path)
-                    .file_name()
-                    .unwrap()
-                    .to_str()
-                    .to_value(),
+                "name" => obj.name().to_value(),
                 "path" => self.data.borrow().path.to_value(),
                 "parent-path" => self.data.borrow().snapshot_source_path.to_value(),
                 "creation-time" => self.data.borrow().creation_time.to_value(),
-                "absolute-path" => self.data.borrow().absolute_path.to_value(),
+                "absolute-path" => obj.mounted_path().to_value(),
                 _ => unimplemented!(),
             }
         }
@@ -97,42 +92,41 @@ mod imp {
 }
 
 glib::wrapper! {
-    pub struct SnapshotObject(ObjectSubclass<imp::SnapshotObject>);
+    pub struct Subvolume(ObjectSubclass<imp::Subvolume>);
 }
 
-impl SnapshotObject {
-    pub fn new(
-        path: String,
-        absolute_path: String,
-        parent_path: Option<String>,
-        creation_time: String,
-    ) -> Self {
+impl Subvolume {
+    pub fn new(data: SubvolumeData) -> Self {
         Object::new(&[
-            ("path", &path),
-            ("parent-path", &parent_path),
-            ("creation-time", &creation_time),
-            ("absolute-path", &absolute_path),
+            ("path", &data.path),
+            ("parent-path", &data.snapshot_source_path),
+            ("creation-time", &data.creation_time),
+            ("absolute-path", &data.absolute_path),
         ])
-        .expect("Failed to create SnapshotObject")
+        .expect("Failed to create Subvolume")
     }
 
-    pub fn absolute_path(&self) -> String {
-        self.property("absolute-path")
+    pub fn name(&self) -> String {
+        Path::new(&self.imp().data.borrow().path)
+            .file_name()
+            .unwrap()
+            .to_owned()
+            .into_string()
+            .unwrap()
+    }
+
+    pub fn mounted_path(&self) -> String {
+        self.imp().data.borrow().absolute_path.to_owned()
     }
 }
 
-impl From<SubvolumeData> for SnapshotObject {
+impl From<SubvolumeData> for Subvolume {
     fn from(item: SubvolumeData) -> Self {
-        SnapshotObject::new(
-            item.path,
-            item.absolute_path,
-            item.snapshot_source_path,
-            item.creation_time,
-        )
+        Subvolume::new(item)
     }
 }
 
-#[derive(Default, Deserialize)]
+#[derive(Default, Clone, Deserialize, glib::Variant)]
 pub struct SubvolumeData {
     pub path: String,
     pub absolute_path: String,

@@ -10,8 +10,8 @@ use gtk::{
 };
 
 use crate::{
-    rename_popover::RenamePopover, requester::daemon,
-    snapshot_creation_window::SnapshotCreationWindow, snapshot_object::SnapshotObject,
+    rename_popover::RenamePopover, requester::daemon, snapshot_column_cell::SnapshotColumnCell,
+    snapshot_creation_window::SnapshotCreationWindow, subvolume::Subvolume,
 };
 
 mod imp {
@@ -94,7 +94,7 @@ impl SnapshotView {
     }
 
     fn setup_models(&self) {
-        let model = gio::ListStore::new(SnapshotObject::static_type());
+        let model = gio::ListStore::new(Subvolume::static_type());
         let imp = self.imp();
         imp.model.set(model).expect("Failed to set model");
         self.refresh_model();
@@ -108,7 +108,7 @@ impl SnapshotView {
         let subvols = daemon().subvolumes();
         for subvol in subvols {
             if subvol.snapshot_source_path.is_some() {
-                model.append(&SnapshotObject::from(subvol));
+                model.append(&Subvolume::from(subvol));
             }
         }
     }
@@ -117,31 +117,38 @@ impl SnapshotView {
         let column_view = self.imp().column_view.get();
 
         let factory = SignalListItemFactory::new();
+        factory.connect_setup(move |_, list_item| {
+            let cell = SnapshotColumnCell::new();
+            list_item.set_child(Some(&cell));
+        });
         factory.connect_bind(|_, list_item| {
             let obj = list_item
                 .item()
                 .expect("Item must exist")
-                .downcast::<SnapshotObject>()
-                .expect("Item must be SnapshotObject");
+                .downcast::<Subvolume>()
+                .expect("Item must be Subvolume");
 
-            let lbl = gtk::Label::new(None);
+            let cell = list_item
+                .child()
+                .unwrap()
+                .downcast::<SnapshotColumnCell>()
+                .unwrap();
+
             let binding = obj
-                .bind_property(property, &lbl, "label")
+                .bind_property(property, &cell.label(), "label")
                 .flags(glib::BindingFlags::SYNC_CREATE)
                 .build();
 
-            obj.imp().binding.borrow_mut().replace(binding);
-
-            list_item.set_child(Some(&lbl));
+            cell.add_binding(binding);
         });
         factory.connect_unbind(move |_, list_item| {
-            let obj = list_item
-                .item()
-                .expect("Item must exist")
-                .downcast::<SnapshotObject>()
-                .expect("Item must be SnapshotObject");
+            let cell = list_item
+                .child()
+                .expect("Child must exist")
+                .downcast::<SnapshotColumnCell>()
+                .expect("Child must be SnapshotColumnCell");
 
-            obj.imp().binding.borrow().as_ref().unwrap().unbind();
+            cell.unbind_all();
         });
         let cvc = ColumnViewColumn::builder()
             .title(title)
@@ -199,14 +206,13 @@ impl SnapshotView {
                 let selection_model = col_view.model().unwrap();
                 let selection = selection_model.selection();
                 for (_, idx) in BitsetIter::init_first(&selection) {
-                    let obj: SnapshotObject = selection_model
+                    let obj: Subvolume = selection_model
                         .item(idx)
                         .expect("Item must exist")
                         .downcast()
                         .unwrap();
-                    let absolute_path: String = obj.absolute_path();
-                    daemon().delete_snapshot(&absolute_path);
-                    println!("delete: {}", &absolute_path);
+                    daemon().delete_snapshot(&obj.mounted_path());
+                    println!("delete: {}", &obj.mounted_path());
                 }
                 view.refresh_model();
             }),
@@ -234,19 +240,18 @@ impl SnapshotView {
             false,
             closure_local!(move |popover: RenamePopover, new_name: String| {
                 let idx = popover.target();
-                let obj: SnapshotObject = col_view
+                let obj: Subvolume = col_view
                     .model()
                     .unwrap()
                     .item(idx)
                     .expect("Item must exist")
                     .downcast()
                     .unwrap();
-                let absolute_path: String = obj.absolute_path();
 
-                let mut new_path = PathBuf::from(&absolute_path);
+                let mut new_path = PathBuf::from(&obj.mounted_path());
                 new_path.set_file_name(new_name);
 
-                daemon().rename_snapshot(absolute_path.as_str(), new_path.to_str().unwrap());
+                daemon().rename_snapshot(obj.mounted_path().as_str(), new_path.to_str().unwrap());
 
                 view.refresh_model();
 
