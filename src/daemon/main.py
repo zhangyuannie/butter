@@ -3,7 +3,7 @@
 import sys
 import os
 import json
-from typing import Optional
+from typing import Optional, List, Dict
 import btrfsutil
 from datetime import datetime
 import subprocess
@@ -34,11 +34,11 @@ class Subvolume:
         return normpath[1:] if normpath.startswith("//") else normpath
 
     @staticmethod
-    def enumerate_all() -> list["Subvolume"]:
+    def enumerate_all() -> List["Subvolume"]:
         mounted_path_by_subvol_path = find_subvol_mnt()
-        subvol_by_uuid: dict[str, Subvolume] = {}
-        subvol_by_id: dict[int, Subvolume] = {}
-        ret: list[Subvolume] = []
+        subvol_by_uuid: Dict[str, Subvolume] = {}
+        subvol_by_id: Dict[int, Subvolume] = {}
+        ret: List[Subvolume] = []
 
         # get partial subvolumes
         with btrfsutil.SubvolumeIterator("/", BTRFS_FS_TREE_OBJECTID, info=True) as it:
@@ -62,10 +62,10 @@ class Subvolume:
         return f"Subvolume(path={self.path}, mounted_path={self.mounted_path})"
 
 
-def find_subvol_mnt() -> dict[str, str]:
+def find_subvol_mnt() -> Dict[str, str]:
     """Get a mapping from subvolume path to mounted path"""
     output = subprocess.check_output(["findmnt", "-t", "btrfs", "--json"])
-    filesystems: list[dict] = json.loads(output)["filesystems"]
+    filesystems: List[Dict] = json.loads(output)["filesystems"]
     ret = {}
     extract_regex = r"\[([^]]+)"
 
