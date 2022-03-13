@@ -13,8 +13,6 @@ mod imp {
     pub struct FileChooserEntry {
         #[template_child]
         pub entry: TemplateChild<gtk::Entry>,
-        #[template_child]
-        pub subvol_dropdown: TemplateChild<gtk::DropDown>,
     }
 
     #[glib::object_subclass]
@@ -53,6 +51,10 @@ glib::wrapper! {
 impl FileChooserEntry {
     pub fn new() -> Self {
         Object::new(&[]).expect("Failed to create FileChooserEntry")
+    }
+
+    pub fn text(&self) -> glib::GString {
+        self.imp().entry.text()
     }
 }
 

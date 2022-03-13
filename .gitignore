@@ -1,3 +1,4 @@
 /target
 /src/config.rs
 /po/butter.pot
+__pycache__

@@ -3,34 +3,95 @@
 import sys
 import os
 import json
+from typing import Optional
 import btrfsutil
 from datetime import datetime
+import subprocess
+import re
 
 BTRFS_FS_TREE_OBJECTID = 5
 
 
-def list_snapshots(_):
-    subvol_by_uuid = {}
-    with btrfsutil.SubvolumeIterator("/", BTRFS_FS_TREE_OBJECTID, info=True) as it:
-        for path, info in it:
-            subvol_by_uuid[info.uuid] = (path, info)
+class Subvolume:
+    def __init__(self, path: str, info) -> None:
+        self.path = path
+        self.info = info
+        self.snapshot_source: Optional[Subvolume] = None
+        """the subvolume this subvolume is a snapshot of"""
+        self.parent: Optional[Subvolume] = None
+        """the subvolume which contains this subvolume"""
+        self._mounted_path: Optional[str] = None
 
-    snapshots = []
-    with btrfsutil.SubvolumeIterator("/", info=True) as it:
-        for path, info in it:
-            if info.parent_uuid.count(b"\x00") != len(info.parent_uuid):
-                snapshots.append((path, info))
+    @property
+    def mounted_path(self) -> str:
+        """the absolute path this subvolume is mounted to"""
+        if self._mounted_path:
+            return self._mounted_path
+        path = self.path.replace(self.parent.path, self.parent.mounted_path, 1)
+        normpath = os.path.normpath(path)
+
+        # https://github.com/python/cpython/commit/47abf240365ddd54a91c6ac167900d4bf6806c4f
+        return normpath[1:] if normpath.startswith("//") else normpath
+
+    @staticmethod
+    def enumerate_all() -> list["Subvolume"]:
+        mounted_path_by_subvol_path = find_subvol_mnt()
+        subvol_by_uuid: dict[str, Subvolume] = {}
+        subvol_by_id: dict[int, Subvolume] = {}
+        ret: list[Subvolume] = []
+
+        # get partial subvolumes
+        with btrfsutil.SubvolumeIterator("/", BTRFS_FS_TREE_OBJECTID, info=True) as it:
+            for path, info in it:
+                subvol = Subvolume(path, info)
+                ret.append(subvol)
+                subvol_by_uuid[info.uuid] = subvol
+                subvol_by_id[info.id] = subvol
+
+        # complete subvolumes
+        for subvol in ret:
+            subvol.parent = subvol_by_id.get(subvol.info.parent_id, None)
+            if f"/{subvol.path}" in mounted_path_by_subvol_path:
+                subvol._mounted_path = mounted_path_by_subvol_path[f"/{subvol.path}"]
+            if subvol.info.parent_uuid.count(b"\x00") != len(subvol.info.parent_uuid):
+                subvol.snapshot_source = subvol_by_uuid[subvol.info.parent_uuid]
+
+        return ret
+
+    def __str__(self) -> str:
+        return f"Subvolume(path={self.path}, mounted_path={self.mounted_path})"
+
+
+def find_subvol_mnt() -> dict[str, str]:
+    """Get a mapping from subvolume path to mounted path"""
+    output = subprocess.check_output(["findmnt", "-t", "btrfs", "--json"])
+    filesystems: list[dict] = json.loads(output)["filesystems"]
+    ret = {}
+    extract_regex = r"\[([^]]+)"
+
+    while filesystems:
+        fs = filesystems.pop()
+        subvol_path = re.search(extract_regex, fs["source"]).group(1)
+        ret[subvol_path] = fs["target"]
+        filesystems.extend(fs.get("children", []))
+
+    return ret
+
+
+def list_snapshots(_):
+    subvols = Subvolume.enumerate_all()
 
     return [
         {
-            "path": subvol_by_uuid[info.uuid][0],
-            "absolute_path": f"/{path}",
-            "creation_time": datetime.fromtimestamp(info.otime).isoformat(
+            "path": subvol.path,
+            "absolute_path": subvol.mounted_path,
+            "creation_time": datetime.fromtimestamp(subvol.info.otime).isoformat(
                 " ", "minutes"
             ),
-            "parent_path": subvol_by_uuid[info.parent_uuid][0],
+            "parent_path": subvol.snapshot_source.path,
         }
-        for path, info in snapshots
+        for subvol in subvols
+        if subvol.snapshot_source != None
     ]
 
 
@@ -90,6 +151,3 @@ if __name__ == "__main__":
         else:
             print(f"butterd: bad Request: {req}", file=sys.stderr)
             sys.exit(1)
-
-else:
-    sys.exit(1)
