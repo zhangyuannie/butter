@@ -118,6 +118,10 @@ impl Subvolume {
     pub fn mounted_path(&self) -> String {
         self.imp().data.borrow().absolute_path.to_owned()
     }
+
+    pub fn is_snapshot(&self) -> bool {
+        self.imp().data.borrow().snapshot_source_path.is_some()
+    }
 }
 
 impl From<SubvolumeData> for Subvolume {

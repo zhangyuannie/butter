@@ -1,5 +1,6 @@
 use crate::application::Application;
 use crate::snapshot_view::SnapshotView;
+use gtk::prelude::Cast;
 use gtk::subclass::prelude::*;
 use gtk::{gio, glib};
 
@@ -7,8 +8,6 @@ mod imp {
     use adw::prelude::*;
     use adw::subclass::prelude::*;
     use gtk::{gio, glib, subclass::prelude::*, CompositeTemplate};
-
-    use crate::snapshot_view::SnapshotView;
 
     #[derive(CompositeTemplate, Default)]
     #[template(resource = "/org/zhangyuannie/butter/ui/window.ui")]
@@ -19,8 +18,6 @@ mod imp {
         pub view_stack: TemplateChild<adw::ViewStack>,
         #[template_child]
         pub switcher_bar: TemplateChild<adw::ViewSwitcherBar>,
-        #[template_child]
-        pub snapshot_view: TemplateChild<SnapshotView>,
     }
 
     #[glib::object_subclass]
@@ -49,7 +46,7 @@ mod imp {
                 let imp = win.imp();
                 let cur_view = imp.view_stack.visible_child_name().unwrap();
                 if cur_view == "snapshot" {
-                    let view = imp.snapshot_view.get();
+                    let view = win.snapshot_view();
                     view.present_creation_window();
                 } else {
                     todo!();
@@ -86,7 +83,11 @@ impl Window {
     }
 
     pub fn snapshot_view(&self) -> SnapshotView {
-        self.imp().snapshot_view.get()
+        self.view_stack()
+            .child_by_name("snapshot")
+            .unwrap()
+            .downcast()
+            .unwrap()
     }
 
     pub fn switcher_bar(&self) -> adw::ViewSwitcherBar {

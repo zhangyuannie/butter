@@ -10,23 +10,25 @@ use gtk::{
 };
 
 use crate::{
-    rename_popover::RenamePopover, requester::daemon, snapshot_column_cell::SnapshotColumnCell,
+    rename_popover::RenamePopover, snapshot_column_cell::SnapshotColumnCell,
     snapshot_creation_window::SnapshotCreationWindow, subvolume::Subvolume,
+    subvolume_manager::SubvolumeManager,
 };
 
 mod imp {
     use adw::subclass::prelude::*;
+    use glib::object::WeakRef;
     use glib::once_cell::sync::OnceCell;
     use gtk::{
-        gio::{self, SimpleAction},
-        glib,
+        gio::SimpleAction,
+        glib::{self, once_cell::sync::Lazy, ParamFlags, ParamSpec, ParamSpecObject, Value},
         prelude::*,
         subclass::prelude::*,
         CompositeTemplate,
     };
     use std::cell::RefCell;
 
-    use crate::rename_popover::RenamePopover;
+    use crate::{rename_popover::RenamePopover, subvolume_manager::SubvolumeManager};
 
     #[derive(CompositeTemplate, Default)]
     #[template(file = "../data/resources/ui/snapshot_view.ui")]
@@ -35,8 +37,9 @@ mod imp {
         pub column_view: TemplateChild<gtk::ColumnView>,
         pub selection_menu: OnceCell<gtk::PopoverMenu>,
         pub rename_popover: RenamePopover,
-        pub model: OnceCell<gio::ListStore>,
+        pub model: OnceCell<gtk::FilterListModel>,
         pub single_select_actions: RefCell<Vec<SimpleAction>>,
+        pub subvolume_manager: OnceCell<WeakRef<SubvolumeManager>>,
     }
 
     #[glib::object_subclass]
@@ -72,6 +75,30 @@ mod imp {
                 widget.unparent()
             }
         }
+
+        fn properties() -> &'static [ParamSpec] {
+            static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
+                vec![ParamSpecObject::new(
+                    "subvolume-manager",
+                    "subvolume-manager",
+                    "subvolume-manager",
+                    SubvolumeManager::static_type(),
+                    ParamFlags::READWRITE | glib::ParamFlags::CONSTRUCT_ONLY,
+                )]
+            });
+            PROPERTIES.as_ref()
+        }
+
+        fn set_property(&self, _obj: &Self::Type, _id: usize, value: &Value, pspec: &ParamSpec) {
+            match pspec.name() {
+                "subvolume-manager" => self
+                    .subvolume_manager
+                    .set(value.get::<SubvolumeManager>().unwrap().downgrade())
+                    .unwrap(),
+
+                _ => unimplemented!(),
+            }
+        }
     }
     impl WidgetImpl for SnapshotView {}
     impl BinImpl for SnapshotView {}
@@ -83,7 +110,11 @@ glib::wrapper! {
 }
 
 impl SnapshotView {
-    fn model(&self) -> &gio::ListStore {
+    pub fn new(subvolume_manager: &SubvolumeManager) -> Self {
+        glib::Object::new(&[("subvolume-manager", subvolume_manager)]).unwrap()
+    }
+
+    fn model(&self) -> &gtk::FilterListModel {
         self.imp().model.get().expect("Failed to get model")
     }
 
@@ -94,23 +125,16 @@ impl SnapshotView {
     }
 
     fn setup_models(&self) {
-        let model = gio::ListStore::new(Subvolume::static_type());
         let imp = self.imp();
+        let filter =
+            gtk::CustomFilter::new(|obj| obj.downcast_ref::<Subvolume>().unwrap().is_snapshot());
+        println!("a111");
+        let model =
+            gtk::FilterListModel::new(Some(self.subvolume_manager().model()), Some(&filter));
+        println!("a222");
         imp.model.set(model).expect("Failed to set model");
-        self.refresh_model();
         let selection_model = MultiSelection::new(Some(self.model()));
         imp.column_view.set_model(Some(&selection_model));
-    }
-
-    fn refresh_model(&self) {
-        let model = self.model();
-        model.remove_all();
-        let subvols = daemon().subvolumes();
-        for subvol in subvols {
-            if subvol.snapshot_source_path.is_some() {
-                model.append(&Subvolume::from(subvol));
-            }
-        }
     }
 
     fn setup_column(&self, property: &'static str, title: &str, is_last: bool) {
@@ -211,10 +235,9 @@ impl SnapshotView {
                         .expect("Item must exist")
                         .downcast()
                         .unwrap();
-                    daemon().delete_snapshot(&obj.mounted_path());
+                    view.subvolume_manager().delete_snapshot(&obj.mounted_path());
                     println!("delete: {}", &obj.mounted_path());
                 }
-                view.refresh_model();
             }),
         );
 
@@ -251,9 +274,8 @@ impl SnapshotView {
                 let mut new_path = PathBuf::from(&obj.mounted_path());
                 new_path.set_file_name(new_name);
 
-                daemon().rename_snapshot(obj.mounted_path().as_str(), new_path.to_str().unwrap());
-
-                view.refresh_model();
+                view.subvolume_manager()
+                    .rename_snapshot(obj.mounted_path().as_str(), new_path.to_str().unwrap());
 
                 popover.popdown();
             }),
@@ -314,8 +336,17 @@ impl SnapshotView {
     }
 
     pub fn present_creation_window(&self) {
-        let win = SnapshotCreationWindow::new();
+        let win = SnapshotCreationWindow::new(&self.subvolume_manager());
         win.present();
+    }
+
+    fn subvolume_manager(&self) -> SubvolumeManager {
+        self.imp()
+            .subvolume_manager
+            .get()
+            .unwrap()
+            .upgrade()
+            .unwrap()
     }
 }
 

@@ -1,16 +1,17 @@
 use std::path::PathBuf;
 
-use glib::Object;
 use gtk::subclass::prelude::*;
-use gtk::{gio, glib, prelude::*, CompositeTemplate};
+use gtk::{glib, prelude::*, CompositeTemplate};
 
-use crate::requester::daemon;
 use crate::subvolume::Subvolume;
+use crate::subvolume_manager::SubvolumeManager;
 
 mod imp {
-    use crate::file_chooser_entry::FileChooserEntry;
-    use crate::requester::daemon;
-    use crate::subvolume::Subvolume;
+    use glib::object::WeakRef;
+    use glib::once_cell::sync::OnceCell;
+    use gtk::glib::{once_cell::sync::Lazy, ParamFlags, ParamSpec, ParamSpecObject, Value};
+
+    use crate::{file_chooser_entry::FileChooserEntry, subvolume_manager::SubvolumeManager};
 
     use super::*;
 
@@ -27,6 +28,8 @@ mod imp {
         pub subvol_dropdown: TemplateChild<gtk::DropDown>,
         #[template_child]
         pub readonly_switch: TemplateChild<gtk::Switch>,
+
+        pub subvolume_manager: OnceCell<WeakRef<SubvolumeManager>>,
     }
 
     #[glib::object_subclass]
@@ -52,8 +55,33 @@ mod imp {
             self.create_button.connect_clicked(glib::clone!(@weak obj => move |_| {
                 let imp = obj.imp();
                 let item = imp.subvol_dropdown.selected_item().unwrap().downcast::<Subvolume>().unwrap();
-                daemon().create_snapshot(item.mounted_path().as_str(), obj.target_path().to_str().unwrap());
+                obj.subvolume_manager().create_snapshot(item.mounted_path().as_str(), obj.target_path().to_str().unwrap());
+                obj.close();
             }));
+        }
+
+        fn properties() -> &'static [ParamSpec] {
+            static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
+                vec![ParamSpecObject::new(
+                    "subvolume-manager",
+                    "subvolume-manager",
+                    "subvolume-manager",
+                    SubvolumeManager::static_type(),
+                    ParamFlags::READWRITE | glib::ParamFlags::CONSTRUCT_ONLY,
+                )]
+            });
+            PROPERTIES.as_ref()
+        }
+
+        fn set_property(&self, _obj: &Self::Type, _id: usize, value: &Value, pspec: &ParamSpec) {
+            match pspec.name() {
+                "subvolume-manager" => self
+                    .subvolume_manager
+                    .set(value.get::<SubvolumeManager>().unwrap().downgrade())
+                    .unwrap(),
+
+                _ => unimplemented!(),
+            }
         }
     }
     impl WidgetImpl for SnapshotCreationWindow {}
@@ -68,23 +96,22 @@ glib::wrapper! {
 }
 
 impl SnapshotCreationWindow {
-    pub fn new() -> Self {
-        Object::new(&[]).expect("Failed to create SnapshotCreationWindow")
+    pub fn new(subvolume_manager: &SubvolumeManager) -> Self {
+        glib::Object::new(&[("subvolume-manager", subvolume_manager)]).unwrap()
     }
 
     fn setup_dropdown(&self) {
-        let subvols = daemon().subvolumes();
-        let model = gio::ListStore::new(Subvolume::static_type());
-        for subvol in subvols {
-            if subvol.snapshot_source_path.is_none() {
-                model.append(&Subvolume::from(subvol));
-            }
-        }
+        let imp = self.imp();
+        let filter =
+            gtk::CustomFilter::new(|obj| !obj.downcast_ref::<Subvolume>().unwrap().is_snapshot());
+        let model =
+            gtk::FilterListModel::new(Some(self.subvolume_manager().model()), Some(&filter));
+
         let exp = gtk::ClosureExpression::new::<String, _, gtk::ClosureExpression>(
             None,
             glib::closure!(|sv: Subvolume| sv.name()),
         );
-        let imp = self.imp();
+
         imp.subvol_dropdown.set_expression(Some(&exp));
         imp.subvol_dropdown.set_model(Some(&model));
     }
@@ -95,10 +122,13 @@ impl SnapshotCreationWindow {
         ret.push(imp.name_entry.text().to_string());
         ret
     }
-}
 
-impl Default for SnapshotCreationWindow {
-    fn default() -> Self {
-        Self::new()
+    fn subvolume_manager(&self) -> SubvolumeManager {
+        self.imp()
+            .subvolume_manager
+            .get()
+            .unwrap()
+            .upgrade()
+            .unwrap()
     }
 }

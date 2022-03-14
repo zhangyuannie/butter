@@ -2,19 +2,18 @@ mod application;
 mod config;
 mod file_chooser_entry;
 mod rename_popover;
-mod requester;
 mod snapshot_column_cell;
 mod snapshot_creation_window;
 mod snapshot_view;
 mod subvolume;
+mod subvolume_manager;
 mod ui;
 mod window;
 
 use adw::prelude::*;
 use gtk::gio;
-use requester::daemon;
-use std::io;
 use std::process::{Command, Stdio};
+use subvolume_manager::SubvolumeManager;
 
 fn main() {
     let daemon_process = Command::new("pkexec")
@@ -23,11 +22,10 @@ fn main() {
         .stdout(Stdio::piped())
         .spawn()
         .unwrap();
-    {
-        let mut d = daemon();
-        d.set_reader(io::BufReader::new(daemon_process.stdout.unwrap()));
-        d.set_writer(daemon_process.stdin.unwrap())
-    }
+    let subvol_manager = SubvolumeManager::new(
+        daemon_process.stdin.unwrap(),
+        daemon_process.stdout.unwrap(),
+    );
 
     gettext::setlocale(gettext::LocaleCategory::LcAll, "");
     gettext::bindtextdomain(config::GETTEXT_PACKAGE, config::LOCALEDIR)
@@ -39,6 +37,6 @@ fn main() {
     let res = gio::Resource::load(config::GRESOURCE_FILE).expect("Unable to load gresource file");
     gio::resources_register(&res);
 
-    let app = application::Application::new();
+    let app = application::Application::new(subvol_manager);
     app.run();
 }

@@ -8,28 +8,6 @@
         <child>
           <object class="AdwViewStack" id="view_stack">
             <property name="vexpand">True</property>
-            <child>
-              <object class="AdwViewStackPage">
-                <property name="name">snapshot</property>
-                <property name="title">Snapshot</property>
-                <property name="icon-name">insert-object-symbolic</property>
-                <property name="child">
-                  <object class="SnapshotView" id="snapshot_view"/>
-                </property>
-              </object>
-            </child>
-            <child>
-              <object class="AdwViewStackPage">
-                <property name="name">schedule</property>
-                <property name="title">Schedule</property>
-                <property name="icon-name">alarm-symbolic</property>
-                <property name="child">
-                  <object class="GtkLabel">
-                    <property name="label">test</property>
-                  </object>
-                </property>
-              </object>
-            </child>
           </object>
         </child>
         <child>

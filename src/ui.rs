@@ -1,14 +1,26 @@
 use adw::prelude::*;
 use adw::{HeaderBar, ViewSwitcherTitle};
-use gtk::gio;
+use gtk::{gio, Label};
 
 use crate::application::Application;
 use crate::config;
+use crate::snapshot_view::SnapshotView;
 use crate::window::Window;
 
 pub fn build_ui(app: &Application) {
     let window = Window::new(&app);
     let view_stack = window.view_stack();
+
+    let snapshot_page = view_stack.add(&SnapshotView::new(&app.subvolume_manager()));
+    snapshot_page.set_name(Some("snapshot"));
+    snapshot_page.set_title(Some("Snapshot"));
+    snapshot_page.set_icon_name(Some("insert-object-symbolic"));
+
+    let schedule_page = view_stack.add(&Label::new(Some("Placeholder")));
+    schedule_page.set_name(Some("schedule"));
+    schedule_page.set_title(Some("Schedule"));
+    schedule_page.set_icon_name(Some("alarm-symbolic"));
+
     let view_switcher_title = ViewSwitcherTitle::builder()
         .stack(&view_stack)
         .title(config::APP_NAME)
