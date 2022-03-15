@@ -44,8 +44,9 @@ mod daemon {
             serde_json::from_str(&reply_json).unwrap()
         }
 
-        pub fn create_snapshot(&mut self, src: &str, dest: &str) -> bool {
-            let reply_json = self.run(&["create_snapshot", src, dest]);
+        pub fn create_snapshot(&mut self, src: &str, dest: &str, readonly: bool) -> bool {
+            let ro_str = if readonly { "yes" } else { "" };
+            let reply_json = self.run(&["create_snapshot", src, dest, ro_str]);
             serde_json::from_str(&reply_json).unwrap()
         }
     }
@@ -123,9 +124,9 @@ impl SubvolumeManager {
         ret
     }
 
-    pub fn create_snapshot(&mut self, src: &str, dest: &str) -> bool {
+    pub fn create_snapshot(&mut self, src: &str, dest: &str, readonly: bool) -> bool {
         let daemon = self.imp().daemon.get().unwrap();
-        let ret = daemon.lock().unwrap().create_snapshot(src, dest);
+        let ret = daemon.lock().unwrap().create_snapshot(src, dest, readonly);
         self.refresh();
         ret
     }

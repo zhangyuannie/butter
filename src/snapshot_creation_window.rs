@@ -55,7 +55,11 @@ mod imp {
             self.create_button.connect_clicked(glib::clone!(@weak obj => move |_| {
                 let imp = obj.imp();
                 let item = imp.subvol_dropdown.selected_item().unwrap().downcast::<Subvolume>().unwrap();
-                obj.subvolume_manager().create_snapshot(item.mounted_path().as_str(), obj.target_path().to_str().unwrap());
+                obj.subvolume_manager().create_snapshot(
+                    item.mounted_path().as_str(),
+                    obj.target_path().to_str().unwrap(),
+                    imp.readonly_switch.is_active(),
+                );
                 obj.close();
             }));
         }

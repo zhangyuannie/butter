@@ -128,10 +128,8 @@ impl SnapshotView {
         let imp = self.imp();
         let filter =
             gtk::CustomFilter::new(|obj| obj.downcast_ref::<Subvolume>().unwrap().is_snapshot());
-        println!("a111");
         let model =
             gtk::FilterListModel::new(Some(self.subvolume_manager().model()), Some(&filter));
-        println!("a222");
         imp.model.set(model).expect("Failed to set model");
         let selection_model = MultiSelection::new(Some(self.model()));
         imp.column_view.set_model(Some(&selection_model));

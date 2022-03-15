@@ -120,12 +120,12 @@ def delete_snapshot(args):
 
 def create_snapshot(args):
     try:
-        src, dest = args
+        src, dest, read_only = args
 
         # Make sure target directory exists
         os.makedirs(os.path.dirname(dest), exist_ok=True)
 
-        btrfsutil.create_snapshot(src, dest, read_only=True)
+        btrfsutil.create_snapshot(src, dest, read_only=bool(read_only))
         return True
     except btrfsutil.BtrfsUtilError as e:
         print(f"butterd: {e}", file=sys.stderr)
