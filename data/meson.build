@@ -14,5 +14,10 @@ install_data(
   install_dir: datadir / 'applications',
 )
 
+install_data(
+  '@0@.gschema.xml'.format(id),
+  install_dir: datadir / 'glib-2.0' / 'schemas',
+)
+
 subdir('icons')
 subdir('resources')

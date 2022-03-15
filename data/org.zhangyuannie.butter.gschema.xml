@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<schemalist>
+  <schema path="/org/zhangyuannie/butter/" id="org.zhangyuannie.butter" gettext-domain="butter">
+    <key name="window-size" type="(ii)">
+      <default>(600, 400)</default>
+      <summary>Window width and height</summary>
+      <description></description>
+    </key>
+    <key name="window-is-maximized" type="b">
+      <default>false</default>
+      <summary>Window is maximized</summary>
+      <description></description>
+    </key>
+  </schema>
+</schemalist>
