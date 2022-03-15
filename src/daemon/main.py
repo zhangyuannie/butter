@@ -23,10 +23,12 @@ class Subvolume:
         self._mounted_path: Optional[str] = None
 
     @property
-    def mounted_path(self) -> str:
+    def mounted_path(self) -> Optional[str]:
         """the absolute path this subvolume is mounted to"""
         if self._mounted_path:
             return self._mounted_path
+        if self.parent == None:
+            return None
         path = self.path.replace(self.parent.path, self.parent.mounted_path, 1)
         normpath = os.path.normpath(path)
 

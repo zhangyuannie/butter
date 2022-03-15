@@ -115,7 +115,7 @@ impl Subvolume {
             .unwrap()
     }
 
-    pub fn mounted_path(&self) -> String {
+    pub fn mounted_path(&self) -> Option<String> {
         self.imp().data.borrow().absolute_path.to_owned()
     }
 
@@ -133,7 +133,7 @@ impl From<SubvolumeData> for Subvolume {
 #[derive(Default, Clone, Deserialize, glib::Variant)]
 pub struct SubvolumeData {
     pub path: String,
-    pub absolute_path: String,
+    pub absolute_path: Option<String>,
     pub snapshot_source_path: Option<String>,
     pub creation_time: String,
 }

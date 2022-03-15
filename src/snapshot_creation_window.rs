@@ -61,7 +61,7 @@ mod imp {
                 let imp = obj.imp();
                 let item = imp.subvol_dropdown.selected_item().unwrap().downcast::<Subvolume>().unwrap();
                 obj.subvolume_manager().create_snapshot(
-                    item.mounted_path().as_str(),
+                    item.mounted_path().unwrap().as_str(),
                     obj.target_path().to_str().unwrap(),
                     imp.readonly_switch.is_active(),
                 );
@@ -111,8 +111,10 @@ impl SnapshotCreationWindow {
 
     fn setup_dropdown(&self) {
         let imp = self.imp();
-        let filter =
-            gtk::CustomFilter::new(|obj| !obj.downcast_ref::<Subvolume>().unwrap().is_snapshot());
+        let filter = gtk::CustomFilter::new(|obj| {
+            let subvol = obj.downcast_ref::<Subvolume>().unwrap();
+            !subvol.is_snapshot() && subvol.mounted_path().is_some()
+        });
         let model =
             gtk::FilterListModel::new(Some(self.subvolume_manager().model()), Some(&filter));
 

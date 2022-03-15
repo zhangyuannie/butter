@@ -233,8 +233,8 @@ impl SnapshotView {
                         .expect("Item must exist")
                         .downcast()
                         .unwrap();
-                    view.subvolume_manager().delete_snapshot(&obj.mounted_path());
-                    println!("delete: {}", &obj.mounted_path());
+                    view.subvolume_manager().delete_snapshot(&obj.mounted_path().unwrap());
+                    println!("delete: {}", &obj.mounted_path().unwrap());
                 }
             }),
         );
@@ -269,11 +269,13 @@ impl SnapshotView {
                     .downcast()
                     .unwrap();
 
-                let mut new_path = PathBuf::from(&obj.mounted_path());
+                let mut new_path = PathBuf::from(&obj.mounted_path().unwrap());
                 new_path.set_file_name(new_name);
 
-                view.subvolume_manager()
-                    .rename_snapshot(obj.mounted_path().as_str(), new_path.to_str().unwrap());
+                view.subvolume_manager().rename_snapshot(
+                    obj.mounted_path().unwrap().as_str(),
+                    new_path.to_str().unwrap(),
+                );
 
                 popover.popdown();
             }),
