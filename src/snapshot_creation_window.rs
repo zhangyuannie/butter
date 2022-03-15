@@ -50,6 +50,11 @@ mod imp {
     impl ObjectImpl for SnapshotCreationWindow {
         fn constructed(&self, obj: &Self::Type) {
             self.parent_constructed(obj);
+            self.create_button.set_sensitive(false);
+            self.name_entry
+                .connect_text_notify(glib::clone!(@weak obj => move |entry| {
+                    obj.create_button().set_sensitive(entry.text_length() > 0);
+                }));
             obj.setup_dropdown();
             self.location_entry.set_text("/var/snapshots");
             self.create_button.connect_clicked(glib::clone!(@weak obj => move |_| {
@@ -134,5 +139,9 @@ impl SnapshotCreationWindow {
             .unwrap()
             .upgrade()
             .unwrap()
+    }
+
+    fn create_button(&self) -> gtk::Button {
+        self.imp().create_button.get()
     }
 }
