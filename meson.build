@@ -17,8 +17,10 @@ bindir = prefix / get_option('bindir')
 localedir = prefix / get_option('localedir')
 libexecdir = prefix / get_option('libexecdir')
 datadir = prefix / get_option('datadir')
+sharedstatedir = prefix / get_option('sharedstatedir')
 
 pkgdatadir = datadir / meson.project_name()
+pkgsharedstatedir = sharedstatedir / meson.project_name()
 
 subdir('data')
 subdir('po')
