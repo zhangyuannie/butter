@@ -1,2 +1,8 @@
+data/resources/ui/file_chooser_entry.ui
 data/resources/ui/header_bar.ui
 data/resources/ui/rename_popover.ui
+data/resources/ui/selection_menu.ui
+data/resources/ui/snapshot_creation_window.ui
+
+src/snapshot_view.rs
+src/ui.rs

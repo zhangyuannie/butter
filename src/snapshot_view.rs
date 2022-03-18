@@ -20,6 +20,7 @@ use crate::{
 
 mod imp {
     use adw::subclass::prelude::*;
+    use gettext::gettext;
     use glib::object::WeakRef;
     use glib::once_cell::sync::OnceCell;
     use gtk::{
@@ -64,10 +65,10 @@ mod imp {
         fn constructed(&self, obj: &Self::Type) {
             self.parent_constructed(obj);
             obj.setup_models();
-            obj.setup_column("name", "Name", false);
-            obj.setup_column("path", "Path", false);
-            obj.setup_column("creation-time", "Created", false);
-            obj.setup_column("parent-path", "Source", true);
+            obj.setup_column("name", gettext("Name").as_str(), false);
+            obj.setup_column("path", gettext("Path").as_str(), false);
+            obj.setup_column("creation-time", gettext("Created").as_str(), false);
+            obj.setup_column("parent-path", gettext("Source").as_str(), true);
             obj.setup_menu();
             obj.setup_clicks();
             obj.setup_rename_popover();

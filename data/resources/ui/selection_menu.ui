@@ -3,15 +3,15 @@
   <menu id="selection_menu_model">
     <section>
       <item>
-        <attribute name="label">Open</attribute>
+        <attribute name="label" translatable="yes">Open</attribute>
         <attribute name="action">view.open</attribute>
       </item>
       <item>
-        <attribute name="label">Rename</attribute>
+        <attribute name="label" translatable="yes">Rename</attribute>
         <attribute name="action">view.rename</attribute>
       </item>
       <item>
-        <attribute name="label">Delete</attribute>
+        <attribute name="label" translatable="yes">Delete</attribute>
         <attribute name="action">view.delete</attribute>
       </item>
     </section>

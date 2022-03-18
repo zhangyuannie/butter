@@ -7,15 +7,19 @@ msgid ""
 msgstr ""
 "Project-Id-Version: butter\n"
 "Report-Msgid-Bugs-To: https://github.com/zhangyuannie/butter/issues\n"
-"POT-Creation-Date: 2022-03-11 14:40-0500\n"
+"POT-Creation-Date: 2022-03-18 02:30-0400\n"
 "PO-Revision-Date: 2022-03-11 14:40-0500\n"
-"Last-Translator: Automatically generated\n"
+"Last-Translator: Zhangyuan Nie\n"
 "Language-Team: French\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: data/resources/ui/file_chooser_entry.ui:14
+msgid "Browse…"
+msgstr "Parcourir…"
 
 #: data/resources/ui/header_bar.ui:22
 msgid "Preferences"
@@ -26,5 +30,66 @@ msgid "About Butter"
 msgstr "À propos de Butter"
 
 #: data/resources/ui/rename_popover.ui:12
+#: data/resources/ui/selection_menu.ui:10
 msgid "Rename"
 msgstr "Renommer"
+
+#: data/resources/ui/selection_menu.ui:6
+msgid "Open"
+msgstr "Ouvrir"
+
+#: data/resources/ui/selection_menu.ui:14
+msgid "Delete"
+msgstr "Supprimer"
+
+#: data/resources/ui/snapshot_creation_window.ui:4
+msgid "New Snapshot"
+msgstr "Nouvel instantané"
+
+#: data/resources/ui/snapshot_creation_window.ui:12
+msgid "Cancel"
+msgstr "Annuler"
+
+#: data/resources/ui/snapshot_creation_window.ui:18
+msgid "Create"
+msgstr "Créer"
+
+#: data/resources/ui/snapshot_creation_window.ui:42
+msgid "Snapshot Name"
+msgstr "Nom de l'instantané"
+
+#: data/resources/ui/snapshot_creation_window.ui:61
+msgid "Snapshot Location"
+msgstr "Emplacement de l'instantané"
+
+#: data/resources/ui/snapshot_creation_window.ui:80
+msgid "Subvolume"
+msgstr "Sous-volume"
+
+#: data/resources/ui/snapshot_creation_window.ui:99
+msgid "Readonly"
+msgstr "Lecture seule"
+
+#: src/snapshot_view.rs:68
+msgid "Name"
+msgstr "Nom"
+
+#: src/snapshot_view.rs:69
+msgid "Path"
+msgstr "Chemin d'accès"
+
+#: src/snapshot_view.rs:70
+msgid "Created"
+msgstr "Date de création"
+
+#: src/snapshot_view.rs:71
+msgid "Source"
+msgstr "Parent"
+
+#: src/ui.rs:17
+msgid "Snapshot"
+msgstr "Instantané"
+
+#: src/ui.rs:22
+msgid "Schedule"
+msgstr "Planification"

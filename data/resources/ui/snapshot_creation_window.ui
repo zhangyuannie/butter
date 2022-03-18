@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <template class="SnapshotCreationWindow" parent="GtkWindow">
-    <property name="title">New Snapshot</property>
+    <property name="title" translatable="yes">New Snapshot</property>
     <property name="modal">True</property>
     <property name="destroy_with_parent">True</property>
     <child type="titlebar">
@@ -9,13 +9,13 @@
         <property name="show_title_buttons">False</property>
         <child>
           <object class="GtkButton">
-            <property name="label">Cancel</property>
+            <property name="label" translatable="yes">Cancel</property>
             <property name="action_name">window.close</property>
           </object>
         </child>
         <child type="end">
           <object class="GtkButton" id="create_button">
-            <property name="label">Create</property>
+            <property name="label" translatable="yes">Create</property>
             <style>
               <class name="suggested-action"/>
             </style>

@@ -1,5 +1,6 @@
 use adw::prelude::*;
 use adw::{HeaderBar, ViewSwitcherTitle};
+use gettext::gettext;
 use gtk::{gio, Label};
 
 use crate::application::Application;
@@ -13,12 +14,12 @@ pub fn build_ui(app: &Application) {
 
     let snapshot_page = view_stack.add(&SnapshotView::new(&app.subvolume_manager()));
     snapshot_page.set_name(Some("snapshot"));
-    snapshot_page.set_title(Some("Snapshot"));
+    snapshot_page.set_title(Some(gettext("Snapshot").as_str()));
     snapshot_page.set_icon_name(Some("insert-object-symbolic"));
 
     let schedule_page = view_stack.add(&Label::new(Some("Placeholder")));
     schedule_page.set_name(Some("schedule"));
-    schedule_page.set_title(Some("Schedule"));
+    schedule_page.set_title(Some(gettext("Schedule").as_str()));
     schedule_page.set_icon_name(Some("alarm-symbolic"));
 
     let view_switcher_title = ViewSwitcherTitle::builder()

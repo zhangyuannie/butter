@@ -7,14 +7,18 @@ msgid ""
 msgstr ""
 "Project-Id-Version: butter\n"
 "Report-Msgid-Bugs-To: https://github.com/zhangyuannie/butter/issues\n"
-"POT-Creation-Date: 2022-03-11 14:40-0500\n"
+"POT-Creation-Date: 2022-03-18 02:30-0400\n"
 "PO-Revision-Date: 2022-03-11 14:40-0500\n"
-"Last-Translator: Automatically generated\n"
+"Last-Translator: Zhangyuan Nie\n"
 "Language-Team: Simplified Chinese\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+
+#: data/resources/ui/file_chooser_entry.ui:14
+msgid "Browse…"
+msgstr "浏览…"
 
 #: data/resources/ui/header_bar.ui:22
 msgid "Preferences"
@@ -25,5 +29,66 @@ msgid "About Butter"
 msgstr "关于 Butter"
 
 #: data/resources/ui/rename_popover.ui:12
+#: data/resources/ui/selection_menu.ui:10
 msgid "Rename"
 msgstr "重命名"
+
+#: data/resources/ui/selection_menu.ui:6
+msgid "Open"
+msgstr "打开"
+
+#: data/resources/ui/selection_menu.ui:14
+msgid "Delete"
+msgstr "删除"
+
+#: data/resources/ui/snapshot_creation_window.ui:4
+msgid "New Snapshot"
+msgstr "新建快照"
+
+#: data/resources/ui/snapshot_creation_window.ui:12
+msgid "Cancel"
+msgstr "取消"
+
+#: data/resources/ui/snapshot_creation_window.ui:18
+msgid "Create"
+msgstr "创建"
+
+#: data/resources/ui/snapshot_creation_window.ui:42
+msgid "Snapshot Name"
+msgstr "快照名称"
+
+#: data/resources/ui/snapshot_creation_window.ui:61
+msgid "Snapshot Location"
+msgstr "快照位置"
+
+#: data/resources/ui/snapshot_creation_window.ui:80
+msgid "Subvolume"
+msgstr "子卷"
+
+#: data/resources/ui/snapshot_creation_window.ui:99
+msgid "Readonly"
+msgstr "只读"
+
+#: src/snapshot_view.rs:68
+msgid "Name"
+msgstr "名称"
+
+#: src/snapshot_view.rs:69
+msgid "Path"
+msgstr "路径"
+
+#: src/snapshot_view.rs:70
+msgid "Created"
+msgstr "创建时间"
+
+#: src/snapshot_view.rs:71
+msgid "Source"
+msgstr "源子卷"
+
+#: src/ui.rs:17
+msgid "Snapshot"
+msgstr "快照"
+
+#: src/ui.rs:22
+msgid "Schedule"
+msgstr "计划"
