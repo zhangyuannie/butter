@@ -3,7 +3,7 @@ use gtk::subclass::prelude::*;
 use gtk::{gio, glib};
 
 use crate::config;
-use crate::subvolume_manager::SubvolumeManager;
+use crate::subvolume::SubvolumeManager;
 
 mod imp {
     use super::*;
@@ -14,7 +14,7 @@ mod imp {
     };
     use std::cell::RefCell;
 
-    use crate::{subvolume_manager::SubvolumeManager, ui::build_ui};
+    use crate::{subvolume::SubvolumeManager, ui::build_ui};
 
     #[derive(Default)]
     pub struct Application {

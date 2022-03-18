@@ -3,15 +3,14 @@ use std::path::PathBuf;
 use gtk::subclass::prelude::*;
 use gtk::{glib, prelude::*, CompositeTemplate};
 
-use crate::subvolume::Subvolume;
-use crate::subvolume_manager::SubvolumeManager;
+use crate::subvolume::{Subvolume, SubvolumeManager};
 
 mod imp {
     use glib::object::WeakRef;
     use glib::once_cell::sync::OnceCell;
     use gtk::glib::{once_cell::sync::Lazy, ParamFlags, ParamSpec, ParamSpecObject, Value};
 
-    use crate::{file_chooser_entry::FileChooserEntry, subvolume_manager::SubvolumeManager};
+    use crate::{file_chooser_entry::FileChooserEntry, subvolume::SubvolumeManager};
 
     use super::*;
 

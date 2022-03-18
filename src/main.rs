@@ -6,14 +6,13 @@ mod snapshot_column_cell;
 mod snapshot_creation_window;
 mod snapshot_view;
 mod subvolume;
-mod subvolume_manager;
 mod ui;
 mod window;
 
 use adw::prelude::*;
 use gtk::gio;
 use std::process::{Command, Stdio};
-use subvolume_manager::SubvolumeManager;
+use subvolume::SubvolumeManager;
 
 fn main() {
     let daemon_process = Command::new("pkexec")

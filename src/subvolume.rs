@@ -1,3 +1,7 @@
+mod subvolume_manager;
+
+pub use subvolume_manager::SubvolumeManager;
+
 use std::path::Path;
 
 use glib::Object;

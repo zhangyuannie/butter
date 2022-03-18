@@ -11,9 +11,11 @@ use gtk::{
 };
 
 use crate::{
-    rename_popover::RenamePopover, snapshot_column_cell::SnapshotColumnCell,
-    snapshot_creation_window::SnapshotCreationWindow, subvolume::Subvolume,
-    subvolume_manager::SubvolumeManager, window::Window,
+    rename_popover::RenamePopover,
+    snapshot_column_cell::SnapshotColumnCell,
+    snapshot_creation_window::SnapshotCreationWindow,
+    subvolume::{Subvolume, SubvolumeManager},
+    window::Window,
 };
 
 mod imp {
@@ -29,7 +31,7 @@ mod imp {
     };
     use std::cell::RefCell;
 
-    use crate::{rename_popover::RenamePopover, subvolume_manager::SubvolumeManager};
+    use crate::{rename_popover::RenamePopover, subvolume::SubvolumeManager};
 
     #[derive(CompositeTemplate, Default)]
     #[template(file = "../data/resources/ui/snapshot_view.ui")]
