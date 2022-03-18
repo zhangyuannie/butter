@@ -59,12 +59,28 @@ mod imp {
             self.create_button.connect_clicked(glib::clone!(@weak obj => move |_| {
                 let imp = obj.imp();
                 let item = imp.subvol_dropdown.selected_item().unwrap().downcast::<Subvolume>().unwrap();
-                obj.subvolume_manager().create_snapshot(
+                let res = obj.subvolume_manager().create_snapshot(
                     item.mounted_path().unwrap().as_str(),
                     obj.target_path().to_str().unwrap(),
                     imp.readonly_switch.is_active(),
                 );
-                obj.close();
+
+                match res {
+                    Ok(_) => obj.close(),
+                    Err(s) => {
+                        let dialog = gtk::MessageDialog::new(
+                            Some(&obj),
+                            gtk::DialogFlags::DESTROY_WITH_PARENT |  gtk::DialogFlags::MODAL,
+                            gtk::MessageType::Error,
+                            gtk::ButtonsType::Close,
+                            &s,
+                        );
+                        dialog.connect_response(|dialog, _| {
+                            dialog.destroy();
+                        });
+                        dialog.show();
+                    }
+                }
             }));
         }
 
