@@ -102,13 +102,13 @@ def list_subvolumes(_):
     ]
 
 
-def rename_snapshot(args):
+def rename_snapshot(args) -> Optional[str]:
     try:
         before, after = args
         os.rename(before, after)
-        return True
-    except:
-        return False
+        return None
+    except Exception as e:
+        return str(e)
 
 
 def delete_snapshot(args):

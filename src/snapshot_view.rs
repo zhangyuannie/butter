@@ -6,13 +6,14 @@ use gtk::{
     gio::{self, SimpleActionGroup},
     glib::{self, closure_local},
     prelude::*,
-    BitsetIter, ColumnView, ColumnViewColumn, MultiSelection, SignalListItemFactory, Widget,
+    BitsetIter, ColumnView, ColumnViewColumn, DialogFlags, MultiSelection, SignalListItemFactory,
+    Widget,
 };
 
 use crate::{
     rename_popover::RenamePopover, snapshot_column_cell::SnapshotColumnCell,
     snapshot_creation_window::SnapshotCreationWindow, subvolume::Subvolume,
-    subvolume_manager::SubvolumeManager,
+    subvolume_manager::SubvolumeManager, window::Window,
 };
 
 mod imp {
@@ -272,11 +273,25 @@ impl SnapshotView {
                 let mut new_path = PathBuf::from(&obj.mounted_path().unwrap());
                 new_path.set_file_name(new_name);
 
-                view.subvolume_manager().rename_snapshot(
+                let res = view.subvolume_manager().rename_snapshot(
                     obj.mounted_path().unwrap().as_str(),
                     new_path.to_str().unwrap(),
                 );
 
+                if let Err(s) = res {
+                    let win = view.root().unwrap().downcast::<Window>().unwrap();
+                    let dialog = gtk::MessageDialog::new(
+                        Some(&win),
+                        DialogFlags::DESTROY_WITH_PARENT | DialogFlags::MODAL,
+                        gtk::MessageType::Error,
+                        gtk::ButtonsType::Close,
+                        &s,
+                    );
+                    dialog.connect_response(|dialog, _| {
+                        dialog.destroy();
+                    });
+                    dialog.show();
+                }
                 popover.popdown();
             }),
         );

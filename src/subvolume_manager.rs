@@ -4,6 +4,7 @@ use glib::once_cell::sync::OnceCell;
 use gtk::{gio, glib, prelude::*, subclass::prelude::*};
 use std::io::{BufRead, BufReader, Write};
 use std::process::{self, ChildStdin, ChildStdout};
+use std::result;
 use std::sync::Mutex;
 
 mod daemon {
@@ -34,7 +35,7 @@ mod daemon {
             serde_json::from_str(&reply_json).unwrap()
         }
 
-        pub fn rename_snapshot(&mut self, before: &str, after: &str) -> bool {
+        pub fn rename_snapshot(&mut self, before: &str, after: &str) -> Option<String> {
             let reply_json = self.run(&["rename_snapshot", before, after]);
             serde_json::from_str(&reply_json).unwrap()
         }
@@ -117,11 +118,23 @@ impl SubvolumeManager {
         ret
     }
 
-    pub fn rename_snapshot(&self, before: &str, after: &str) -> bool {
+    pub fn rename_snapshot(
+        &self,
+        before_path: &str,
+        after_path: &str,
+    ) -> result::Result<(), String> {
         let daemon = self.imp().daemon.get().unwrap();
-        let ret = daemon.lock().unwrap().rename_snapshot(before, after);
-        self.refresh();
-        ret
+        let ret = daemon
+            .lock()
+            .unwrap()
+            .rename_snapshot(before_path, after_path);
+        match ret {
+            Some(error) => Err(error),
+            None => {
+                self.refresh();
+                Ok(())
+            }
+        }
     }
 
     pub fn create_snapshot(&mut self, src: &str, dest: &str, readonly: bool) -> bool {

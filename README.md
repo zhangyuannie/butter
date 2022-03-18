@@ -1,6 +1,6 @@
 # Butter
 
-Butter is a simple GTK application for BTRFS snapshot management.
+Butter is a simple GTK application for Btrfs snapshot management.
 
 > WIP. DO NOT USE.
 
