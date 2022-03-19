@@ -2,7 +2,7 @@
 
 Butter is a simple GTK application for Btrfs snapshot management.
 
-> WIP. DO NOT USE.
+> Work in Progress.
 
 ![Screenshot](https://znie.org/images/butter/screenshot.png)
 

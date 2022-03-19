@@ -5,4 +5,3 @@ pub const GETTEXT_PACKAGE: &str = @GETTEXT_PACKAGE@;
 pub const LOCALEDIR: &str = @LOCALEDIR@;
 pub const DAEMON_EXEC_PATH: &str = concat!(@LIBEXECDIR@, "/butterd");
 pub const GRESOURCE_FILE: &str = concat!(@PKGDATADIR@, "/resources.gresource");
-pub const PKGSHAREDSTATEDIR: &str = @PKGSHAREDSTATEDIR@;
