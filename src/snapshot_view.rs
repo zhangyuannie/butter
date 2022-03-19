@@ -394,10 +394,11 @@ fn extract_row_from_column_list_view(column_list_view: &Widget, y: f64) -> Optio
     let mut idx = 0;
 
     loop {
-        assert_eq!(cur.widget_name(), "GtkListItemWidget");
-        let rect = cur.allocation();
-        if rect.y() as f64 <= y && y < (rect.y() + rect.height()) as f64 {
-            return Some(idx);
+        if cur.widget_name() == "GtkListItemWidget" {
+            let rect = cur.allocation();
+            if rect.y() as f64 <= y && y < (rect.y() + rect.height()) as f64 {
+                return Some(idx);
+            }
         }
         idx += 1;
         cur = cur.next_sibling()?;
