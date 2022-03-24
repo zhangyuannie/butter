@@ -6,9 +6,17 @@ Butter is a simple GTK application for Btrfs snapshot management.
 
 ![Screenshot](https://znie.org/images/butter/screenshot.png)
 
-## Build & Install
+## Installation
 
-Dependencies:
+### Distribution repositories
+
+Development versions tracking the main branch:
+
+- Fedora: https://copr.fedorainfracloud.org/coprs/zhangyuannie/butter-git
+
+### Building from Source
+
+#### Dependencies
 
 - cargo
 - libadwaita >= 1.0.0
@@ -19,9 +27,9 @@ Dependencies:
 - meson >= 0.59
 - python >= 3.6
 
-You can install the required packages with:
+You can install these dependencies with:
 
-- Fedora Linux 35 and newer
+- Fedora 35 and later
 
   ```
   # dnf install meson cargo gtk4-devel libadwaita-devel python3-btrfsutil
@@ -33,7 +41,16 @@ You can install the required packages with:
   # zypper install meson cargo gtk4-devel libadwaita-devel python-btrfsutil
   ```
 
-To build and install:
+#### Get the Source Code
+
+```
+$ git clone https://github.com/zhangyuannie/butter.git
+$ cd butter
+```
+
+#### Build and Install
+
+To install Butter into `/usr`:
 
 ```
 $ meson --prefix=/usr build
@@ -46,3 +63,7 @@ To uninstall:
 ```
 # ninja -C build uninstall
 ```
+
+## License
+
+Butter is available under the GNU General Public License version 3 (GPLv3). See [COPYING](COPYING) for the full text.
