@@ -12,6 +12,7 @@ Butter is a simple GTK application for Btrfs snapshot management.
 
 Development versions tracking the main branch:
 
+- Arch: https://aur.archlinux.org/packages/butter-git
 - Fedora: https://copr.fedorainfracloud.org/coprs/zhangyuannie/butter-git
 
 ### Building from Source
@@ -28,6 +29,11 @@ Development versions tracking the main branch:
 - python >= 3.6
 
 You can install these dependencies with:
+
+- Arch
+  ```
+  # pacman -S meson rust gtk4 libadwaita btrfs-progs python
+  ```
 
 - Fedora 35 and later
 
