@@ -1,0 +1,58 @@
+%global commitdate @COMMITDATE@
+%global commit @COMMIT@
+%global shortcommit %(c=%{commit}; echo ${c:0:7})
+%global debug_package %{nil}
+
+Name:           butter
+Version:        @VERSION@
+Release:        1.%{commitdate}git%{shortcommit}%{?dist}
+Summary:        Application for Btrfs snapshot management
+
+License:        GPLv3
+URL:            https://github.com/zhangyuannie/butter
+Source:         https://github.com/zhangyuannie/butter/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
+
+BuildRequires:  meson
+BuildRequires:  python3-devel
+BuildRequires:  cargo
+BuildRequires:  libadwaita-devel
+BuildRequires:  gtk4-devel
+BuildRequires:  gettext
+BuildRequires:  desktop-file-utils
+
+Requires:       gtk4%{?_isa} >= 4.4.0
+Requires:       libadwaita%{?_isa} >= 1.0.0
+Requires:       python3-btrfsutil >= 5.10.0
+Requires:       polkit
+
+%description
+Application for Btrfs snapshot management
+
+%files -f %{name}.lang
+%license COPYING
+%{_bindir}/butter
+%{_libexecdir}/butterd
+%{_datadir}/applications/org.zhangyuannie.butter.desktop
+%{_datadir}/butter/
+%{_datadir}/glib-2.0/schemas/org.zhangyuannie.butter.gschema.xml
+%{_datadir}/icons/hicolor/scalable/apps/org.zhangyuannie.butter.svg
+%{_datadir}/icons/hicolor/symbolic/apps/org.zhangyuannie.butter-symbolic.svg
+%{_datadir}/polkit-1/actions/org.zhangyuannie.butter.policy
+
+%prep
+%autosetup -n %{name}-%{commit} -p1
+
+%build
+%meson
+%meson_build
+
+%install
+%meson_install
+%find_lang %{name}
+
+%check
+desktop-file-validate $RPM_BUILD_ROOT%{_datadir}/applications/*.desktop
+
+%changelog
+* Tue Mar 15 2022 Zhangyuan Nie <yuan@znie.org> - 0.1.0-1
+- Initial package
