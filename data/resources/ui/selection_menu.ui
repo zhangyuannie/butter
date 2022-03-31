@@ -17,6 +17,23 @@
     </section>
   </menu>
 
+  <menu id="header_menu_model">
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">Path</attribute>
+        <attribute name="action">view.show-path</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">Created</attribute>
+        <attribute name="action">view.show-creation-time</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">Source</attribute>
+        <attribute name="action">view.show-parent-path</attribute>
+      </item>
+    </section>
+  </menu>
+
   <object class="GtkPopoverMenu" id="selection_menu">
     <property name="has-arrow">false</property>
     <property name="menu-model">selection_menu_model</property>

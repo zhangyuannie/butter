@@ -2,12 +2,10 @@ use std::path::PathBuf;
 
 use adw::subclass::prelude::*;
 use gtk::{
-    gdk,
-    gio::{self, SimpleActionGroup},
+    gdk, gio,
     glib::{self, closure_local},
     prelude::*,
-    BitsetIter, ColumnView, ColumnViewColumn, DialogFlags, MultiSelection, SignalListItemFactory,
-    Widget,
+    BitsetIter, ColumnView, ColumnViewColumn, DialogFlags, SignalListItemFactory, Widget,
 };
 
 use crate::{
@@ -24,15 +22,19 @@ mod imp {
     use glib::object::WeakRef;
     use glib::once_cell::sync::OnceCell;
     use gtk::{
+        gio,
         gio::SimpleAction,
         glib::{self, once_cell::sync::Lazy, ParamFlags, ParamSpec, ParamSpecObject, Value},
         prelude::*,
         subclass::prelude::*,
-        CompositeTemplate,
+        CompositeTemplate, MultiSelection,
     };
     use std::cell::RefCell;
 
-    use crate::{rename_popover::RenamePopover, subvolume::SubvolumeManager};
+    use crate::{
+        rename_popover::RenamePopover,
+        subvolume::{Subvolume, SubvolumeManager},
+    };
 
     #[derive(CompositeTemplate, Default)]
     #[template(file = "../data/resources/ui/snapshot_view.ui")]
@@ -44,6 +46,7 @@ mod imp {
         pub model: OnceCell<gtk::FilterListModel>,
         pub single_select_actions: RefCell<Vec<SimpleAction>>,
         pub subvolume_manager: OnceCell<WeakRef<SubvolumeManager>>,
+        pub actions: gio::SimpleActionGroup,
     }
 
     #[glib::object_subclass]
@@ -64,12 +67,43 @@ mod imp {
     impl ObjectImpl for SnapshotView {
         fn constructed(&self, obj: &Self::Type) {
             self.parent_constructed(obj);
-            obj.setup_models();
-            obj.setup_column("name", gettext("Name").as_str(), false);
-            obj.setup_column("path", gettext("Path").as_str(), false);
-            obj.setup_column("creation-time", gettext("Created").as_str(), false);
-            obj.setup_column("parent-path", gettext("Source").as_str(), true);
+
+            // set list model and selection model
+            {
+                let filter = gtk::CustomFilter::new(|obj| {
+                    obj.downcast_ref::<Subvolume>().unwrap().is_snapshot()
+                });
+                let model =
+                    gtk::FilterListModel::new(Some(obj.subvolume_manager().model()), Some(&filter));
+                self.model.set(model).expect("Failed to set model");
+
+                let selection_model = MultiSelection::new(Some(obj.model()));
+                self.column_view.set_model(Some(&selection_model));
+            }
+
+            let header_menu: gio::MenuModel = {
+                let menu_builder = gtk::Builder::from_string(include_str!(
+                    "../data/resources/ui/selection_menu.ui"
+                ));
+                menu_builder.object("header_menu_model").unwrap()
+            };
+
             obj.setup_menu();
+
+            obj.setup_column("name", gettext("Name").as_str(), false, &header_menu);
+            obj.setup_column("path", gettext("Path").as_str(), false, &header_menu);
+            obj.setup_column(
+                "creation-time",
+                gettext("Created").as_str(),
+                false,
+                &header_menu,
+            );
+            obj.setup_column(
+                "parent-path",
+                gettext("Source").as_str(),
+                true,
+                &header_menu,
+            );
             obj.setup_clicks();
             obj.setup_rename_popover();
         }
@@ -128,18 +162,13 @@ impl SnapshotView {
         }
     }
 
-    fn setup_models(&self) {
-        let imp = self.imp();
-        let filter =
-            gtk::CustomFilter::new(|obj| obj.downcast_ref::<Subvolume>().unwrap().is_snapshot());
-        let model =
-            gtk::FilterListModel::new(Some(self.subvolume_manager().model()), Some(&filter));
-        imp.model.set(model).expect("Failed to set model");
-        let selection_model = MultiSelection::new(Some(self.model()));
-        imp.column_view.set_model(Some(&selection_model));
-    }
-
-    fn setup_column(&self, property: &'static str, title: &str, is_last: bool) {
+    fn setup_column(
+        &self,
+        property: &'static str,
+        title: &str,
+        expand: bool,
+        menu: &gio::MenuModel,
+    ) {
         let column_view = self.imp().column_view.get();
 
         let factory = SignalListItemFactory::new();
@@ -179,9 +208,16 @@ impl SnapshotView {
         let cvc = ColumnViewColumn::builder()
             .title(title)
             .factory(&factory)
-            .expand(is_last)
-            .resizable(!is_last)
+            .expand(expand)
+            .resizable(true)
+            .header_menu(menu)
             .build();
+
+        let show_action =
+            gio::PropertyAction::new(format!("{}{}", "show-", property).as_str(), &cvc, "visible");
+
+        self.imp().actions.add_action(&show_action);
+
         column_view.append_column(&cvc);
     }
 
@@ -195,7 +231,6 @@ impl SnapshotView {
     fn setup_menu(&self) {
         let imp = self.imp();
         let col_view = &imp.column_view.get();
-        let actions = SimpleActionGroup::new();
 
         let open_action = gio::SimpleAction::new("open", None);
         open_action.connect_activate(glib::clone!(@weak self as view => move |_, _| {
@@ -243,6 +278,7 @@ impl SnapshotView {
             }),
         );
 
+        let actions = &imp.actions;
         actions.add_action(&open_action);
         actions.add_action(&rename_action);
         actions.add_action(&delete_action);
@@ -250,8 +286,7 @@ impl SnapshotView {
         let mut single_actions = imp.single_select_actions.borrow_mut();
         single_actions.push(open_action);
         single_actions.push(rename_action);
-
-        self.insert_action_group("view", Some(&actions));
+        self.insert_action_group("view", Some(actions));
     }
 
     fn setup_rename_popover(&self) {
@@ -326,13 +361,13 @@ impl SnapshotView {
             .build();
         gesture.connect_pressed(
             glib::clone!(@weak selection_menu, @weak self as view => move |gesture, _, x, y| {
-                gesture.set_state(gtk::EventSequenceState::Claimed);
                 let col_view: ColumnView = gesture.widget().downcast().unwrap();
 
                 let header_rect = extract_header(&col_view).allocation();
                 let clv_y = y - header_rect.y() as f64 - header_rect.height() as f64;
 
                 if let Some(idx) = extract_row_from_column_list_view(&extract_column_list_view(&col_view), clv_y) {
+                    gesture.set_state(gtk::EventSequenceState::Claimed);
                     let model = col_view.model().unwrap();
                     if !model.is_selected(idx) {
                         println!("gesture_pressed: select {} only", idx);
