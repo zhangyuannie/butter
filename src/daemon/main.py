@@ -3,7 +3,7 @@
 import sys
 import os
 import json
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, TextIO
 import btrfsutil
 from datetime import datetime
 import subprocess
@@ -66,6 +66,34 @@ class Subvolume:
 
     def __str__(self) -> str:
         return f"Subvolume(path={self.path}, mounted_path={self.mounted_path})"
+
+
+class Cmd:
+    def __init__(self, reader: TextIO, writer: TextIO) -> None:
+        self.reader = reader
+        self.writer = writer
+        self.cmds = {
+            "list_subvolumes": list_subvolumes,
+            "rename_snapshot": rename_snapshot,
+            "delete_snapshot": delete_snapshot,
+            "create_snapshot": create_snapshot,
+        }
+
+    def loop(self) -> None:
+        while True:
+            req = self.reader.readline()
+            if req == "":
+                break
+            cmd, *args = json.loads(req)
+
+            try:
+                reply = self.cmds[cmd](args)
+            except KeyError:
+                reply = {"err": "bad request"}
+
+            self.writer.write(json.dumps(reply))
+            self.writer.write("\n")
+            self.writer.flush()
 
 
 def find_subvol_mnt() -> Dict[str, str]:
@@ -133,27 +161,13 @@ def create_snapshot(args) -> Optional[str]:
         return str(e)
 
 
-CMDS = {
-    "list_subvolumes": list_subvolumes,
-    "rename_snapshot": rename_snapshot,
-    "delete_snapshot": delete_snapshot,
-    "create_snapshot": create_snapshot,
-}
+def schedule():
+    raise NotImplementedError()
 
 
 if __name__ == "__main__":
-    while True:
-        req = sys.stdin.readline()
-        if req == "":
-            break
-        cmd, *args = json.loads(req)
-        if cmd in CMDS:
-            print(cmd, file=sys.stderr)
-            reply = CMDS[cmd](args)
-            print(reply, file=sys.stderr)
-            sys.stdout.write(json.dumps(reply))
-            sys.stdout.write("\n")
-            sys.stdout.flush()
-        else:
-            print(f"butterd: bad Request: {req}", file=sys.stderr)
-            sys.exit(1)
+    if len(sys.argv) > 1 and sys.argv[1] == "schedule":
+        schedule()
+    else:
+        cmd = Cmd(sys.stdin, sys.stdout)
+        cmd.loop()
