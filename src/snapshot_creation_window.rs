@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use gtk::subclass::prelude::*;
 use gtk::{glib, prelude::*, CompositeTemplate};
 
-use crate::subvolume::{Subvolume, SubvolumeManager};
+use crate::subvolume::{GSubvolume, SubvolumeManager};
 
 mod imp {
     use glib::object::WeakRef;
@@ -58,22 +58,22 @@ mod imp {
             self.location_entry.set_text("/var/snapshots");
             self.create_button.connect_clicked(glib::clone!(@weak obj => move |_| {
                 let imp = obj.imp();
-                let item = imp.subvol_dropdown.selected_item().unwrap().downcast::<Subvolume>().unwrap();
+                let item = imp.subvol_dropdown.selected_item().unwrap().downcast::<GSubvolume>().unwrap();
                 let res = obj.subvolume_manager().create_snapshot(
-                    item.mounted_path().unwrap().as_str(),
-                    obj.target_path().to_str().unwrap(),
+                    item.path().to_path_buf(),
+                    obj.target_path(),
                     imp.readonly_switch.is_active(),
                 );
 
                 match res {
                     Ok(_) => obj.close(),
-                    Err(s) => {
+                    Err(error) => {
                         let dialog = gtk::MessageDialog::new(
                             Some(&obj),
                             gtk::DialogFlags::DESTROY_WITH_PARENT |  gtk::DialogFlags::MODAL,
                             gtk::MessageType::Error,
                             gtk::ButtonsType::Close,
-                            &s,
+                            &error.to_string(),
                         );
                         dialog.connect_response(|dialog, _| {
                             dialog.destroy();
@@ -127,15 +127,15 @@ impl SnapshotCreationWindow {
     fn setup_dropdown(&self) {
         let imp = self.imp();
         let filter = gtk::CustomFilter::new(|obj| {
-            let subvol = obj.downcast_ref::<Subvolume>().unwrap();
-            !subvol.is_snapshot() && subvol.mounted_path().is_some()
+            let subvol = obj.downcast_ref::<GSubvolume>().unwrap();
+            !subvol.is_snapshot()
         });
         let model =
             gtk::FilterListModel::new(Some(self.subvolume_manager().model()), Some(&filter));
 
         let exp = gtk::ClosureExpression::new::<String, _, gtk::ClosureExpression>(
             None,
-            glib::closure!(|sv: Subvolume| sv.name()),
+            glib::closure!(|sv: GSubvolume| sv.name().to_string()),
         );
 
         imp.subvol_dropdown.set_expression(Some(&exp));

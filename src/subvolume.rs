@@ -1,34 +1,33 @@
 mod subvolume_manager;
 
+use butter::daemon::interface;
 pub use subvolume_manager::SubvolumeManager;
 
-use std::path::Path;
+use std::{cell::Ref, path::Path, time::SystemTime};
 
 use glib::Object;
-use gtk::{glib, subclass::prelude::*};
+use gtk::{glib, prelude::*, subclass::prelude::*};
 use serde::Deserialize;
 
 mod imp {
+    use super::*;
+    use glib::once_cell::sync::OnceCell;
     use std::{cell::RefCell, rc::Rc};
 
-    use gtk::{
-        glib::{self, once_cell::sync::Lazy, ParamFlags, ParamSpec, ParamSpecString, Value},
-        prelude::*,
-        subclass::prelude::*,
-    };
+    use gtk::glib::{self, once_cell::sync::Lazy, ParamFlags, ParamSpec, ParamSpecString, Value};
 
     #[derive(Default)]
-    pub struct Subvolume {
-        pub data: Rc<RefCell<super::SubvolumeData>>,
+    pub struct GSubvolume {
+        pub data: OnceCell<interface::Subvolume>,
     }
 
     #[glib::object_subclass]
-    impl ObjectSubclass for Subvolume {
+    impl ObjectSubclass for GSubvolume {
         const NAME: &'static str = "Subvolume";
-        type Type = super::Subvolume;
+        type Type = super::GSubvolume;
     }
 
-    impl ObjectImpl for Subvolume {
+    impl ObjectImpl for GSubvolume {
         fn properties() -> &'static [ParamSpec] {
             static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
                 vec![
@@ -60,35 +59,12 @@ mod imp {
             PROPERTIES.as_ref()
         }
 
-        fn set_property(&self, _obj: &Self::Type, _id: usize, value: &Value, pspec: &ParamSpec) {
-            match pspec.name() {
-                "path" => {
-                    let input_value = value.get().expect("Value must be String");
-                    self.data.borrow_mut().path = input_value;
-                }
-                "parent-path" => {
-                    let input_value = value.get().expect("Value must be String");
-                    self.data.borrow_mut().snapshot_source_path = input_value;
-                }
-                "creation-time" => {
-                    let input_value = value.get().expect("Value must be String");
-                    self.data.borrow_mut().creation_time = input_value;
-                }
-                "absolute-path" => {
-                    let input_value = value.get().expect("Value must be String");
-                    self.data.borrow_mut().absolute_path = input_value;
-                }
-                _ => unimplemented!(),
-            }
-        }
-
         fn property(&self, obj: &Self::Type, _id: usize, pspec: &ParamSpec) -> Value {
             match pspec.name() {
                 "name" => obj.name().to_value(),
-                "path" => self.data.borrow().path.to_value(),
-                "parent-path" => self.data.borrow().snapshot_source_path.to_value(),
-                "creation-time" => self.data.borrow().creation_time.to_value(),
-                "absolute-path" => obj.mounted_path().to_value(),
+                "absolute-path" | "path" => obj.path().to_str().to_value(),
+                "parent-path" => "x".to_value(),
+                "creation-time" => obj.g_created().to_value(),
                 _ => unimplemented!(),
             }
         }
@@ -96,48 +72,49 @@ mod imp {
 }
 
 glib::wrapper! {
-    pub struct Subvolume(ObjectSubclass<imp::Subvolume>);
+    pub struct GSubvolume(ObjectSubclass<imp::GSubvolume>);
 }
 
-impl Subvolume {
-    pub fn new(data: SubvolumeData) -> Self {
-        Object::new(&[
-            ("path", &data.path),
-            ("parent-path", &data.snapshot_source_path),
-            ("creation-time", &data.creation_time),
-            ("absolute-path", &data.absolute_path),
-        ])
-        .expect("Failed to create Subvolume")
+impl GSubvolume {
+    pub fn new() -> Self {
+        Object::new(&[]).expect("Failed to create Subvolume")
     }
 
-    pub fn name(&self) -> String {
-        Path::new(&self.imp().data.borrow().path)
-            .file_name()
-            .unwrap()
-            .to_owned()
-            .into_string()
-            .unwrap()
+    pub fn data(&self) -> &interface::Subvolume {
+        self.imp().data.get().unwrap()
     }
 
-    pub fn mounted_path(&self) -> Option<String> {
-        self.imp().data.borrow().absolute_path.to_owned()
+    pub fn name(&self) -> &str {
+        self.data().path.file_name().unwrap().to_str().unwrap()
+    }
+
+    pub fn path(&self) -> &Path {
+        self.data().path.as_path()
     }
 
     pub fn is_snapshot(&self) -> bool {
-        self.imp().data.borrow().snapshot_source_path.is_some()
+        self.data().snapshot_source_uuid.is_some()
+    }
+
+    pub fn set_data(&self, data: interface::Subvolume) {
+        self.imp().data.set(data).unwrap()
+    }
+
+    pub fn g_created(&self) -> glib::DateTime {
+        let created = self
+            .data()
+            .created
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap();
+
+        glib::DateTime::from_unix_local(created.as_secs() as i64).unwrap()
     }
 }
 
-impl From<SubvolumeData> for Subvolume {
-    fn from(item: SubvolumeData) -> Self {
-        Subvolume::new(item)
+impl From<interface::Subvolume> for GSubvolume {
+    fn from(item: interface::Subvolume) -> Self {
+        let ret = GSubvolume::new();
+        ret.set_data(item);
+        ret
     }
-}
-
-#[derive(Default, Clone, Deserialize, glib::Variant)]
-pub struct SubvolumeData {
-    pub path: String,
-    pub absolute_path: Option<String>,
-    pub snapshot_source_path: Option<String>,
-    pub creation_time: String,
 }

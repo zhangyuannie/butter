@@ -32,16 +32,16 @@ cargo_build = custom_target(
   'cargo_build',
   build_by_default: true,
   build_always_stale: true,
-  output: meson.project_name(),
+  output: ['butter', 'butterd'],
   console: true,
   install: true,
-  install_dir: bindir,
+  install_dir: [bindir, libexecdir],
   command: [
     'env', cargo_env,
     cargo, 'build', cargo_options,
     '&&',
-    'cp', 'src' / 'release' / meson.project_name(), '@OUTPUT@',
+    'cp', 'src' / 'release' / 'butter', '@OUTPUT0@',
+    '&&',
+    'cp', 'src' / 'release' / 'butterd', '@OUTPUT1@',
   ],
 )
-
-subdir('daemon')

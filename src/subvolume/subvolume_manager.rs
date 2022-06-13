@@ -1,13 +1,17 @@
-use crate::subvolume::{Subvolume, SubvolumeData};
+use crate::subvolume::GSubvolume;
 
+use butter::daemon::interface::DaemonInterface;
 use glib::once_cell::sync::OnceCell;
 use gtk::{gio, glib, prelude::*, subclass::prelude::*};
 use std::io::{BufRead, BufReader, Write};
+use std::path::PathBuf;
 use std::process::{self, ChildStdin, ChildStdout};
 use std::result;
 use std::sync::Mutex;
 
 mod daemon {
+
+    use butter::daemon::interface::{BtrfsFilesystem, DaemonInterface, Request, Result, Subvolume};
 
     use super::*;
 
@@ -18,37 +22,52 @@ mod daemon {
     }
 
     impl Daemon {
-        pub fn run(&mut self, args: &[&str]) -> String {
-            let req = serde_json::to_string(args).unwrap();
+        pub fn run(&mut self, request: Request) -> Vec<u8> {
+            let req = serde_json::to_string(&request).unwrap();
             writeln!(self.writer, "{}", req).unwrap();
-            let mut reply = String::new();
-            let byte_count = self.reader.read_line(&mut reply).unwrap();
+            let mut ret = Vec::new();
+            let byte_count = self.reader.read_until('\n' as u8, &mut ret).unwrap();
             if byte_count == 0 {
                 println!("Daemon exited unexpectedly!");
                 process::exit(1);
             }
-            reply
+            ret
+        }
+    }
+
+    impl DaemonInterface for Daemon {
+        fn list_filesystems(&mut self) -> Result<Vec<BtrfsFilesystem>> {
+            serde_json::from_slice(&self.run(Request::ListFilesystems)).unwrap()
         }
 
-        pub fn subvolumes(&mut self) -> Vec<SubvolumeData> {
-            let reply_json = self.run(&["list_subvolumes"]);
-            serde_json::from_str(&reply_json).unwrap()
+        fn filesystem(&mut self) -> Option<String> {
+            serde_json::from_slice(&self.run(Request::Filesystems)).unwrap()
         }
 
-        pub fn rename_snapshot(&mut self, before: &str, after: &str) -> Option<String> {
-            let reply_json = self.run(&["rename_snapshot", before, after]);
-            serde_json::from_str(&reply_json).unwrap()
+        fn set_filesystem(&mut self, device: BtrfsFilesystem) -> Result<()> {
+            serde_json::from_slice(&self.run(Request::SetFilesystem(device))).unwrap()
         }
 
-        pub fn delete_snapshot(&mut self, path: &str) -> bool {
-            let reply_json = self.run(&["delete_snapshot", path]);
-            serde_json::from_str(&reply_json).unwrap()
+        fn list_subvolumes(&mut self) -> Result<Vec<Subvolume>> {
+            serde_json::from_slice(&self.run(Request::ListSubvolumes)).unwrap()
         }
 
-        pub fn create_snapshot(&mut self, src: &str, dest: &str, readonly: bool) -> Option<String> {
-            let ro_str = if readonly { "yes" } else { "" };
-            let reply_json = self.run(&["create_snapshot", src, dest, ro_str]);
-            serde_json::from_str(&reply_json).unwrap()
+        fn move_subvolume(&mut self, from: PathBuf, to: PathBuf) -> Result<()> {
+            serde_json::from_slice(&self.run(Request::MoveSubvolume(from, to))).unwrap()
+        }
+
+        fn delete_subvolume(&mut self, path: PathBuf) -> Result<()> {
+            serde_json::from_slice(&self.run(Request::DeleteSubvolume(path))).unwrap()
+        }
+
+        fn create_snapshot(
+            &mut self,
+            src: PathBuf,
+            dest: PathBuf,
+            flags: libbtrfsutil::CreateSnapshotFlags,
+        ) -> Result<Subvolume> {
+            serde_json::from_slice(&self.run(Request::CreateSnapshot(src, dest, flags.bits())))
+                .unwrap()
         }
     }
 }
@@ -71,7 +90,7 @@ mod imp {
     impl ObjectImpl for SubvolumeManager {
         fn constructed(&self, obj: &Self::Type) {
             self.parent_constructed(obj);
-            let model = gio::ListStore::new(Subvolume::static_type());
+            let model = gio::ListStore::new(GSubvolume::static_type());
             self.model.set(model).expect("Failed to set model");
         }
     }
@@ -105,50 +124,54 @@ impl SubvolumeManager {
         let model = self.model();
         model.remove_all();
         let daemon = self.imp().daemon.get().unwrap();
-        let subvols = daemon.lock().unwrap().subvolumes();
-        for subvol in subvols {
-            model.append(&Subvolume::from(subvol));
-        }
-    }
-
-    pub fn delete_snapshot(&self, mounted_path: &str) -> bool {
-        let daemon = self.imp().daemon.get().unwrap();
-        let ret = daemon.lock().unwrap().delete_snapshot(mounted_path);
-        self.refresh();
-        ret
-    }
-
-    pub fn rename_snapshot(
-        &self,
-        before_path: &str,
-        after_path: &str,
-    ) -> result::Result<(), String> {
-        let daemon = self.imp().daemon.get().unwrap();
-        let ret = daemon
+        // TODO: smarter way to select the filesystem
+        let fs_vec = daemon.lock().unwrap().list_filesystems().unwrap();
+        daemon
             .lock()
             .unwrap()
-            .rename_snapshot(before_path, after_path);
-        match ret {
-            Some(error) => Err(error),
-            None => {
-                self.refresh();
-                Ok(())
-            }
+            .set_filesystem(fs_vec.get(0).unwrap().clone())
+            .unwrap();
+
+        let subvols = daemon.lock().unwrap().list_subvolumes().unwrap();
+        for subvol in subvols {
+            model.append(&GSubvolume::from(subvol));
         }
+    }
+
+    pub fn delete_snapshot(&self, path: PathBuf) -> anyhow::Result<()> {
+        let daemon = self.imp().daemon.get().unwrap();
+        daemon.lock().unwrap().delete_subvolume(path)?;
+        self.refresh();
+        Ok(())
+    }
+
+    pub fn rename_snapshot(&self, before_path: PathBuf, after_path: PathBuf) -> anyhow::Result<()> {
+        let daemon = self.imp().daemon.get().unwrap();
+        daemon
+            .lock()
+            .unwrap()
+            .move_subvolume(before_path, after_path)?;
+        self.refresh();
+        Ok(())
     }
 
     pub fn create_snapshot(
         &mut self,
-        src: &str,
-        dest: &str,
+        src: PathBuf,
+        dest: PathBuf,
         readonly: bool,
-    ) -> result::Result<(), String> {
+    ) -> anyhow::Result<()> {
         let daemon = self.imp().daemon.get().unwrap();
-        let ret = daemon.lock().unwrap().create_snapshot(src, dest, readonly);
+        daemon.lock().unwrap().create_snapshot(
+            src,
+            dest,
+            if readonly {
+                libbtrfsutil::CreateSnapshotFlags::READ_ONLY
+            } else {
+                libbtrfsutil::CreateSnapshotFlags::empty()
+            },
+        )?;
         self.refresh();
-        match ret {
-            Some(error) => Err(error),
-            None => Ok(()),
-        }
+        Ok(())
     }
 }
