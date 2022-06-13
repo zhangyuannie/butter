@@ -12,7 +12,7 @@ use crate::{
     rename_popover::RenamePopover,
     snapshot_column_cell::SnapshotColumnCell,
     snapshot_creation_window::SnapshotCreationWindow,
-    subvolume::{Subvolume, SubvolumeManager},
+    subvolume::{GSubvolume, SubvolumeManager},
     window::Window,
 };
 
@@ -33,7 +33,7 @@ mod imp {
 
     use crate::{
         rename_popover::RenamePopover,
-        subvolume::{Subvolume, SubvolumeManager},
+        subvolume::{GSubvolume, SubvolumeManager},
     };
 
     #[derive(CompositeTemplate, Default)]
@@ -71,7 +71,7 @@ mod imp {
             // set list model and selection model
             {
                 let filter = gtk::CustomFilter::new(|obj| {
-                    obj.downcast_ref::<Subvolume>().unwrap().is_snapshot()
+                    obj.downcast_ref::<GSubvolume>().unwrap().is_snapshot()
                 });
                 let model =
                     gtk::FilterListModel::new(Some(obj.subvolume_manager().model()), Some(&filter));
@@ -180,7 +180,7 @@ impl SnapshotView {
             let obj = list_item
                 .item()
                 .expect("Item must exist")
-                .downcast::<Subvolume>()
+                .downcast::<GSubvolume>()
                 .expect("Item must be Subvolume");
 
             let cell = list_item
@@ -267,13 +267,13 @@ impl SnapshotView {
                 let selection_model = col_view.model().unwrap();
                 let selection = selection_model.selection();
                 for (_, idx) in BitsetIter::init_first(&selection) {
-                    let obj: Subvolume = selection_model
+                    let obj: GSubvolume = selection_model
                         .item(idx)
                         .expect("Item must exist")
                         .downcast()
                         .unwrap();
-                    view.subvolume_manager().delete_snapshot(&obj.mounted_path().unwrap());
-                    println!("delete: {}", &obj.mounted_path().unwrap());
+                    view.subvolume_manager().delete_snapshot(obj.path().to_path_buf()).unwrap();
+                    println!("delete: {}", obj.path().display());
                 }
             }),
         );
@@ -300,7 +300,7 @@ impl SnapshotView {
             false,
             closure_local!(move |popover: RenamePopover, new_name: String| {
                 let idx = popover.target();
-                let obj: Subvolume = col_view
+                let obj: GSubvolume = col_view
                     .model()
                     .unwrap()
                     .item(idx)
@@ -308,22 +308,21 @@ impl SnapshotView {
                     .downcast()
                     .unwrap();
 
-                let mut new_path = PathBuf::from(&obj.mounted_path().unwrap());
+                let mut new_path = obj.path().to_path_buf();
                 new_path.set_file_name(new_name);
 
-                let res = view.subvolume_manager().rename_snapshot(
-                    obj.mounted_path().unwrap().as_str(),
-                    new_path.to_str().unwrap(),
-                );
+                let res = view
+                    .subvolume_manager()
+                    .rename_snapshot(obj.path().to_path_buf(), new_path);
 
-                if let Err(s) = res {
+                if let Err(error) = res {
                     let win = view.root().unwrap().downcast::<Window>().unwrap();
                     let dialog = gtk::MessageDialog::new(
                         Some(&win),
                         DialogFlags::DESTROY_WITH_PARENT | DialogFlags::MODAL,
                         gtk::MessageType::Error,
                         gtk::ButtonsType::Close,
-                        &s,
+                        &error.to_string(),
                     );
                     dialog.connect_response(|dialog, _| {
                         dialog.destroy();
