@@ -90,16 +90,50 @@ mod imp {
 
             obj.setup_menu();
 
-            obj.setup_column("name", gettext("Name").as_str(), false, &header_menu);
-            obj.setup_column("path", gettext("Path").as_str(), false, &header_menu);
             obj.setup_column(
-                "creation-time",
+                "name",
+                |obj, label| {
+                    obj.bind_property("name", &label, "label")
+                        .flags(glib::BindingFlags::SYNC_CREATE)
+                        .build()
+                },
+                gettext("Name").as_str(),
+                false,
+                &header_menu,
+            );
+            obj.setup_column(
+                "path",
+                |obj, label| {
+                    obj.bind_property("path", &label, "label")
+                        .flags(glib::BindingFlags::SYNC_CREATE)
+                        .build()
+                },
+                gettext("Path").as_str(),
+                false,
+                &header_menu,
+            );
+            obj.setup_column(
+                "created",
+                |obj, label| {
+                    obj.bind_property("created", &label, "label")
+                        .transform_to(|_, value| {
+                            let datetime = value.get::<glib::DateTime>().unwrap();
+                            Some(datetime.format("%c").unwrap().to_value())
+                        })
+                        .flags(glib::BindingFlags::SYNC_CREATE)
+                        .build()
+                },
                 gettext("Created").as_str(),
                 false,
                 &header_menu,
             );
             obj.setup_column(
                 "parent-path",
+                |obj, label| {
+                    obj.bind_property("parent-path", &label, "label")
+                        .flags(glib::BindingFlags::SYNC_CREATE)
+                        .build()
+                },
                 gettext("Source").as_str(),
                 true,
                 &header_menu,
@@ -165,6 +199,7 @@ impl SnapshotView {
     fn setup_column(
         &self,
         property: &'static str,
+        create_binding: fn(GSubvolume, gtk::Label) -> glib::Binding,
         title: &str,
         expand: bool,
         menu: &gio::MenuModel,
@@ -176,7 +211,7 @@ impl SnapshotView {
             let cell = SnapshotColumnCell::new();
             list_item.set_child(Some(&cell));
         });
-        factory.connect_bind(|_, list_item| {
+        factory.connect_bind(move |_, list_item| {
             let obj = list_item
                 .item()
                 .expect("Item must exist")
@@ -189,10 +224,7 @@ impl SnapshotView {
                 .downcast::<SnapshotColumnCell>()
                 .unwrap();
 
-            let binding = obj
-                .bind_property(property, &cell.label(), "label")
-                .flags(glib::BindingFlags::SYNC_CREATE)
-                .build();
+            let binding = create_binding(obj, cell.label());
 
             cell.add_binding(binding);
         });

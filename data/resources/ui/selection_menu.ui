@@ -25,7 +25,7 @@
       </item>
       <item>
         <attribute name="label" translatable="yes">Created</attribute>
-        <attribute name="action">view.show-creation-time</attribute>
+        <attribute name="action">view.show-created</attribute>
       </item>
       <item>
         <attribute name="label" translatable="yes">Source</attribute>
