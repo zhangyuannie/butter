@@ -134,7 +134,7 @@ impl SubvolumeManager {
 
         let subvols = daemon.lock().unwrap().list_subvolumes().unwrap();
         for subvol in subvols {
-            model.append(&GSubvolume::from(subvol));
+            model.append(&GSubvolume::new(subvol));
         }
     }
 

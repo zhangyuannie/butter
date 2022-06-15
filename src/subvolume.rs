@@ -40,12 +40,12 @@ mod imp {
                         None,
                         ParamFlags::READWRITE,
                     ),
-                    ParamSpecString::new(
-                        "creation-time",
-                        "creation-time",
-                        "creation-time",
-                        None,
-                        ParamFlags::READWRITE,
+                    glib::ParamSpecBoxed::new(
+                        "created",
+                        "Creation Time",
+                        "created",
+                        glib::DateTime::static_type(),
+                        ParamFlags::READABLE,
                     ),
                     ParamSpecString::new(
                         "absolute-path",
@@ -64,7 +64,7 @@ mod imp {
                 "name" => obj.name().to_value(),
                 "absolute-path" | "path" => obj.path().to_str().to_value(),
                 "parent-path" => "x".to_value(),
-                "creation-time" => obj.g_created().to_value(),
+                "created" => obj.g_created().to_value(),
                 _ => unimplemented!(),
             }
         }
@@ -76,8 +76,10 @@ glib::wrapper! {
 }
 
 impl GSubvolume {
-    pub fn new() -> Self {
-        Object::new(&[]).expect("Failed to create Subvolume")
+    pub fn new(subvol: interface::Subvolume) -> Self {
+        let obj: Self = Object::new(&[]).expect("Failed to create GSubvolume");
+        obj.imp().data.set(subvol).unwrap();
+        obj
     }
 
     pub fn data(&self) -> &interface::Subvolume {
@@ -96,10 +98,6 @@ impl GSubvolume {
         self.data().snapshot_source_uuid.is_some()
     }
 
-    pub fn set_data(&self, data: interface::Subvolume) {
-        self.imp().data.set(data).unwrap()
-    }
-
     pub fn g_created(&self) -> glib::DateTime {
         let created = self
             .data()
@@ -108,13 +106,5 @@ impl GSubvolume {
             .unwrap();
 
         glib::DateTime::from_unix_local(created.as_secs() as i64).unwrap()
-    }
-}
-
-impl From<interface::Subvolume> for GSubvolume {
-    fn from(item: interface::Subvolume) -> Self {
-        let ret = GSubvolume::new();
-        ret.set_data(item);
-        ret
     }
 }
