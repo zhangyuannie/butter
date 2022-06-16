@@ -49,13 +49,6 @@ mod imp {
                         glib::DateTime::static_type(),
                         ParamFlags::READABLE,
                     ),
-                    ParamSpecString::new(
-                        "absolute-path",
-                        "absolute-path",
-                        "absolute-path",
-                        None,
-                        ParamFlags::READWRITE,
-                    ),
                 ]
             });
             PROPERTIES.as_ref()
@@ -64,7 +57,7 @@ mod imp {
         fn property(&self, obj: &Self::Type, _id: usize, pspec: &ParamSpec) -> Value {
             match pspec.name() {
                 "name" => obj.name().to_value(),
-                "absolute-path" | "path" => obj.path().to_str().to_value(),
+                "path" => obj.path().to_str().to_value(),
                 "parent-path" => "x".to_value(),
                 "created" => obj.g_created().to_value(),
                 _ => unimplemented!(),
