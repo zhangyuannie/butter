@@ -22,29 +22,29 @@ Development versions tracking the main branch:
 - cargo
 - libadwaita >= 1.0.0
 - gtk >= 4.4.0
-- python3-btrfsutil >= 5.10.0
+- btrfs-progs >= 5.10.0
+- libbtrfsutil >= 5.10.0
 - kernel >= 4.18
 - polkit >= 0.100
 - meson >= 0.59
-- python >= 3.6
 
 You can install these dependencies with:
 
 - Arch
   ```
-  # pacman -S meson rust gtk4 libadwaita btrfs-progs python
+  # pacman -S meson rust gtk4 libadwaita btrfs-progs
   ```
 
 - Fedora 35 and later
 
   ```
-  # dnf install meson cargo gtk4-devel libadwaita-devel python3-btrfsutil
+  # dnf install meson cargo gtk4-devel libadwaita-devel btrfs-progs libbtrfsutil
   ```
 
 - openSUSE Tumbleweed
 
   ```
-  # zypper install meson cargo gtk4-devel libadwaita-devel python-btrfsutil
+  # zypper install meson cargo gtk4-devel libadwaita-devel btrfsprogs libbtrfsutil1
   ```
 
 #### Get the Source Code
