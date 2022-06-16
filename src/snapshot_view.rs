@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use adw::subclass::prelude::*;
 use gtk::{
     gdk, gio,

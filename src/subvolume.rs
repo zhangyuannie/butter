@@ -1,18 +1,20 @@
+mod list;
+pub use list::SubvolList;
+
 mod subvolume_manager;
 
 use butter::daemon::interface;
 pub use subvolume_manager::SubvolumeManager;
+use uuid::Uuid;
 
-use std::{cell::Ref, path::Path, time::SystemTime};
+use std::{path::Path, time::SystemTime};
 
 use glib::Object;
 use gtk::{glib, prelude::*, subclass::prelude::*};
-use serde::Deserialize;
 
 mod imp {
     use super::*;
     use glib::once_cell::sync::OnceCell;
-    use std::{cell::RefCell, rc::Rc};
 
     use gtk::glib::{self, once_cell::sync::Lazy, ParamFlags, ParamSpec, ParamSpecString, Value};
 
@@ -82,8 +84,12 @@ impl GSubvolume {
         obj
     }
 
-    pub fn data(&self) -> &interface::Subvolume {
+    fn data(&self) -> &interface::Subvolume {
         self.imp().data.get().unwrap()
+    }
+
+    pub fn uuid(&self) -> Uuid {
+        self.data().uuid
     }
 
     pub fn name(&self) -> &str {
