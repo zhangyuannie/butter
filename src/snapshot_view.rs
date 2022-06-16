@@ -253,7 +253,7 @@ impl SnapshotView {
 
     fn open_snapshot(&self, idx: u32) {
         let obj = self.model().item(idx).expect("Item must exist");
-        let uri = format!("file://{}", obj.property::<String>("absolute-path"));
+        let uri = format!("file://{}", obj.property::<String>("path"));
         println!("open_snapshot: show_uri: {}", uri);
         gtk::show_uri(None::<&gtk::Window>, uri.as_str(), gdk::CURRENT_TIME);
     }
