@@ -16,11 +16,12 @@ mod imp {
     use super::*;
     use glib::once_cell::sync::OnceCell;
 
-    use gtk::glib::{self, once_cell::sync::Lazy, ParamFlags, ParamSpec, ParamSpecString, Value};
+    use gtk::glib::{self, once_cell::sync::Lazy, ParamFlags, ParamSpec, Value, WeakRef};
 
     #[derive(Default)]
     pub struct GSubvolume {
         pub data: OnceCell<interface::Subvolume>,
+        pub parent: WeakRef<super::GSubvolume>,
     }
 
     #[glib::object_subclass]
@@ -33,19 +34,31 @@ mod imp {
         fn properties() -> &'static [ParamSpec] {
             static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
                 vec![
-                    ParamSpecString::new("name", "name", "name", None, ParamFlags::READABLE),
-                    ParamSpecString::new("path", "path", "path", None, ParamFlags::READWRITE),
-                    ParamSpecString::new(
-                        "parent-path",
-                        "parent-path",
-                        "parent-path",
+                    glib::ParamSpecString::new(
+                        "name",
+                        "Name",
+                        "Filename",
                         None,
-                        ParamFlags::READWRITE,
+                        ParamFlags::READABLE,
+                    ),
+                    glib::ParamSpecString::new(
+                        "path",
+                        "Path",
+                        "Absolute Path",
+                        None,
+                        ParamFlags::READABLE,
+                    ),
+                    glib::ParamSpecString::new(
+                        "parent-path",
+                        "Parent Path",
+                        "Path of the subvolume this is a snapshot of",
+                        None,
+                        ParamFlags::READABLE,
                     ),
                     glib::ParamSpecBoxed::new(
                         "created",
+                        "Created",
                         "Creation Time",
-                        "created",
                         glib::DateTime::static_type(),
                         ParamFlags::READABLE,
                     ),
@@ -58,7 +71,9 @@ mod imp {
             match pspec.name() {
                 "name" => obj.name().to_value(),
                 "path" => obj.path().to_str().to_value(),
-                "parent-path" => "x".to_value(),
+                "parent-path" => obj
+                    .parent()
+                    .map_or("".to_value(), |parent| parent.path().to_str().to_value()),
                 "created" => obj.g_created().to_value(),
                 _ => unimplemented!(),
             }
@@ -105,5 +120,17 @@ impl GSubvolume {
             .unwrap();
 
         glib::DateTime::from_unix_local(created.as_secs() as i64).unwrap()
+    }
+
+    pub fn parent_uuid(&self) -> Option<Uuid> {
+        self.data().snapshot_source_uuid
+    }
+
+    pub fn parent(&self) -> Option<GSubvolume> {
+        self.imp().parent.upgrade()
+    }
+
+    pub fn set_parent(&self, subvol: Option<&GSubvolume>) {
+        self.imp().parent.set(subvol)
     }
 }

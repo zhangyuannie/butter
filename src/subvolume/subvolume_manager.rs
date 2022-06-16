@@ -1,12 +1,17 @@
 use crate::subvolume::{GSubvolume, SubvolList};
 
+#[allow(unused_imports)]
+use gtk::prelude::*;
+
 use butter::daemon::interface::DaemonInterface;
 use glib::once_cell::sync::OnceCell;
-use gtk::{gio, glib, prelude::*, subclass::prelude::*};
+use gtk::{glib, subclass::prelude::*};
+use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Write};
 use std::path::PathBuf;
 use std::process::{self, ChildStdin, ChildStdout};
 use std::sync::Mutex;
+use uuid::Uuid;
 
 mod daemon {
 
@@ -126,8 +131,23 @@ impl SubvolumeManager {
             .unwrap();
 
         let subvols = daemon.lock().unwrap().list_subvolumes().unwrap();
-        for subvol in subvols {
-            model.insert(GSubvolume::new(subvol));
+        let subvols = {
+            let mut map: HashMap<Uuid, GSubvolume> = HashMap::with_capacity(subvols.len());
+            for subvol in subvols {
+                map.insert(subvol.uuid, GSubvolume::new(subvol));
+            }
+            map
+        };
+
+        // populate parent now
+        for (_, subvol) in &subvols {
+            if let Some(uuid) = subvol.parent_uuid() {
+                subvol.set_parent(subvols.get(&uuid));
+            }
+        }
+
+        for (_, subvol) in subvols {
+            model.insert(subvol);
         }
     }
 
