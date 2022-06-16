@@ -5,7 +5,6 @@ use std::{
     time::SystemTime,
 };
 
-use gtk::glib;
 use libc::c_int;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;

@@ -1,4 +1,4 @@
-use crate::subvolume::GSubvolume;
+use crate::subvolume::{GSubvolume, SubvolList};
 
 use butter::daemon::interface::DaemonInterface;
 use glib::once_cell::sync::OnceCell;
@@ -6,7 +6,6 @@ use gtk::{gio, glib, prelude::*, subclass::prelude::*};
 use std::io::{BufRead, BufReader, Write};
 use std::path::PathBuf;
 use std::process::{self, ChildStdin, ChildStdout};
-use std::result;
 use std::sync::Mutex;
 
 mod daemon {
@@ -78,7 +77,7 @@ mod imp {
     #[derive(Default)]
     pub struct SubvolumeManager {
         pub daemon: OnceCell<Mutex<daemon::Daemon>>,
-        pub model: OnceCell<gio::ListStore>,
+        pub model: SubvolList,
     }
 
     #[glib::object_subclass]
@@ -87,13 +86,7 @@ mod imp {
         type Type = super::SubvolumeManager;
     }
 
-    impl ObjectImpl for SubvolumeManager {
-        fn constructed(&self, obj: &Self::Type) {
-            self.parent_constructed(obj);
-            let model = gio::ListStore::new(GSubvolume::static_type());
-            self.model.set(model).expect("Failed to set model");
-        }
-    }
+    impl ObjectImpl for SubvolumeManager {}
 }
 
 glib::wrapper! {
@@ -116,13 +109,13 @@ impl SubvolumeManager {
         ret
     }
 
-    pub fn model(&self) -> &gio::ListStore {
-        self.imp().model.get().expect("Failed to get model")
+    pub fn model(&self) -> &SubvolList {
+        &self.imp().model
     }
 
     pub fn refresh(&self) {
         let model = self.model();
-        model.remove_all();
+        model.clear();
         let daemon = self.imp().daemon.get().unwrap();
         // TODO: smarter way to select the filesystem
         let fs_vec = daemon.lock().unwrap().list_filesystems().unwrap();
@@ -134,7 +127,7 @@ impl SubvolumeManager {
 
         let subvols = daemon.lock().unwrap().list_subvolumes().unwrap();
         for subvol in subvols {
-            model.append(&GSubvolume::new(subvol));
+            model.insert(GSubvolume::new(subvol));
         }
     }
 
