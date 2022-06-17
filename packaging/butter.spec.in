@@ -15,13 +15,14 @@ Source:         https://github.com/zhangyuannie/butter/archive/%{commit}/%{name}
 BuildRequires:  meson
 BuildRequires:  cargo
 BuildRequires:  libadwaita-devel
+BuildRequires:  btrfs-progs-devel
 BuildRequires:  gtk4-devel
 BuildRequires:  gettext
 BuildRequires:  desktop-file-utils
 
 Requires:       gtk4%{?_isa} >= 4.4.0
 Requires:       libadwaita%{?_isa} >= 1.0.0
-Requires:       libbtrfsutil >= 5.10.0
+Requires:       libbtrfsutil{?_isa} >= 5.10.0
 Requires:       btrfs-progs >= 5.10.0
 Requires:       polkit
 
