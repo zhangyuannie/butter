@@ -83,7 +83,7 @@ impl Default for Subvolume {
     }
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
 pub struct BtrfsFilesystem {
     pub label: Option<String>,
     pub uuid: Uuid,

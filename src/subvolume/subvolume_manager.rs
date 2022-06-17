@@ -13,6 +13,8 @@ use std::process::{self, ChildStdin, ChildStdout};
 use std::sync::Mutex;
 use uuid::Uuid;
 
+use butter::daemon::interface::BtrfsFilesystem;
+
 mod daemon {
 
     use butter::daemon::interface::{BtrfsFilesystem, DaemonInterface, Request, Result, Subvolume};
@@ -121,14 +123,13 @@ impl SubvolumeManager {
     pub fn refresh(&self) {
         let model = self.model();
         model.clear();
+
+        if self.filesystem().is_none() {
+            // TODO: smarter way to select the filesystem
+            let fs_vec = self.filesystems().unwrap();
+            self.set_filesystem(fs_vec.get(0).unwrap().clone()).unwrap();
+        }
         let daemon = self.imp().daemon.get().unwrap();
-        // TODO: smarter way to select the filesystem
-        let fs_vec = daemon.lock().unwrap().list_filesystems().unwrap();
-        daemon
-            .lock()
-            .unwrap()
-            .set_filesystem(fs_vec.get(0).unwrap().clone())
-            .unwrap();
 
         let subvols = daemon.lock().unwrap().list_subvolumes().unwrap();
         let subvols = {
@@ -149,6 +150,24 @@ impl SubvolumeManager {
         for (_, subvol) in subvols {
             model.insert(subvol);
         }
+    }
+
+    pub fn filesystems(&self) -> anyhow::Result<Vec<BtrfsFilesystem>> {
+        let daemon = self.imp().daemon.get().unwrap();
+        let ret = daemon.lock().unwrap().list_filesystems()?;
+        Ok(ret)
+    }
+
+    pub fn filesystem(&self) -> Option<String> {
+        let daemon = self.imp().daemon.get().unwrap();
+        daemon.lock().unwrap().filesystem()
+    }
+
+    pub fn set_filesystem(&self, fs: BtrfsFilesystem) -> anyhow::Result<()> {
+        let daemon = self.imp().daemon.get().unwrap();
+        daemon.lock().unwrap().set_filesystem(fs)?;
+        self.refresh();
+        Ok(())
     }
 
     pub fn delete_snapshot(&self, path: PathBuf) -> anyhow::Result<()> {
