@@ -1,11 +1,12 @@
 use adw::prelude::*;
 use adw::{HeaderBar, ViewSwitcherTitle};
 use gettext::gettext;
-use gtk::{gio, Label};
+use gtk::{gio, glib, Label};
 
 use crate::application::Application;
 use crate::config;
 use crate::snapshot_view::SnapshotView;
+use crate::subvolume::GBtrfsFilesystem;
 use crate::window::Window;
 
 pub fn build_ui(app: &Application) {
@@ -36,6 +37,18 @@ pub fn build_ui(app: &Application) {
 
     let header_bar: HeaderBar = header_bar_builder.object("header_bar").unwrap();
     header_bar.set_title_widget(Some(&view_switcher_title));
+
+    // filesystem dropdown
+    {
+        let exp = gtk::ClosureExpression::new::<String, _, gtk::ClosureExpression>(
+            None,
+            glib::closure!(|sv: GBtrfsFilesystem| sv.display()),
+        );
+        let fs_dropdown =
+            gtk::DropDown::new(Some(app.subvolume_manager().filesystems()), Some(&exp));
+
+        header_bar.pack_end(&fs_dropdown);
+    }
 
     window.content_box().prepend(&header_bar);
     window.present();

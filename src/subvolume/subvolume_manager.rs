@@ -5,7 +5,7 @@ use gtk::prelude::*;
 
 use butter::daemon::interface::DaemonInterface;
 use glib::once_cell::sync::OnceCell;
-use gtk::{glib, subclass::prelude::*};
+use gtk::{gio, glib, subclass::prelude::*};
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Write};
 use std::path::PathBuf;
@@ -14,6 +14,8 @@ use std::sync::Mutex;
 use uuid::Uuid;
 
 use butter::daemon::interface::BtrfsFilesystem;
+
+use super::g_btrfs_filesystem::GBtrfsFilesystem;
 
 mod daemon {
 
@@ -79,12 +81,24 @@ mod daemon {
 }
 
 mod imp {
+    use crate::subvolume::g_btrfs_filesystem::GBtrfsFilesystem;
+
     use super::*;
 
-    #[derive(Default)]
     pub struct SubvolumeManager {
         pub daemon: OnceCell<Mutex<daemon::Daemon>>,
         pub model: SubvolList,
+        pub filesystems: gio::ListStore,
+    }
+
+    impl Default for SubvolumeManager {
+        fn default() -> Self {
+            Self {
+                daemon: Default::default(),
+                model: Default::default(),
+                filesystems: gio::ListStore::new(GBtrfsFilesystem::static_type()),
+            }
+        }
     }
 
     #[glib::object_subclass]
@@ -121,16 +135,12 @@ impl SubvolumeManager {
     }
 
     pub fn refresh(&self) {
-        let model = self.model();
-        model.clear();
+        self.refresh_filesystems();
+        self.refresh_subvolumes();
+    }
 
-        if self.filesystem().is_none() {
-            // TODO: smarter way to select the filesystem
-            let fs_vec = self.filesystems().unwrap();
-            self.set_filesystem(fs_vec.get(0).unwrap().clone()).unwrap();
-        }
+    pub fn refresh_subvolumes(&self) {
         let daemon = self.imp().daemon.get().unwrap();
-
         let subvols = daemon.lock().unwrap().list_subvolumes().unwrap();
         let subvols = {
             let mut map: HashMap<Uuid, GSubvolume> = HashMap::with_capacity(subvols.len());
@@ -147,15 +157,30 @@ impl SubvolumeManager {
             }
         }
 
+        let model = self.model();
+        model.clear();
         for (_, subvol) in subvols {
             model.insert(subvol);
         }
     }
 
-    pub fn filesystems(&self) -> anyhow::Result<Vec<BtrfsFilesystem>> {
+    pub fn refresh_filesystems(&self) {
         let daemon = self.imp().daemon.get().unwrap();
-        let ret = daemon.lock().unwrap().list_filesystems()?;
-        Ok(ret)
+        let filesystems = daemon.lock().unwrap().list_filesystems().unwrap();
+        if self.filesystem().is_none() {
+            // select a default one
+            self.set_filesystem(filesystems.get(0).unwrap().clone())
+                .unwrap();
+        }
+        let model = &self.imp().filesystems;
+        model.remove_all();
+        for fs in filesystems {
+            model.append(&GBtrfsFilesystem::new(fs));
+        }
+    }
+
+    pub fn filesystems(&self) -> &gio::ListStore {
+        &self.imp().filesystems
     }
 
     pub fn filesystem(&self) -> Option<String> {
