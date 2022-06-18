@@ -2,6 +2,8 @@ mod list;
 pub use list::SubvolList;
 
 mod subvolume_manager;
+mod g_btrfs_filesystem;
+pub use g_btrfs_filesystem::GBtrfsFilesystem;
 
 use butter::daemon::interface;
 pub use subvolume_manager::SubvolumeManager;
