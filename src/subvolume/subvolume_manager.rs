@@ -49,7 +49,7 @@ mod daemon {
         }
 
         fn filesystem(&mut self) -> Option<Uuid> {
-            serde_json::from_slice(&self.run(Request::Filesystems)).unwrap()
+            serde_json::from_slice(&self.run(Request::Filesystem)).unwrap()
         }
 
         fn set_filesystem(&mut self, device: BtrfsFilesystem) -> Result<bool> {
