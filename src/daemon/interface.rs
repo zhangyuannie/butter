@@ -56,7 +56,7 @@ pub trait DaemonInterface {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Request {
     ListFilesystems,
-    Filesystems,
+    Filesystem,
     SetFilesystem(BtrfsFilesystem),
     ListSubvolumes,
     MoveSubvolume(PathBuf, PathBuf),

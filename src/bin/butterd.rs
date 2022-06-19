@@ -140,7 +140,7 @@ fn main() {
         eprintln!("{:?}", req);
         let response = match req {
             Request::ListFilesystems => serde_json::to_string(&d.list_filesystems()),
-            Request::Filesystems => serde_json::to_string(&d.filesystem()),
+            Request::Filesystem => serde_json::to_string(&d.filesystem()),
             Request::SetFilesystem(device) => serde_json::to_string(&d.set_filesystem(device)),
             Request::ListSubvolumes => serde_json::to_string(&d.list_subvolumes()),
             Request::MoveSubvolume(from, to) => serde_json::to_string(&d.move_subvolume(from, to)),
