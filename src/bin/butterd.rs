@@ -8,6 +8,7 @@ use butter::daemon::cmd::btrfs_filesystem_show;
 use butter::daemon::interface::{BtrfsFilesystem, DaemonInterface, Request, Result, Subvolume};
 use butter::daemon::mounted_fs::MountedTopLevelSubvolume;
 use libbtrfsutil::CreateSnapshotFlags;
+use uuid::Uuid;
 
 struct MountedFs {
     info: BtrfsFilesystem,
@@ -41,11 +42,16 @@ impl DaemonInterface for Daemon {
         Ok(ret)
     }
 
-    fn filesystem(&mut self) -> Option<String> {
-        self.fs.as_ref().and_then(|fs| fs.info.label.clone())
+    fn filesystem(&mut self) -> Option<Uuid> {
+        self.fs.as_ref().and_then(|fs| Some(fs.info.uuid))
     }
 
-    fn set_filesystem(&mut self, fs: BtrfsFilesystem) -> Result<()> {
+    fn set_filesystem(&mut self, fs: BtrfsFilesystem) -> Result<bool> {
+        if let Some(cur_fs) = &self.fs {
+            if cur_fs.info.uuid == fs.uuid {
+                return Ok(false);
+            }
+        }
         self.fs = Some(MountedFs {
             subvol: MountedTopLevelSubvolume::new(
                 fs.devices
@@ -55,7 +61,7 @@ impl DaemonInterface for Daemon {
             info: fs,
         });
 
-        Ok(())
+        Ok(true)
     }
 
     fn list_subvolumes(&mut self) -> Result<Vec<Subvolume>> {

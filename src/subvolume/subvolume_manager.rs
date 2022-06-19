@@ -48,11 +48,11 @@ mod daemon {
             serde_json::from_slice(&self.run(Request::ListFilesystems)).unwrap()
         }
 
-        fn filesystem(&mut self) -> Option<String> {
+        fn filesystem(&mut self) -> Option<Uuid> {
             serde_json::from_slice(&self.run(Request::Filesystems)).unwrap()
         }
 
-        fn set_filesystem(&mut self, device: BtrfsFilesystem) -> Result<()> {
+        fn set_filesystem(&mut self, device: BtrfsFilesystem) -> Result<bool> {
             serde_json::from_slice(&self.run(Request::SetFilesystem(device))).unwrap()
         }
 
@@ -168,10 +168,9 @@ impl SubvolumeManager {
         let daemon = self.imp().daemon.get().unwrap();
         let filesystems = daemon.lock().unwrap().list_filesystems().unwrap();
         if self.filesystem().is_none() {
-            // select a default one
-            self.set_filesystem(filesystems.get(0).unwrap().clone())
-                .unwrap();
+            self.set_filesystem(filesystems[0].clone()).unwrap();
         }
+
         let model = &self.imp().filesystems;
         model.remove_all();
         for fs in filesystems {
@@ -183,15 +182,17 @@ impl SubvolumeManager {
         &self.imp().filesystems
     }
 
-    pub fn filesystem(&self) -> Option<String> {
+    pub fn filesystem(&self) -> Option<Uuid> {
         let daemon = self.imp().daemon.get().unwrap();
         daemon.lock().unwrap().filesystem()
     }
 
     pub fn set_filesystem(&self, fs: BtrfsFilesystem) -> anyhow::Result<()> {
         let daemon = self.imp().daemon.get().unwrap();
-        daemon.lock().unwrap().set_filesystem(fs)?;
-        self.refresh();
+        let updated = daemon.lock().unwrap().set_filesystem(fs)?;
+        if updated {
+            self.refresh_subvolumes();
+        }
         Ok(())
     }
 

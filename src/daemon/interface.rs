@@ -40,8 +40,8 @@ pub type Result<T> = result::Result<T, Error>;
 
 pub trait DaemonInterface {
     fn list_filesystems(&mut self) -> Result<Vec<BtrfsFilesystem>>;
-    fn filesystem(&mut self) -> Option<String>;
-    fn set_filesystem(&mut self, fs: BtrfsFilesystem) -> Result<()>;
+    fn filesystem(&mut self) -> Option<Uuid>;
+    fn set_filesystem(&mut self, fs: BtrfsFilesystem) -> Result<bool>;
     fn list_subvolumes(&mut self) -> Result<Vec<Subvolume>>;
     fn move_subvolume(&mut self, from: PathBuf, to: PathBuf) -> Result<()>;
     fn delete_subvolume(&mut self, path: PathBuf) -> Result<()>;

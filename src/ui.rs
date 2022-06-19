@@ -47,6 +47,13 @@ pub fn build_ui(app: &Application) {
         let fs_dropdown =
             gtk::DropDown::new(Some(app.subvolume_manager().filesystems()), Some(&exp));
 
+        let app = app.clone();
+        fs_dropdown.connect_selected_notify(move |dd| {
+            let fs: GBtrfsFilesystem = dd.selected_item().unwrap().downcast().unwrap();
+            let fs = fs.data().clone();
+            app.subvolume_manager().set_filesystem(fs).unwrap();
+        });
+
         header_bar.pack_end(&fs_dropdown);
     }
 

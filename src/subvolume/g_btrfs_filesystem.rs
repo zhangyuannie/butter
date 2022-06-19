@@ -1,4 +1,4 @@
-use butter::daemon::interface;
+use butter::daemon::interface::{self, BtrfsFilesystem};
 
 use glib::Object;
 use gtk::{glib, prelude::*, subclass::prelude::*};
@@ -68,5 +68,11 @@ impl GBtrfsFilesystem {
         } else {
             format!("\"{}\"", self.data().devices.get(0).unwrap().display())
         }
+    }
+}
+
+impl From<GBtrfsFilesystem> for BtrfsFilesystem {
+    fn from(fs: GBtrfsFilesystem) -> Self {
+        fs.data().clone()
     }
 }
