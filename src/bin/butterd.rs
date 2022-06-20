@@ -65,22 +65,37 @@ impl DaemonInterface for Daemon {
     }
 
     fn list_subvolumes(&mut self) -> Result<Vec<Subvolume>> {
-        Ok(libbtrfsutil::SubvolumeInfoIterator::new(
-            self.fs.as_ref().context("no filesystem set")?.subvol.path(),
-            NonZeroU64::new(libbtrfsutil::FS_TREE_OBJECTID),
-            libbtrfsutil::SubvolumeIteratorFlags::empty(),
-        )
-        .context("failed to enumerate subvolumes")?
-        .map(|subvol| {
-            let (path, info) = subvol.unwrap();
-            Subvolume {
-                path,
-                uuid: info.uuid(),
-                created: info.created(),
-                snapshot_source_uuid: info.parent_uuid(),
-            }
-        })
-        .collect())
+        let mount_path = self.fs.as_ref().context("no filesystem set")?.subvol.path();
+
+        let toplevel = libbtrfsutil::subvolume_info(mount_path, None)
+            .context("failed to get top-level subvol info")?;
+
+        let mut ret = vec![Subvolume {
+            path: PathBuf::from("/"),
+            uuid: toplevel.uuid(),
+            created: toplevel.created(),
+            snapshot_source_uuid: toplevel.parent_uuid(),
+        }];
+
+        ret.extend(
+            libbtrfsutil::SubvolumeInfoIterator::new(
+                mount_path,
+                NonZeroU64::new(libbtrfsutil::FS_TREE_OBJECTID),
+                libbtrfsutil::SubvolumeIteratorFlags::empty(),
+            )
+            .context("failed to enumerate subvolumes")?
+            .map(|subvol| {
+                let (path, info) = subvol.unwrap();
+                Subvolume {
+                    path,
+                    uuid: info.uuid(),
+                    created: info.created(),
+                    snapshot_source_uuid: info.parent_uuid(),
+                }
+            }),
+        );
+
+        Ok(ret)
     }
 
     fn move_subvolume(&mut self, from: PathBuf, to: PathBuf) -> Result<()> {
