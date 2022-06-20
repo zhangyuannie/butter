@@ -32,19 +32,19 @@ You can install these dependencies with:
 
 - Arch
   ```
-  # pacman -S meson rust gtk4 libadwaita btrfs-progs
+  # pacman -S meson rust gtk4 libadwaita btrfs-progs clang
   ```
 
 - Fedora 35 and later
 
   ```
-  # dnf install meson cargo gtk4-devel libadwaita-devel btrfs-progs-devel
+  # dnf install meson cargo gtk4-devel libadwaita-devel btrfs-progs-devel clang
   ```
 
 - openSUSE Tumbleweed
 
   ```
-  # zypper install meson cargo gtk4-devel libadwaita-devel libbtrfsutil-devel
+  # zypper install meson cargo gtk4-devel libadwaita-devel libbtrfsutil-devel llvm-clang
   ```
 
 #### Get the Source Code

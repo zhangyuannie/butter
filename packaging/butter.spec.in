@@ -19,6 +19,7 @@ BuildRequires:  btrfs-progs-devel
 BuildRequires:  gtk4-devel
 BuildRequires:  gettext
 BuildRequires:  desktop-file-utils
+BuildRequires:  clang
 
 Requires:       gtk4%{?_isa} >= 4.4.0
 Requires:       libadwaita%{?_isa} >= 1.0.0
