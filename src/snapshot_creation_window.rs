@@ -135,7 +135,14 @@ impl SnapshotCreationWindow {
 
         let exp = gtk::ClosureExpression::new::<String, _, gtk::ClosureExpression>(
             None,
-            glib::closure!(|sv: GSubvolume| String::from(sv.path().to_string_lossy())),
+            glib::closure!(|sv: GSubvolume| {
+                let path = String::from(sv.path().to_string_lossy());
+                if path == "/" {
+                    "<FS_TREE>".to_string()
+                } else {
+                    path
+                }
+            }),
         );
 
         imp.subvol_dropdown.set_expression(Some(&exp));

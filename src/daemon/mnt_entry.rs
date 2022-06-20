@@ -16,7 +16,7 @@ impl<R: io::BufRead> MntEntries<R> {
 #[derive(Debug, Default, Clone)]
 pub struct MntEntry {
     pub spec: String,
-    pub target: PathBuf,
+    pub target: Option<PathBuf>,
     pub fs_type: String,
     pub options: String,
     pub dump_freq: i32,
@@ -44,7 +44,14 @@ impl<R: io::BufRead> Iterator for MntEntries<R> {
                                 None => return Some(Err(Error::from(ErrorKind::InvalidData))),
                             },
                             target: match words.next() {
-                                Some(s) => PathBuf::from(s),
+                                Some(s) => {
+                                    if s == "none" {
+                                        None
+                                    } else {
+                                        // TODO: escapes
+                                        Some(PathBuf::from(s))
+                                    }
+                                }
                                 None => return Some(Err(Error::from(ErrorKind::InvalidData))),
                             },
                             fs_type: match words.next() {
