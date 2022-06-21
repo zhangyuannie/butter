@@ -199,7 +199,7 @@ impl SubvolumeManager {
     pub fn delete_snapshot(&self, path: PathBuf) -> anyhow::Result<()> {
         let daemon = self.imp().daemon.get().unwrap();
         daemon.lock().unwrap().delete_subvolume(path)?;
-        self.refresh();
+        self.refresh_subvolumes();
         Ok(())
     }
 
@@ -209,7 +209,7 @@ impl SubvolumeManager {
             .lock()
             .unwrap()
             .move_subvolume(before_path, after_path)?;
-        self.refresh();
+        self.refresh_subvolumes();
         Ok(())
     }
 
@@ -229,7 +229,7 @@ impl SubvolumeManager {
                 libbtrfsutil::CreateSnapshotFlags::empty()
             },
         )?;
-        self.refresh();
+        self.refresh_subvolumes();
         Ok(())
     }
 }

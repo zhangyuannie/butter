@@ -49,9 +49,11 @@ pub fn build_ui(app: &Application) {
 
         let app = app.clone();
         fs_dropdown.connect_selected_notify(move |dd| {
-            let fs: GBtrfsFilesystem = dd.selected_item().unwrap().downcast().unwrap();
-            let fs = fs.data().clone();
-            app.subvolume_manager().set_filesystem(fs).unwrap();
+            if let Some(fs) = dd.selected_item() {
+                let fs: GBtrfsFilesystem = fs.downcast().expect("Object must be GBtrfsFilesystem");
+                let fs = fs.data().clone();
+                app.subvolume_manager().set_filesystem(fs).unwrap();
+            }
         });
 
         header_bar.pack_end(&fs_dropdown);
