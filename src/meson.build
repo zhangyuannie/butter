@@ -6,6 +6,7 @@ conf.set_quoted('LOCALEDIR', localedir)
 conf.set_quoted('LIBEXECDIR', libexecdir)
 conf.set_quoted('PKGDATADIR', pkgdatadir)
 conf.set_quoted('PKGSHAREDSTATEDIR', pkgsharedstatedir)
+conf.set_quoted('PKGSYSCONFDIR', pkgsysconfdir)
 
 configure_file(
   input: 'config.rs.in',

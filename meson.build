@@ -21,6 +21,7 @@ sharedstatedir = prefix / get_option('sharedstatedir')
 
 pkgdatadir = datadir / meson.project_name()
 pkgsharedstatedir = sharedstatedir / meson.project_name()
+pkgsysconfdir = get_option('sysconfdir') / meson.project_name()
 
 subdir('data')
 subdir('po')
