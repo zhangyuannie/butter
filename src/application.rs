@@ -1,8 +1,9 @@
+use butter::config;
+
 use gtk::prelude::ObjectExt;
 use gtk::subclass::prelude::*;
 use gtk::{gio, glib};
 
-use crate::config;
 use crate::subvolume::SubvolumeManager;
 
 mod imp {

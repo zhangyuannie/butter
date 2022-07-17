@@ -1,26 +1,25 @@
 use chrono::{Datelike, NaiveDateTime, Timelike};
 
-use self::conf::Schedule;
+use super::conf::Schedule;
 
-mod conf;
-
-pub use conf::*;
-
-pub trait DateTimeSortable: Clone {
+pub trait DateTimeSortable {
     fn created(&self) -> &NaiveDateTime;
 }
 
-pub fn select_snapshots_to_keep<T: DateTimeSortable>(
-    snapshots: &[T],
-    schedule: Schedule,
-) -> Vec<T> {
+pub fn select_snapshots_to_remove<I, T: DateTimeSortable>(
+    snapshots: I,
+    schedule: &Schedule,
+) -> Vec<T>
+where
+    I: Iterator<Item = T>,
+{
     struct Bucket {
         keep: u32,
         last: i32,
         algo: fn(&NaiveDateTime) -> i32,
     }
 
-    let mut ret: Vec<T> = Vec::new();
+    let mut ret = Vec::new();
     let mut buckets = [
         Bucket {
             keep: schedule.keep_hourly,
@@ -53,20 +52,20 @@ pub fn select_snapshots_to_keep<T: DateTimeSortable>(
     ];
 
     for snapshot in snapshots {
-        let mut should_keep = false;
+        let mut should_remove = true;
         for bucket in &mut buckets {
             if bucket.keep > 0 {
                 let val = (bucket.algo)(&snapshot.created());
                 if val != bucket.last {
                     bucket.keep -= 1;
                     bucket.last = val;
-                    should_keep = true;
+                    should_remove = false;
                 }
             }
         }
 
-        if should_keep {
-            ret.push(snapshot.clone());
+        if should_remove {
+            ret.push(snapshot);
         }
     }
 

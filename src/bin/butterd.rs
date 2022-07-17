@@ -67,7 +67,7 @@ impl DaemonInterface for Daemon {
     fn list_subvolumes(&mut self) -> Result<Vec<Subvolume>> {
         let mount_path = self.fs.as_ref().context("no filesystem set")?.subvol.path();
 
-        let toplevel = libbtrfsutil::subvolume_info(mount_path, None)
+        let toplevel = libbtrfsutil::subvolume_info(mount_path)
             .context("failed to get top-level subvol info")?;
 
         let mut ret = vec![Subvolume {
@@ -131,8 +131,7 @@ impl DaemonInterface for Daemon {
         )
         .context("failed to create snapshot")?;
 
-        let info = libbtrfsutil::subvolume_info(dest.as_path(), None)
-            .context("failed to get snapshot info")?;
+        let info = libbtrfsutil::subvolume_info(&dest).context("failed to get snapshot info")?;
 
         Ok(Subvolume {
             path: dest,

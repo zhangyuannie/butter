@@ -1,5 +1,4 @@
 mod application;
-mod config;
 mod file_chooser_entry;
 mod rename_popover;
 mod snapshot_column_cell;
@@ -10,11 +9,48 @@ mod ui;
 mod window;
 
 use adw::prelude::*;
+use butter::{
+    config,
+    schedule::{cmd_cleanup, cmd_snapshot},
+};
 use gtk::gio;
 use std::process::{Command, Stdio};
 use subvolume::SubvolumeManager;
 
+use clap::{Parser, Subcommand};
+
+#[derive(Parser)]
+struct Cli {
+    #[clap(subcommand)]
+    cmd: Option<Cmd>,
+}
+
+#[derive(Subcommand)]
+enum Cmd {
+    Schedule {
+        #[clap(subcommand)]
+        cmd: ScheduleCmd,
+    },
+}
+
+#[derive(Subcommand)]
+enum ScheduleCmd {
+    Snapshot,
+    Cleanup,
+}
+
 fn main() {
+    let cli = Cli::parse();
+    match cli.cmd {
+        Some(Cmd::Schedule { cmd }) => match cmd {
+            ScheduleCmd::Snapshot => cmd_snapshot(),
+            ScheduleCmd::Cleanup => cmd_cleanup(),
+        },
+        None => gui(),
+    }
+}
+
+fn gui() {
     let daemon_process = Command::new("pkexec")
         .arg(config::DAEMON_EXEC_PATH)
         .stdin(Stdio::piped())
