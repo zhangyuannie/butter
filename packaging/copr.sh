@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-# Build dependencies: bash jq curl
+# Build dependencies: bash jq curl rpmdevtools
 # Result directory: out
 out="${PWD}/out"
 
@@ -30,4 +30,4 @@ curl -sS "${raw_src_url}/packaging/butter.spec.in" |
       -e "s|@VERSION@|${version}|" \
   > "${out}/butter.spec"
 
-cat "${out}/butter.spec"
+spectool -g -C "${out}" "${out}/butter.spec"
