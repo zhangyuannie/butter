@@ -11,7 +11,6 @@ use crate::{config, JsonFile};
 pub struct Schedule {
     pub label: String,
     pub is_enabled: bool,
-    pub should_cleanup: bool,
     #[serde(default, skip_serializing_if = "is_default")]
     pub keep_hourly: u32,
     #[serde(default, skip_serializing_if = "is_default")]
@@ -24,6 +23,16 @@ pub struct Schedule {
     pub keep_yearly: u32,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub subvolumes: Vec<ScheduleSubvolume>,
+}
+
+impl Schedule {
+    pub fn should_prune(&self) -> bool {
+        self.keep_hourly != 0
+            || self.keep_daily != 0
+            || self.keep_weekly != 0
+            || self.keep_monthly != 0
+            || self.keep_yearly != 0
+    }
 }
 
 #[derive(Serialize, Deserialize)]

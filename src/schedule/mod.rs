@@ -53,24 +53,24 @@ pub fn cmd_snapshot() {
     }
 }
 
-pub fn cmd_cleanup() {
+pub fn cmd_prune() {
     for schedule in ReadScheduleDir::new().expect("Failed to read config directory") {
         if let Ok(schedule) = schedule {
             let config = schedule.as_data();
-            if !config.should_cleanup {
+            if !config.should_prune() {
                 continue;
             }
             for subvol in &config.subvolumes {
-                let res = cleanup_single(config, &subvol.path, &subvol.target_dir);
+                let res = prune_single(config, &subvol.path, &subvol.target_dir);
                 if let Err(err) = res {
-                    println!("Failed to cleanup {}: {}", subvol.target_dir.display(), err);
+                    println!("Failed to prune {}: {}", subvol.target_dir.display(), err);
                 }
             }
         }
     }
 }
 
-fn cleanup_single(schedule: &Schedule, subvol: &Path, snapshot_dir: &Path) -> anyhow::Result<()> {
+fn prune_single(schedule: &Schedule, subvol: &Path, snapshot_dir: &Path) -> anyhow::Result<()> {
     struct Snapshot {
         path: PathBuf,
         created: NaiveDateTime,

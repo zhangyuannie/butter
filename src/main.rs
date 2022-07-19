@@ -11,7 +11,7 @@ mod window;
 use adw::prelude::*;
 use butter::{
     config,
-    schedule::{cmd_cleanup, cmd_snapshot},
+    schedule::{cmd_prune, cmd_snapshot},
 };
 use gtk::gio;
 use std::process::{Command, Stdio};
@@ -36,7 +36,7 @@ enum Cmd {
 #[derive(Subcommand)]
 enum ScheduleCmd {
     Snapshot,
-    Cleanup,
+    Prune,
 }
 
 fn main() {
@@ -44,7 +44,7 @@ fn main() {
     match cli.cmd {
         Some(Cmd::Schedule { cmd }) => match cmd {
             ScheduleCmd::Snapshot => cmd_snapshot(),
-            ScheduleCmd::Cleanup => cmd_cleanup(),
+            ScheduleCmd::Prune => cmd_prune(),
         },
         None => gui(),
     }
