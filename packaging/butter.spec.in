@@ -32,6 +32,7 @@ Application for Btrfs snapshot management
 
 %files -f %{name}.lang
 %license COPYING
+%dir %{_sysconfdir}/butter/schedules
 %{_bindir}/butter
 %{_libexecdir}/butterd
 %{_datadir}/applications/org.zhangyuannie.butter.desktop

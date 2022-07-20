@@ -8,7 +8,7 @@ pub struct JsonFile<T> {
     data: T,
 }
 
-impl<'a, T: Serialize + DeserializeOwned> JsonFile<T> {
+impl<T: Serialize + DeserializeOwned> JsonFile<T> {
     pub fn open(path: PathBuf) -> io::Result<Self> {
         let bytes = fs::read(&path)?;
         let data = serde_json::from_slice(&bytes)?;
@@ -24,5 +24,9 @@ impl<'a, T: Serialize + DeserializeOwned> JsonFile<T> {
 
     pub fn as_data(&self) -> &T {
         &self.data
+    }
+
+    pub fn name(&self) -> &str {
+        self.path.file_stem().unwrap().to_str().unwrap()
     }
 }

@@ -26,7 +26,8 @@ Development versions tracking the main branch:
 - btrfs-progs >= 5.10.0
 - libbtrfsutil >= 1.2.0
 - kernel >= 4.18
-- polkit >= 0.100
+- polkit
+- systemd (timer)
 
 You can install these dependencies with:
 

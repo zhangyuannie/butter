@@ -21,6 +21,11 @@ pub fn cmd_snapshot() {
     for schedule in ReadScheduleDir::new().expect("Failed to read config directory") {
         if let Ok(schedule) = schedule {
             for subvol in &schedule.as_data().subvolumes {
+                println!(
+                    "creating a snapshot from '{}' in '{}'",
+                    subvol.path.display(),
+                    subvol.target_dir.display()
+                );
                 let mut name = RandomName::new();
                 let mut has_err = true;
                 for _ in 0..16 {

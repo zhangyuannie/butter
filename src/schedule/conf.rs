@@ -9,7 +9,6 @@ use crate::{config, JsonFile};
 
 #[derive(Serialize, Deserialize)]
 pub struct Schedule {
-    pub label: String,
     pub is_enabled: bool,
     #[serde(default, skip_serializing_if = "is_default")]
     pub keep_hourly: u32,

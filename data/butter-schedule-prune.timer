@@ -1,0 +1,10 @@
+[Unit]
+Description=Butter Schedule Prune
+
+[Timer]
+OnBootSec=15m
+OnUnitActiveSec=8h
+RandomizedDelaySec=30m
+
+[Install]
+WantedBy=timers.target

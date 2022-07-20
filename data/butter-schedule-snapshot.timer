@@ -1,0 +1,8 @@
+[Unit]
+Description=Butter Schedule Snapshot
+
+[Timer]
+OnCalendar=hourly
+
+[Install]
+WantedBy=timers.target

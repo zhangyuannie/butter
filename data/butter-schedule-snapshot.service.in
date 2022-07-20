@@ -1,0 +1,6 @@
+[Unit]
+Description=Butter Schedule Snapshot
+
+[Service]
+Type=simple
+ExecStart=@BINDIR@/butter schedule snapshot

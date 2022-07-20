@@ -1,0 +1,6 @@
+[Unit]
+Description=Butter Schedule Prune
+
+[Service]
+Type=simple
+ExecStart=@BINDIR@/butter schedule prune
