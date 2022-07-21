@@ -1,28 +1,26 @@
-use glib::Object;
-use gtk::glib;
-use gtk::glib::Binding;
+use adw::subclass::prelude::*;
+use gtk::glib::{Binding, Object};
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
+use gtk::{glib, CompositeTemplate, Label};
+use std::cell::RefCell;
 
 mod imp {
     use super::*;
-    use glib::Binding;
-    use gtk::{CompositeTemplate, Label};
-    use std::cell::RefCell;
 
     #[derive(Default, CompositeTemplate)]
-    #[template(resource = "/org/zhangyuannie/butter/ui/snapshot_column_cell.ui")]
-    pub struct SnapshotColumnCell {
+    #[template(resource = "/org/zhangyuannie/butter/ui/label_cell.ui")]
+    pub struct LabelCell {
         #[template_child]
         pub label: TemplateChild<Label>,
         pub bindings: RefCell<Vec<Binding>>,
     }
 
     #[glib::object_subclass]
-    impl ObjectSubclass for SnapshotColumnCell {
-        const NAME: &'static str = "SnapshotColumnCell";
-        type Type = super::SnapshotColumnCell;
-        type ParentType = gtk::Box;
+    impl ObjectSubclass for LabelCell {
+        const NAME: &'static str = "LabelCell";
+        type ParentType = adw::Bin;
+        type Type = super::LabelCell;
 
         fn class_init(klass: &mut Self::Class) {
             Self::bind_template(klass);
@@ -33,26 +31,26 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for SnapshotColumnCell {}
-    impl WidgetImpl for SnapshotColumnCell {}
-    impl BoxImpl for SnapshotColumnCell {}
+    impl ObjectImpl for LabelCell {}
+    impl WidgetImpl for LabelCell {}
+    impl BinImpl for LabelCell {}
 }
 
 glib::wrapper! {
-    pub struct SnapshotColumnCell(ObjectSubclass<imp::SnapshotColumnCell>)
-    @extends gtk::Box, gtk::Widget,
-    @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget, gtk::Orientable;
+    pub struct LabelCell(ObjectSubclass<imp::LabelCell>)
+    @extends gtk::Widget, adw::Bin,
+    @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget;
 }
 
-impl Default for SnapshotColumnCell {
+impl Default for LabelCell {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl SnapshotColumnCell {
+impl LabelCell {
     pub fn new() -> Self {
-        Object::new(&[]).expect("Failed to create SnapshotColumnCell")
+        Object::new(&[]).expect("Failed to create LabelCell")
     }
 
     pub fn add_binding(&self, binding: Binding) {

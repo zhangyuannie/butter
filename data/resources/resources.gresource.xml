@@ -2,8 +2,8 @@
 <gresources>
   <gresource prefix="/org/zhangyuannie/butter/">
     <file compressed="true" preprocess="xml-stripblanks">ui/file_chooser_entry.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">ui/label_cell.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">ui/schedule_view.ui</file>
-    <file compressed="true" preprocess="xml-stripblanks">ui/snapshot_column_cell.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">ui/snapshot_creation_window.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">ui/window.ui</file>
   </gresource>

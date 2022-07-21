@@ -8,9 +8,9 @@ use gtk::{
 
 use crate::{
     rename_popover::RenamePopover,
-    snapshot_column_cell::SnapshotColumnCell,
     snapshot_creation_window::SnapshotCreationWindow,
     subvolume::{GSubvolume, SubvolumeManager},
+    widgets::LabelCell,
     window::Window,
 };
 
@@ -206,7 +206,7 @@ impl SnapshotView {
 
         let factory = SignalListItemFactory::new();
         factory.connect_setup(move |_, list_item| {
-            let cell = SnapshotColumnCell::new();
+            let cell = LabelCell::new();
             list_item.set_child(Some(&cell));
         });
         factory.connect_bind(move |_, list_item| {
@@ -216,11 +216,7 @@ impl SnapshotView {
                 .downcast::<GSubvolume>()
                 .expect("Item must be Subvolume");
 
-            let cell = list_item
-                .child()
-                .unwrap()
-                .downcast::<SnapshotColumnCell>()
-                .unwrap();
+            let cell = list_item.child().unwrap().downcast::<LabelCell>().unwrap();
 
             let binding = create_binding(obj, cell.label());
 
@@ -230,8 +226,8 @@ impl SnapshotView {
             let cell = list_item
                 .child()
                 .expect("Child must exist")
-                .downcast::<SnapshotColumnCell>()
-                .expect("Child must be SnapshotColumnCell");
+                .downcast::<LabelCell>()
+                .expect("Child must be LabelCell");
 
             cell.unbind_all();
         });
