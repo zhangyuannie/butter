@@ -51,7 +51,7 @@ pub fn cmd_snapshot() {
                     }
                 }
                 if has_err {
-                    println!("Failed to create a snapshot for {}", subvol.path.display());
+                    eprintln!("failed to create a snapshot from {}", subvol.path.display());
                 }
             }
         }
@@ -68,7 +68,7 @@ pub fn cmd_prune() {
             for subvol in &config.subvolumes {
                 let res = prune_single(config, &subvol.path, &subvol.target_dir);
                 if let Err(err) = res {
-                    println!("Failed to prune {}: {}", subvol.target_dir.display(), err);
+                    eprintln!("failed to prune '{}': {}", subvol.target_dir.display(), err);
                 }
             }
         }
@@ -107,12 +107,13 @@ fn prune_single(schedule: &Schedule, subvol: &Path, snapshot_dir: &Path) -> anyh
     let to_remove = select_snapshots_to_remove(snapshots, schedule);
 
     for snapshot in to_remove {
+        println!("deleting '{}'", snapshot.path.display());
         let res = libbtrfsutil::delete_subvolume(
             &snapshot.path,
             libbtrfsutil::DeleteSubvolumeFlags::RECURSIVE,
         );
         if let Err(err) = res {
-            println!("Failed to delete {}: {}", snapshot.path.display(), err);
+            eprintln!("failed to delete '{}': {}", snapshot.path.display(), err);
         }
     }
 
