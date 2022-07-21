@@ -6,6 +6,7 @@ mod snapshot_creation_window;
 mod snapshot_view;
 mod subvolume;
 mod ui;
+mod widgets;
 mod window;
 
 use adw::prelude::*;

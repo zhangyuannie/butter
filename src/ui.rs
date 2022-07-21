@@ -1,12 +1,13 @@
 use adw::prelude::*;
 use adw::{HeaderBar, ViewSwitcherTitle};
 use gettext::gettext;
-use gtk::{gio, glib, Label};
+use gtk::{gio, glib};
 
 use crate::application::Application;
 use crate::config;
 use crate::snapshot_view::SnapshotView;
 use crate::subvolume::GBtrfsFilesystem;
+use crate::widgets::ScheduleView;
 use crate::window::Window;
 
 pub fn build_ui(app: &Application) {
@@ -18,7 +19,7 @@ pub fn build_ui(app: &Application) {
     snapshot_page.set_title(Some(gettext("Snapshot").as_str()));
     snapshot_page.set_icon_name(Some("insert-object-symbolic"));
 
-    let schedule_page = view_stack.add(&Label::new(Some("Placeholder")));
+    let schedule_page = view_stack.add(&ScheduleView::new());
     schedule_page.set_name(Some("schedule"));
     schedule_page.set_title(Some(gettext("Schedule").as_str()));
     schedule_page.set_icon_name(Some("alarm-symbolic"));
