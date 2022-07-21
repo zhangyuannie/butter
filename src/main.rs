@@ -1,6 +1,5 @@
 mod application;
 mod file_chooser_entry;
-mod rename_popover;
 mod snapshot_creation_window;
 mod snapshot_view;
 mod subvolume;

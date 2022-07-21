@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <template class="RenamePopover" parent="GtkPopover">
+  <template class="SnapshotRenamePopover" parent="GtkPopover">
     <child>
       <object class="GtkBox">
         <property name="spacing">8</property>
@@ -10,6 +10,7 @@
         <child>
           <object class="GtkButton" id="rename_button">
             <property name="label" translatable="yes">Rename</property>
+            <signal name="clicked" handler="on_rename_button_clicked" swapped="true"/>
             <style>
               <class name="suggested-action"/>
             </style>

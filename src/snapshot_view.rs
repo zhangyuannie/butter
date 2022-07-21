@@ -1,13 +1,10 @@
 use adw::subclass::prelude::*;
 use gtk::{
-    gdk, gio,
-    glib::{self, closure_local},
-    prelude::*,
-    BitsetIter, ColumnView, ColumnViewColumn, DialogFlags, SignalListItemFactory, Widget,
+    gdk, gio, glib, prelude::*, BitsetIter, ColumnView, ColumnViewColumn, DialogFlags,
+    SignalListItemFactory, Widget,
 };
 
 use crate::{
-    rename_popover::RenamePopover,
     snapshot_creation_window::SnapshotCreationWindow,
     subvolume::{GSubvolume, SubvolumeManager},
     widgets::LabelCell,
@@ -30,8 +27,8 @@ mod imp {
     use std::cell::RefCell;
 
     use crate::{
-        rename_popover::RenamePopover,
         subvolume::{GSubvolume, SubvolumeManager},
+        widgets::SnapshotRenamePopover,
     };
 
     #[derive(CompositeTemplate, Default)]
@@ -40,7 +37,7 @@ mod imp {
         #[template_child(id = "snapshot_column_view")]
         pub column_view: TemplateChild<gtk::ColumnView>,
         pub selection_menu: OnceCell<gtk::PopoverMenu>,
-        pub rename_popover: RenamePopover,
+        pub rename_popover: SnapshotRenamePopover,
         pub model: OnceCell<gtk::FilterListModel>,
         pub single_select_actions: RefCell<Vec<SimpleAction>>,
         pub subvolume_manager: OnceCell<WeakRef<SubvolumeManager>>,
@@ -282,7 +279,6 @@ impl SnapshotView {
             let idx = selection.nth(0);
 
             let item = extract_ith_list_item(&col_view, idx).unwrap();
-            rename_popover.set_target(idx);
             rename_popover.set_pointing_to(Some(&item.allocation()));
             rename_popover.popup();
         }));
@@ -319,45 +315,43 @@ impl SnapshotView {
         let imp = self.imp();
         let popover = &imp.rename_popover;
         let col_view = imp.column_view.get();
-        let view = self.clone();
         popover.set_parent(&extract_column_list_view(&col_view));
-        popover.connect_closure(
-            "clicked",
-            false,
-            closure_local!(move |popover: RenamePopover, new_name: String| {
-                let idx = popover.target();
-                let obj: GSubvolume = col_view
-                    .model()
-                    .unwrap()
-                    .item(idx)
-                    .expect("Item must exist")
-                    .downcast()
-                    .unwrap();
+        popover.connect_clicked(glib::clone!(@weak self as view => move |popover| {
+            let selection_model = view.imp().column_view.model().unwrap();
+            let selection = selection_model.selection();
+            if selection.size() != 1 {
+                println!("rename: selection size should be 1");
+                return;
+            }
+            let obj: GSubvolume = selection_model
+                .item(selection.nth(0))
+                .expect("Item must exist")
+                .downcast()
+                .unwrap();
 
-                let mut new_path = obj.path().to_path_buf();
-                new_path.set_file_name(new_name);
+            let mut new_path = obj.path().to_path_buf();
+            new_path.set_file_name(popover.text());
 
-                let res = view
-                    .subvolume_manager()
-                    .rename_snapshot(obj.path().to_path_buf(), new_path);
+            let res = view
+                .subvolume_manager()
+                .rename_snapshot(obj.path().to_path_buf(), new_path);
 
-                if let Err(error) = res {
-                    let win = view.root().unwrap().downcast::<Window>().unwrap();
-                    let dialog = gtk::MessageDialog::new(
-                        Some(&win),
-                        DialogFlags::DESTROY_WITH_PARENT | DialogFlags::MODAL,
-                        gtk::MessageType::Error,
-                        gtk::ButtonsType::Close,
-                        &error.to_string(),
-                    );
-                    dialog.connect_response(|dialog, _| {
-                        dialog.destroy();
-                    });
-                    dialog.show();
-                }
-                popover.popdown();
-            }),
-        );
+            if let Err(error) = res {
+                let win = view.root().unwrap().downcast::<Window>().unwrap();
+                let dialog = gtk::MessageDialog::new(
+                    Some(&win),
+                    DialogFlags::DESTROY_WITH_PARENT | DialogFlags::MODAL,
+                    gtk::MessageType::Error,
+                    gtk::ButtonsType::Close,
+                    &error.to_string(),
+                );
+                dialog.connect_response(|dialog, _| {
+                    dialog.destroy();
+                });
+                dialog.show();
+            }
+            popover.popdown();
+        }));
     }
 
     fn teardown_rename_popover(&self) {
