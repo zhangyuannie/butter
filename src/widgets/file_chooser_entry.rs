@@ -1,13 +1,10 @@
-use adw;
-use glib::Object;
-use gtk::subclass::prelude::*;
-use gtk::{glib, prelude::*, CompositeTemplate};
+use gtk::{glib, prelude::*};
 
 mod imp {
     use super::*;
     use adw::subclass::prelude::*;
+    use gtk::{subclass::prelude::*, CompositeTemplate};
     use std::cell::RefCell;
-    use std::rc::Rc;
 
     #[derive(CompositeTemplate, Default)]
     #[template(resource = "/org/zhangyuannie/butter/ui/file_chooser_entry.ui")]
@@ -16,7 +13,7 @@ mod imp {
         pub entry: TemplateChild<gtk::Entry>,
         #[template_child]
         pub browse_button: TemplateChild<gtk::Button>,
-        pub file_chooser: Rc<RefCell<Option<gtk::FileChooserNative>>>,
+        pub file_chooser: RefCell<Option<gtk::FileChooserNative>>,
     }
 
     #[glib::object_subclass]
@@ -24,6 +21,7 @@ mod imp {
         const NAME: &'static str = "FileChooserEntry";
         type Type = super::FileChooserEntry;
         type ParentType = adw::Bin;
+        type Interfaces = (gtk::Editable,);
 
         fn class_init(klass: &mut Self::Class) {
             Self::bind_template(klass);
@@ -45,45 +43,42 @@ mod imp {
                         .action(gtk::FileChooserAction::SelectFolder)
                         .build();
 
+                    obj.imp().file_chooser.replace(Some(file_chooser));
+                    let file_chooser = obj.imp().file_chooser.borrow().clone().unwrap();
+
                     file_chooser.connect_response(glib::clone!(@weak obj => move |chooser, resp_type| {
-                        match resp_type {
-                            gtk::ResponseType::Accept => {
-                                if let Some(file) = chooser.file() {
-                                    let path = file.path().unwrap();
-                                    obj.set_text(path.to_str().unwrap());
-                                }
-                            },
-                            _ => {},
+                        if resp_type == gtk::ResponseType::Accept {
+                            if let Some(file) = chooser.file() {
+                                let path = file.path().unwrap();
+                                obj.set_text(path.to_str().unwrap());
+                            }
                         };
                         obj.imp().file_chooser.take();
                     }));
 
                     file_chooser.show();
-                    obj.imp().file_chooser.replace(Some(file_chooser));
                 }));
         }
     }
     impl WidgetImpl for FileChooserEntry {}
     impl BinImpl for FileChooserEntry {}
+    impl EditableImpl for FileChooserEntry {
+        fn delegate(&self, editable: &Self::Type) -> Option<gtk::Editable> {
+            Some(editable.imp().entry.get().upcast())
+        }
+    }
 }
 
 glib::wrapper! {
     pub struct FileChooserEntry(ObjectSubclass<imp::FileChooserEntry>)
         @extends adw::Bin, gtk::Widget,
-        @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget;
+        @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget,
+                    gtk::Editable;
 }
 
 impl FileChooserEntry {
     pub fn new() -> Self {
-        Object::new(&[]).expect("Failed to create FileChooserEntry")
-    }
-
-    pub fn text(&self) -> glib::GString {
-        self.imp().entry.text()
-    }
-
-    pub fn set_text(&self, text: &str) {
-        self.imp().entry.set_text(text);
+        glib::Object::new(&[]).expect("Failed to create FileChooserEntry")
     }
 }
 

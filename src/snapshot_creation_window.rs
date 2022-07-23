@@ -10,7 +10,8 @@ mod imp {
     use glib::once_cell::sync::OnceCell;
     use gtk::glib::{once_cell::sync::Lazy, ParamFlags, ParamSpec, ParamSpecObject, Value};
 
-    use crate::{file_chooser_entry::FileChooserEntry, subvolume::SubvolumeManager};
+    use crate::subvolume::SubvolumeManager;
+    use crate::widgets::FileChooserEntry;
 
     use super::*;
 
