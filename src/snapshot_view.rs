@@ -17,7 +17,7 @@ mod imp {
     use glib::object::WeakRef;
     use glib::once_cell::sync::OnceCell;
     use gtk::{
-        gio,
+        gdk, gio,
         gio::SimpleAction,
         glib::{self, once_cell::sync::Lazy, ParamFlags, ParamSpec, ParamSpecObject, Value},
         prelude::*,
@@ -198,6 +198,12 @@ mod imp {
             let model = gtk::MultiSelection::new(Some(&model));
             self.column_view.set_model(Some(&model));
         }
+
+        pub fn show_rename_popover(&self, pointing_to: &gdk::Rectangle, prefill: &str) {
+            self.rename_popover.set_text(prefill);
+            self.rename_popover.set_pointing_to(Some(pointing_to));
+            self.rename_popover.popup();
+        }
     }
 }
 
@@ -308,17 +314,15 @@ impl SnapshotView {
         rename_action.connect_activate(glib::clone!(@weak self as view => move |_, _| {
             let imp = view.imp();
             let col_view = imp.column_view.get();
-            let rename_popover = &imp.rename_popover;
             let selection_model = col_view.model().unwrap();
             let selection = selection_model.selection();
             if selection.size() != 1 {
                 println!("rename: selection size should be 1");
             }
             let idx = selection.nth(0);
-
             let item = extract_ith_list_item(&col_view, idx).unwrap();
-            rename_popover.set_pointing_to(Some(&item.allocation()));
-            rename_popover.popup();
+            let subvol: GSubvolume = selection_model.item(idx).unwrap().downcast().unwrap();
+            imp.show_rename_popover(&item.allocation(), subvol.name());
         }));
 
         let delete_action = gio::SimpleAction::new("delete", None);
