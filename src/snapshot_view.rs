@@ -22,12 +22,12 @@ mod imp {
         glib::{self, once_cell::sync::Lazy, ParamFlags, ParamSpec, ParamSpecObject, Value},
         prelude::*,
         subclass::prelude::*,
-        CompositeTemplate, MultiSelection,
+        CompositeTemplate,
     };
     use std::cell::RefCell;
 
     use crate::{
-        subvolume::{GSubvolume, SubvolumeManager},
+        subvolume::{GSubvolume, GSubvolumeCreatedSorter, SubvolumeManager},
         widgets::SnapshotRenamePopover,
     };
 
@@ -38,7 +38,6 @@ mod imp {
         pub column_view: TemplateChild<gtk::ColumnView>,
         pub selection_menu: OnceCell<gtk::PopoverMenu>,
         pub rename_popover: SnapshotRenamePopover,
-        pub model: OnceCell<gtk::FilterListModel>,
         pub single_select_actions: RefCell<Vec<SimpleAction>>,
         pub subvolume_manager: OnceCell<WeakRef<SubvolumeManager>>,
         pub actions: gio::SimpleActionGroup,
@@ -62,19 +61,7 @@ mod imp {
     impl ObjectImpl for SnapshotView {
         fn constructed(&self, obj: &Self::Type) {
             self.parent_constructed(obj);
-
-            // set list model and selection model
-            {
-                let filter = gtk::CustomFilter::new(|obj| {
-                    obj.downcast_ref::<GSubvolume>().unwrap().is_snapshot()
-                });
-                let model =
-                    gtk::FilterListModel::new(Some(obj.subvolume_manager().model()), Some(&filter));
-                self.model.set(model).expect("Failed to set model");
-
-                let selection_model = MultiSelection::new(Some(obj.model()));
-                self.column_view.set_model(Some(&selection_model));
-            }
+            self.setup_model(obj);
 
             let header_menu: gio::MenuModel = {
                 let menu_builder = gtk::Builder::from_string(include_str!(
@@ -92,6 +79,14 @@ mod imp {
                         .flags(glib::BindingFlags::SYNC_CREATE)
                         .build()
                 },
+                Some(|builder| {
+                    let exp = gtk::PropertyExpression::new(
+                        GSubvolume::static_type(),
+                        None::<&gtk::Expression>,
+                        "name",
+                    );
+                    builder.sorter(&gtk::StringSorter::new(Some(&exp))).build()
+                }),
                 gettext("Name").as_str(),
                 false,
                 &header_menu,
@@ -103,11 +98,19 @@ mod imp {
                         .flags(glib::BindingFlags::SYNC_CREATE)
                         .build()
                 },
+                Some(|builder| {
+                    let exp = gtk::PropertyExpression::new(
+                        GSubvolume::static_type(),
+                        None::<&gtk::Expression>,
+                        "path",
+                    );
+                    builder.sorter(&gtk::StringSorter::new(Some(&exp))).build()
+                }),
                 gettext("Path").as_str(),
                 false,
                 &header_menu,
             );
-            obj.setup_column(
+            let created_col = obj.setup_column(
                 "created",
                 |obj, label| {
                     obj.bind_property("created", &label, "label")
@@ -118,6 +121,7 @@ mod imp {
                         .flags(glib::BindingFlags::SYNC_CREATE)
                         .build()
                 },
+                Some(|builder| builder.sorter(&GSubvolumeCreatedSorter::new()).build()),
                 gettext("Created").as_str(),
                 false,
                 &header_menu,
@@ -129,10 +133,22 @@ mod imp {
                         .flags(glib::BindingFlags::SYNC_CREATE)
                         .build()
                 },
+                Some(|builder| {
+                    let exp = gtk::PropertyExpression::new(
+                        GSubvolume::static_type(),
+                        None::<&gtk::Expression>,
+                        "parent-path",
+                    );
+                    builder.sorter(&gtk::StringSorter::new(Some(&exp))).build()
+                }),
                 gettext("Source").as_str(),
                 true,
                 &header_menu,
             );
+            // set default sort order
+            self.column_view
+                .sort_by_column(Some(&created_col), gtk::SortType::Descending);
+
             obj.setup_clicks();
             obj.setup_rename_popover();
         }
@@ -169,11 +185,26 @@ mod imp {
     }
     impl WidgetImpl for SnapshotView {}
     impl BinImpl for SnapshotView {}
+
+    impl SnapshotView {
+        fn setup_model(&self, obj: &super::SnapshotView) {
+            let filter = gtk::CustomFilter::new(|obj| {
+                obj.downcast_ref::<GSubvolume>().unwrap().is_snapshot()
+            });
+            let model =
+                gtk::FilterListModel::new(Some(obj.subvolume_manager().model()), Some(&filter));
+
+            let model = gtk::SortListModel::new(Some(&model), self.column_view.sorter().as_ref());
+            let model = gtk::MultiSelection::new(Some(&model));
+            self.column_view.set_model(Some(&model));
+        }
+    }
 }
 
 glib::wrapper! {
     pub struct SnapshotView(ObjectSubclass<imp::SnapshotView>)
-        @extends gtk::Widget, adw::Bin;
+        @extends gtk::Widget, adw::Bin,
+        @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget;
 }
 
 impl SnapshotView {
@@ -181,8 +212,8 @@ impl SnapshotView {
         glib::Object::new(&[("subvolume-manager", subvolume_manager)]).unwrap()
     }
 
-    fn model(&self) -> &gtk::FilterListModel {
-        self.imp().model.get().expect("Failed to get model")
+    fn model(&self) -> gtk::SelectionModel {
+        self.imp().column_view.model().expect("Failed to get model")
     }
 
     fn set_single_select_actions_availability(&self, enable: bool) {
@@ -195,10 +226,11 @@ impl SnapshotView {
         &self,
         property: &'static str,
         create_binding: fn(GSubvolume, gtk::Label) -> glib::Binding,
+        build_with: Option<fn(gtk::builders::ColumnViewColumnBuilder) -> gtk::ColumnViewColumn>,
         title: &str,
         expand: bool,
         menu: &gio::MenuModel,
-    ) {
+    ) -> ColumnViewColumn {
         let column_view = self.imp().column_view.get();
 
         let factory = SignalListItemFactory::new();
@@ -233,8 +265,13 @@ impl SnapshotView {
             .factory(&factory)
             .expand(expand)
             .resizable(true)
-            .header_menu(menu)
-            .build();
+            .header_menu(menu);
+
+        let cvc = if let Some(build) = build_with {
+            build(cvc)
+        } else {
+            cvc.build()
+        };
 
         let show_action =
             gio::PropertyAction::new(format!("{}{}", "show-", property).as_str(), &cvc, "visible");
@@ -242,6 +279,7 @@ impl SnapshotView {
         self.imp().actions.add_action(&show_action);
 
         column_view.append_column(&cvc);
+        cvc
     }
 
     fn open_snapshot(&self, idx: u32) {

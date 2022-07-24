@@ -5,6 +5,9 @@ mod g_btrfs_filesystem;
 mod subvolume_manager;
 pub use g_btrfs_filesystem::GBtrfsFilesystem;
 
+mod created_sorter;
+pub use created_sorter::GSubvolumeCreatedSorter;
+
 use butter::daemon::interface;
 pub use subvolume_manager::SubvolumeManager;
 use uuid::Uuid;
@@ -112,6 +115,10 @@ impl GSubvolume {
 
     pub fn is_snapshot(&self) -> bool {
         self.data().snapshot_source_uuid.is_some()
+    }
+
+    pub fn created(&self) -> SystemTime {
+        self.data().created
     }
 
     pub fn g_created(&self) -> glib::DateTime {
