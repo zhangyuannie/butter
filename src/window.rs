@@ -1,5 +1,6 @@
 use crate::application::Application;
 use crate::snapshot_view::SnapshotView;
+use crate::widgets::AppHeaderBar;
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
 use gtk::{gio, glib};
@@ -9,10 +10,10 @@ mod imp {
     use adw::subclass::prelude::*;
     use gtk::{gio, glib, subclass::prelude::*, CompositeTemplate};
 
-    use crate::config::APP_ID;
+    use crate::{config::APP_ID, widgets::AppHeaderBar};
 
     #[derive(CompositeTemplate)]
-    #[template(resource = "/org/zhangyuannie/butter/ui/window.ui")]
+    #[template(resource = "/org/zhangyuannie/butter/ui/app_window.ui")]
     pub struct Window {
         #[template_child]
         pub content_box: TemplateChild<gtk::Box>,
@@ -20,6 +21,8 @@ mod imp {
         pub view_stack: TemplateChild<adw::ViewStack>,
         #[template_child]
         pub switcher_bar: TemplateChild<adw::ViewSwitcherBar>,
+        #[template_child]
+        pub header_bar: TemplateChild<AppHeaderBar>,
         pub settings: gio::Settings,
     }
 
@@ -29,6 +32,7 @@ mod imp {
                 content_box: TemplateChild::default(),
                 view_stack: TemplateChild::default(),
                 switcher_bar: TemplateChild::default(),
+                header_bar: TemplateChild::default(),
                 settings: gio::Settings::new(APP_ID),
             }
         }
@@ -36,7 +40,7 @@ mod imp {
 
     #[glib::object_subclass]
     impl ObjectSubclass for Window {
-        const NAME: &'static str = "ButterWindow";
+        const NAME: &'static str = "AppWindow";
         type Type = super::Window;
         type ParentType = adw::ApplicationWindow;
 
@@ -64,12 +68,29 @@ mod imp {
                 if cur_view == "snapshot" {
                     let view = win.snapshot_view();
                     view.present_creation_window();
-                } else {
-                    // TODO: schedule
                 }
             });
 
             obj.add_action(&new_action);
+
+            let header_bar = self.header_bar.get();
+            self.view_stack.connect_visible_child_name_notify(
+                glib::clone!(@weak header_bar => move |vs| {
+                    if let Some(view) = vs.visible_child_name() {
+                        match view.as_str() {
+                            "snapshot" => {
+                                header_bar.set_property("title-start", "add");
+                                header_bar.set_property("title-end", "fs");
+                            }
+                            "schedule" => {
+                                header_bar.set_property("title-start", "none");
+                                header_bar.set_property("title-end", "switch");
+                            }
+                            _ => unimplemented!(),
+                        }
+                    }
+                }),
+            );
         }
     }
     impl WidgetImpl for Window {}
@@ -115,6 +136,10 @@ impl Window {
 
     pub fn switcher_bar(&self) -> adw::ViewSwitcherBar {
         self.imp().switcher_bar.get()
+    }
+
+    pub fn header_bar(&self) -> AppHeaderBar {
+        self.imp().header_bar.get()
     }
 
     fn save_window_state(&self) -> Result<(), glib::BoolError> {

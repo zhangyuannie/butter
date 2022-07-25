@@ -1,5 +1,4 @@
 use adw::prelude::*;
-use adw::{HeaderBar, ViewSwitcherTitle};
 use gettext::gettext;
 use gtk::{gio, glib};
 
@@ -13,6 +12,7 @@ use crate::window::Window;
 pub fn build_ui(app: &Application) {
     let window = Window::new(&app);
     let view_stack = window.view_stack();
+    let header_bar = window.header_bar();
 
     let snapshot_page = view_stack.add(&SnapshotView::new(&app.subvolume_manager()));
     snapshot_page.set_name(Some("snapshot"));
@@ -24,20 +24,11 @@ pub fn build_ui(app: &Application) {
     schedule_page.set_title(Some(gettext("Schedule").as_str()));
     schedule_page.set_icon_name(Some("alarm-symbolic"));
 
-    let view_switcher_title = ViewSwitcherTitle::builder()
-        .stack(&view_stack)
-        .title(config::APP_NAME)
-        .build();
-
+    let view_switcher_title = header_bar.view_switcher_title();
+    view_switcher_title.set_stack(Some(&view_stack));
     view_switcher_title
         .bind_property("title-visible", &window.switcher_bar(), "reveal")
         .build();
-
-    let header_bar_builder =
-        gtk::Builder::from_string(include_str!("../data/resources/ui/header_bar.ui"));
-
-    let header_bar: HeaderBar = header_bar_builder.object("header_bar").unwrap();
-    header_bar.set_title_widget(Some(&view_switcher_title));
 
     // filesystem dropdown
     {
@@ -45,8 +36,10 @@ pub fn build_ui(app: &Application) {
             None,
             glib::closure!(|sv: GBtrfsFilesystem| sv.display()),
         );
-        let fs_dropdown =
-            gtk::DropDown::new(Some(app.subvolume_manager().filesystems()), Some(&exp));
+
+        let fs_dropdown = header_bar.fs_dropdown();
+        fs_dropdown.set_expression(Some(&exp));
+        fs_dropdown.set_model(Some(app.subvolume_manager().filesystems()));
 
         let app = app.clone();
         fs_dropdown.connect_selected_notify(move |dd| {
@@ -56,11 +49,8 @@ pub fn build_ui(app: &Application) {
                 app.subvolume_manager().set_filesystem(fs).unwrap();
             }
         });
-
-        header_bar.pack_end(&fs_dropdown);
     }
 
-    window.content_box().prepend(&header_bar);
     window.present();
 
     let about_action = gio::SimpleAction::new("about", None);

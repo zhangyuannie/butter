@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+
+  <template class="AppHeaderBar" parent="AdwBin">
+    <child>
+      <object class="AdwHeaderBar" id="header_bar">
+        <property name="centering_policy">strict</property>
+
+        <child type="title">
+          <object class="AdwViewSwitcherTitle" id="view_switcher_title">
+            <property name="title" translatable="yes">Butter</property>
+          </object>
+        </child>
+
+        <child>
+          <object class="GtkStack" id="start_stack">
+            <child>
+              <object class="GtkStackPage">
+                <property name="name">add</property>
+                <property name="child">
+                  <object class="GtkButton">
+                    <property name="icon_name">list-add-symbolic</property>
+                    <property name="action_name">win.new</property>
+                  </object>
+                </property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkStackPage">
+                <property name="name">none</property>
+                <property name="child">
+                  <object class="AdwBin"/>
+                </property>
+              </object>
+            </child>
+          </object>
+        </child>
+
+        <child type="end">
+          <object class="GtkMenuButton" id="menu_button">
+            <property name="icon_name">open-menu-symbolic</property>
+            <property name="menu_model">primary_menu</property>
+          </object>
+        </child>
+
+        <child type="end">
+          <object class="GtkStack" id="end_stack">
+            <property name="hhomogeneous">false</property>
+            <child>
+              <object class="GtkStackPage">
+                <property name="name">fs</property>
+                <property name="child">
+                  <object class="GtkDropDown" id="fs_dropdown"/>
+                </property>
+              </object>
+            </child>
+
+            <child>
+              <object class="GtkStackPage">
+                <property name="name">switch</property>
+                <property name="child">
+                  <object class="GtkSwitch" id="switch"/>
+                </property>
+              </object>
+            </child>
+          </object>
+        </child>
+
+      </object>
+    </child>
+  </template>
+
+  <menu id="primary_menu">
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">Preferences</attribute>
+        <attribute name="action">app.preferences</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">About Butter</attribute>
+        <attribute name="action">app.about</attribute>
+      </item>
+    </section>
+  </menu>
+</interface>

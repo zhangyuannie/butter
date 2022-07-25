@@ -6,3 +6,5 @@ mod snapshot_rename_popover;
 pub use snapshot_rename_popover::SnapshotRenamePopover;
 mod file_chooser_entry;
 pub use file_chooser_entry::FileChooserEntry;
+mod app_header_bar;
+pub use app_header_bar::AppHeaderBar;
