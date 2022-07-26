@@ -2,7 +2,7 @@ project(
   'butter',
   'rust',
   version: '0.1.0',
-  meson_version: '>= 0.59',
+  meson_version: '>= 0.60',
 )
 
 i18n = import('i18n')

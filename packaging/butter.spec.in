@@ -2,6 +2,7 @@
 %global commit @COMMIT@
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
 %global debug_package %{nil}
+%global systemd_units butter-schedule-prune.service butter-schedule-prune.timer butter-schedule-snapshot.service butter-schedule-snapshot.timer
 
 Name:           butter
 Version:        @VERSION@
@@ -15,17 +16,20 @@ Source:         https://github.com/zhangyuannie/butter/archive/%{commit}/%{name}
 BuildRequires:  meson
 BuildRequires:  cargo
 BuildRequires:  libadwaita-devel
-BuildRequires:  btrfs-progs-devel
+BuildRequires:  pkgconfig(libbtrfsutil)
 BuildRequires:  gtk4-devel
 BuildRequires:  gettext
 BuildRequires:  desktop-file-utils
 BuildRequires:  clang
+BuildRequires:  systemd
+BuildRequires:  systemd-rpm-macros
 
 Requires:       gtk4%{?_isa} >= 4.4.0
 Requires:       libadwaita%{?_isa} >= 1.0.0
-Requires:       libbtrfsutil{?_isa} >= 5.10.0
+Requires:       libbtrfsutil%{?_isa} >= 5.10.0
 Requires:       btrfs-progs >= 5.10.0
 Requires:       polkit
+Requires:       systemd
 
 %description
 Application for Btrfs snapshot management
@@ -41,6 +45,7 @@ Application for Btrfs snapshot management
 %{_datadir}/icons/hicolor/scalable/apps/org.zhangyuannie.butter.svg
 %{_datadir}/icons/hicolor/symbolic/apps/org.zhangyuannie.butter-symbolic.svg
 %{_datadir}/polkit-1/actions/org.zhangyuannie.butter.policy
+%{_unitdir}/%{name}*
 
 %prep
 %autosetup -n %{name}-%{commit} -p1
@@ -55,6 +60,15 @@ Application for Btrfs snapshot management
 
 %check
 desktop-file-validate $RPM_BUILD_ROOT%{_datadir}/applications/*.desktop
+
+%post
+%systemd_post %{systemd_units}
+
+%preun
+%systemd_preun %{systemd_units}
+
+%postun
+%systemd_postun_with_restart %{systemd_units}
 
 %changelog
 * Tue Mar 15 2022 Zhangyuan Nie <yuan@znie.org> - 0.1.0-1
