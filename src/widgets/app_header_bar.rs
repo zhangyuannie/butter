@@ -22,6 +22,8 @@ mod imp {
         pub start_stack: TemplateChild<gtk::Stack>,
         #[template_child]
         pub end_stack: TemplateChild<gtk::Stack>,
+        #[template_child]
+        pub switch: TemplateChild<gtk::Switch>,
     }
 
     #[glib::object_subclass]
@@ -116,5 +118,9 @@ impl AppHeaderBar {
 
     pub fn fs_dropdown(&self) -> &gtk::DropDown {
         self.imp().fs_dropdown.as_ref()
+    }
+
+    pub fn switch(&self) -> &gtk::Switch {
+        self.imp().switch.as_ref()
     }
 }

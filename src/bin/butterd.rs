@@ -4,7 +4,7 @@ use std::num::NonZeroU64;
 use std::path::{Path, PathBuf};
 
 use anyhow::Context;
-use butter::daemon::cmd::btrfs_filesystem_show;
+use butter::daemon::cmd;
 use butter::daemon::interface::{BtrfsFilesystem, DaemonInterface, Request, Result, Subvolume};
 use butter::daemon::mounted_fs::MountedTopLevelSubvolume;
 use libbtrfsutil::CreateSnapshotFlags;
@@ -38,7 +38,7 @@ impl Daemon {
 
 impl DaemonInterface for Daemon {
     fn list_filesystems(&mut self) -> Result<Vec<BtrfsFilesystem>> {
-        let ret = btrfs_filesystem_show()?;
+        let ret = cmd::btrfs_filesystem_show()?;
         Ok(ret)
     }
 
@@ -140,6 +140,21 @@ impl DaemonInterface for Daemon {
             snapshot_source_uuid: info.parent_uuid(),
         })
     }
+
+    fn is_schedule_enabled(&mut self) -> bool {
+        cmd::is_systemd_unit_active("butter-schedule-snapshot.timer").unwrap_or(false)
+    }
+
+    fn set_is_schedule_enabled(&mut self, is_enabled: bool) -> Result<()> {
+        if is_enabled {
+            cmd::enable_systemd_unit("butter-schedule-snapshot.timer", true)?;
+            cmd::enable_systemd_unit("butter-schedule-prune.timer", true)?;
+        } else {
+            cmd::disable_systemd_unit("butter-schedule-snapshot.timer", true)?;
+            cmd::disable_systemd_unit("butter-schedule-prune.timer", true)?;
+        }
+        Ok(())
+    }
 }
 
 fn main() {
@@ -164,6 +179,10 @@ fn main() {
                 dest,
                 CreateSnapshotFlags::from_bits_truncate(flags),
             )),
+            Request::IsScheduleEnabled => serde_json::to_string(&d.is_schedule_enabled()),
+            Request::SetIsScheduleEnabled(is_enabled) => {
+                serde_json::to_string(&d.set_is_schedule_enabled(is_enabled))
+            }
         };
         let response = response.expect("failed to serialize response");
 

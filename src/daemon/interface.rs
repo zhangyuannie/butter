@@ -51,6 +51,8 @@ pub trait DaemonInterface {
         dest: PathBuf,
         flags: libbtrfsutil::CreateSnapshotFlags,
     ) -> Result<Subvolume>;
+    fn is_schedule_enabled(&mut self) -> bool;
+    fn set_is_schedule_enabled(&mut self, is_enabled: bool) -> Result<()>;
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -62,6 +64,8 @@ pub enum Request {
     MoveSubvolume(PathBuf, PathBuf),
     DeleteSubvolume(PathBuf),
     CreateSnapshot(PathBuf, PathBuf, c_int),
+    IsScheduleEnabled,
+    SetIsScheduleEnabled(bool),
 }
 
 #[derive(Debug, Serialize, Deserialize)]

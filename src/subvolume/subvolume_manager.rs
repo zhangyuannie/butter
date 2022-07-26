@@ -77,6 +77,14 @@ mod daemon {
             serde_json::from_slice(&self.run(Request::CreateSnapshot(src, dest, flags.bits())))
                 .unwrap()
         }
+
+        fn is_schedule_enabled(&mut self) -> bool {
+            serde_json::from_slice(&self.run(Request::IsScheduleEnabled)).unwrap()
+        }
+
+        fn set_is_schedule_enabled(&mut self, is_enabled: bool) -> Result<()> {
+            serde_json::from_slice(&self.run(Request::SetIsScheduleEnabled(is_enabled))).unwrap()
+        }
     }
 }
 
@@ -230,6 +238,17 @@ impl SubvolumeManager {
             },
         )?;
         self.refresh_subvolumes();
+        Ok(())
+    }
+
+    pub fn is_schedule_enabled(&self) -> bool {
+        let daemon = self.imp().daemon.get().unwrap();
+        daemon.lock().unwrap().is_schedule_enabled()
+    }
+
+    pub fn set_is_schedule_enabled(&self, is_enabled: bool) -> anyhow::Result<()> {
+        let daemon = self.imp().daemon.get().unwrap();
+        daemon.lock().unwrap().set_is_schedule_enabled(is_enabled)?;
         Ok(())
     }
 }
