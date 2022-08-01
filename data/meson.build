@@ -39,7 +39,7 @@ install_data(
   install_dir: systemd_unit_dir
 )
 
-meson.add_install_script('restorecon',
+meson.add_install_script(script_restorecon,
   systemd_unit_dir / 'butter-schedule-snapshot.service',
   systemd_unit_dir / 'butter-schedule-prune.service',
   systemd_unit_dir / 'butter-schedule-snapshot.timer',

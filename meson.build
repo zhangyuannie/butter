@@ -12,6 +12,9 @@ id = 'org.zhangyuannie.butter'
 
 cargo = find_program('cargo', required: true)
 
+script_restorecon = find_program('scripts/restorecon')
+script_cargo_build = find_program('scripts/cargo_build')
+
 prefix = get_option('prefix')
 bindir = prefix / get_option('bindir')
 localedir = prefix / get_option('localedir')

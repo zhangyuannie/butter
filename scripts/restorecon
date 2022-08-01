@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # workaround https://github.com/mesonbuild/meson/issues/10614
-if command -v restorecon &> /dev/null; then
+if command -v restorecon 2>&1 /dev/null; then
   for path in "$@"; do
     restorecon -F "${DESTDIR}/${path}" 1>&2
   done
