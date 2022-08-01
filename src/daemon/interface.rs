@@ -38,34 +38,17 @@ impl std::error::Error for Error {}
 
 pub type Result<T> = result::Result<T, Error>;
 
+#[rpc::service]
 pub trait DaemonInterface {
-    fn list_filesystems(&mut self) -> Result<Vec<BtrfsFilesystem>>;
-    fn filesystem(&mut self) -> Option<Uuid>;
-    fn set_filesystem(&mut self, fs: BtrfsFilesystem) -> Result<bool>;
-    fn list_subvolumes(&mut self) -> Result<Vec<Subvolume>>;
-    fn move_subvolume(&mut self, from: PathBuf, to: PathBuf) -> Result<()>;
-    fn delete_subvolume(&mut self, path: PathBuf) -> Result<()>;
-    fn create_snapshot(
-        &mut self,
-        src: PathBuf,
-        dest: PathBuf,
-        flags: libbtrfsutil::CreateSnapshotFlags,
-    ) -> Result<Subvolume>;
-    fn is_schedule_enabled(&mut self) -> bool;
-    fn set_is_schedule_enabled(&mut self, is_enabled: bool) -> Result<()>;
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub enum Request {
-    ListFilesystems,
-    Filesystem,
-    SetFilesystem(BtrfsFilesystem),
-    ListSubvolumes,
-    MoveSubvolume(PathBuf, PathBuf),
-    DeleteSubvolume(PathBuf),
-    CreateSnapshot(PathBuf, PathBuf, c_int),
-    IsScheduleEnabled,
-    SetIsScheduleEnabled(bool),
+    fn list_filesystems() -> Result<Vec<BtrfsFilesystem>>;
+    fn filesystem() -> Option<Uuid>;
+    fn set_filesystem(fs: BtrfsFilesystem) -> Result<bool>;
+    fn list_subvolumes() -> Result<Vec<Subvolume>>;
+    fn move_subvolume(from: PathBuf, to: PathBuf) -> Result<()>;
+    fn delete_subvolume(path: PathBuf) -> Result<()>;
+    fn create_snapshot(src: PathBuf, dest: PathBuf, flags: c_int) -> Result<Subvolume>;
+    fn is_schedule_enabled() -> bool;
+    fn set_is_schedule_enabled(is_enabled: bool) -> Result<()>;
 }
 
 #[derive(Debug, Serialize, Deserialize)]

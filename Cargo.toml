@@ -5,7 +5,8 @@ edition = "2021"
 authors = ["Zhangyuan Nie"]
 license = "GPL-3.0-only"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[workspace]
+members = ["rpc"]
 
 [dependencies]
 gtk = { version = "0.4", package = "gtk4" }
@@ -25,3 +26,7 @@ indexmap = "1.8.2"
 chrono = "0.4.19"
 clap = { version = "3.2.8", features = ["derive"] }
 rand = "0.8.5"
+
+[dependencies.rpc]
+path = "rpc"
+version = "0.1.0"

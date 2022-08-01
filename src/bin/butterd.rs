@@ -1,13 +1,13 @@
 use std::fs;
-use std::io::{self, BufRead};
 use std::num::NonZeroU64;
 use std::path::{Path, PathBuf};
 
 use anyhow::Context;
 use butter::daemon::cmd;
-use butter::daemon::interface::{BtrfsFilesystem, DaemonInterface, Request, Result, Subvolume};
+use butter::daemon::interface::{BtrfsFilesystem, DaemonInterface, Result, Subvolume};
 use butter::daemon::mounted_fs::MountedTopLevelSubvolume;
 use libbtrfsutil::CreateSnapshotFlags;
+use libc::c_int;
 use uuid::Uuid;
 
 struct MountedFs {
@@ -113,12 +113,7 @@ impl DaemonInterface for Daemon {
         Ok(())
     }
 
-    fn create_snapshot(
-        &mut self,
-        src: PathBuf,
-        dest: PathBuf,
-        flags: libbtrfsutil::CreateSnapshotFlags,
-    ) -> Result<Subvolume> {
+    fn create_snapshot(&mut self, src: PathBuf, dest: PathBuf, flags: c_int) -> Result<Subvolume> {
         if let Some(dest_parent) = dest.parent() {
             fs::create_dir_all(dest_parent).context("failed to create target parent")?;
         }
@@ -126,7 +121,7 @@ impl DaemonInterface for Daemon {
         libbtrfsutil::create_snapshot(
             self.path_within_fs(&src)?,
             self.path_within_fs(&dest)?,
-            flags,
+            CreateSnapshotFlags::from_bits_truncate(flags),
             None,
         )
         .context("failed to create snapshot")?;
@@ -159,33 +154,5 @@ impl DaemonInterface for Daemon {
 
 fn main() {
     let mut d = Daemon::new();
-    let stdin = io::stdin();
-    for line in stdin.lock().lines() {
-        let line = line.unwrap();
-        if line.is_empty() {
-            break;
-        }
-        let req: Request = serde_json::from_str(&line).unwrap();
-        eprintln!("{:?}", req);
-        let response = match req {
-            Request::ListFilesystems => serde_json::to_string(&d.list_filesystems()),
-            Request::Filesystem => serde_json::to_string(&d.filesystem()),
-            Request::SetFilesystem(device) => serde_json::to_string(&d.set_filesystem(device)),
-            Request::ListSubvolumes => serde_json::to_string(&d.list_subvolumes()),
-            Request::MoveSubvolume(from, to) => serde_json::to_string(&d.move_subvolume(from, to)),
-            Request::DeleteSubvolume(path) => serde_json::to_string(&d.delete_subvolume(path)),
-            Request::CreateSnapshot(src, dest, flags) => serde_json::to_string(&d.create_snapshot(
-                src,
-                dest,
-                CreateSnapshotFlags::from_bits_truncate(flags),
-            )),
-            Request::IsScheduleEnabled => serde_json::to_string(&d.is_schedule_enabled()),
-            Request::SetIsScheduleEnabled(is_enabled) => {
-                serde_json::to_string(&d.set_is_schedule_enabled(is_enabled))
-            }
-        };
-        let response = response.expect("failed to serialize response");
-
-        println!("{}", response);
-    }
+    d.serve();
 }

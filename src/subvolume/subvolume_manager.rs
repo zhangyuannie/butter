@@ -3,13 +3,13 @@ use crate::subvolume::{GSubvolume, SubvolList};
 #[allow(unused_imports)]
 use gtk::prelude::*;
 
-use butter::daemon::interface::DaemonInterface;
+use butter::daemon::interface::DaemonInterfaceClient;
 use glib::once_cell::sync::OnceCell;
 use gtk::{gio, glib, subclass::prelude::*};
 use std::collections::HashMap;
-use std::io::{BufRead, BufReader, Write};
+use std::io::BufReader;
 use std::path::PathBuf;
-use std::process::{self, ChildStdin, ChildStdout};
+use std::process::{ChildStdin, ChildStdout};
 use std::sync::Mutex;
 use uuid::Uuid;
 
@@ -17,84 +17,13 @@ use butter::daemon::interface::BtrfsFilesystem;
 
 use super::g_btrfs_filesystem::GBtrfsFilesystem;
 
-mod daemon {
-
-    use butter::daemon::interface::{BtrfsFilesystem, DaemonInterface, Request, Result, Subvolume};
-
-    use super::*;
-
-    #[derive(Debug)]
-    pub struct Daemon {
-        pub reader: BufReader<ChildStdout>,
-        pub writer: ChildStdin,
-    }
-
-    impl Daemon {
-        pub fn run(&mut self, request: Request) -> Vec<u8> {
-            let req = serde_json::to_string(&request).unwrap();
-            writeln!(self.writer, "{}", req).unwrap();
-            let mut ret = Vec::new();
-            let byte_count = self.reader.read_until('\n' as u8, &mut ret).unwrap();
-            if byte_count == 0 {
-                println!("Daemon exited unexpectedly!");
-                process::exit(1);
-            }
-            ret
-        }
-    }
-
-    impl DaemonInterface for Daemon {
-        fn list_filesystems(&mut self) -> Result<Vec<BtrfsFilesystem>> {
-            serde_json::from_slice(&self.run(Request::ListFilesystems)).unwrap()
-        }
-
-        fn filesystem(&mut self) -> Option<Uuid> {
-            serde_json::from_slice(&self.run(Request::Filesystem)).unwrap()
-        }
-
-        fn set_filesystem(&mut self, device: BtrfsFilesystem) -> Result<bool> {
-            serde_json::from_slice(&self.run(Request::SetFilesystem(device))).unwrap()
-        }
-
-        fn list_subvolumes(&mut self) -> Result<Vec<Subvolume>> {
-            serde_json::from_slice(&self.run(Request::ListSubvolumes)).unwrap()
-        }
-
-        fn move_subvolume(&mut self, from: PathBuf, to: PathBuf) -> Result<()> {
-            serde_json::from_slice(&self.run(Request::MoveSubvolume(from, to))).unwrap()
-        }
-
-        fn delete_subvolume(&mut self, path: PathBuf) -> Result<()> {
-            serde_json::from_slice(&self.run(Request::DeleteSubvolume(path))).unwrap()
-        }
-
-        fn create_snapshot(
-            &mut self,
-            src: PathBuf,
-            dest: PathBuf,
-            flags: libbtrfsutil::CreateSnapshotFlags,
-        ) -> Result<Subvolume> {
-            serde_json::from_slice(&self.run(Request::CreateSnapshot(src, dest, flags.bits())))
-                .unwrap()
-        }
-
-        fn is_schedule_enabled(&mut self) -> bool {
-            serde_json::from_slice(&self.run(Request::IsScheduleEnabled)).unwrap()
-        }
-
-        fn set_is_schedule_enabled(&mut self, is_enabled: bool) -> Result<()> {
-            serde_json::from_slice(&self.run(Request::SetIsScheduleEnabled(is_enabled))).unwrap()
-        }
-    }
-}
-
 mod imp {
     use crate::subvolume::g_btrfs_filesystem::GBtrfsFilesystem;
 
     use super::*;
 
     pub struct SubvolumeManager {
-        pub daemon: OnceCell<Mutex<daemon::Daemon>>,
+        pub daemon: OnceCell<Mutex<DaemonInterfaceClient>>,
         pub model: SubvolList,
         pub filesystems: gio::ListStore,
     }
@@ -128,7 +57,7 @@ impl SubvolumeManager {
         let imp = ret.imp();
 
         imp.daemon
-            .set(Mutex::new(daemon::Daemon {
+            .set(Mutex::new(DaemonInterfaceClient {
                 reader: BufReader::new(stdout),
                 writer: stdin,
             }))
@@ -232,9 +161,9 @@ impl SubvolumeManager {
             src,
             dest,
             if readonly {
-                libbtrfsutil::CreateSnapshotFlags::READ_ONLY
+                libbtrfsutil::CreateSnapshotFlags::READ_ONLY.bits()
             } else {
-                libbtrfsutil::CreateSnapshotFlags::empty()
+                0
             },
         )?;
         self.refresh_subvolumes();
