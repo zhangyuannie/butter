@@ -6,7 +6,7 @@ authors = ["Zhangyuan Nie"]
 license = "GPL-3.0-only"
 
 [workspace]
-members = ["rpc"]
+members = ["rpc", "rpc-macros"]
 
 [dependencies]
 gtk = { version = "0.4", package = "gtk4" }
