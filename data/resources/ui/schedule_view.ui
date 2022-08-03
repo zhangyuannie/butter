@@ -17,27 +17,15 @@
             </property>
 
             <child>
-              <object class="GtkStack" id="rule_stack">
-                <child>
-                  <object class="GtkListBox" id="empty_rule_list">
-                    <property name="selection_mode">none</property>
-                    <style>
-                      <class name="boxed-list" />
-                    </style>
-                    <child>
-                      <object class="AdwActionRow">
-                        <property name="activatable">False</property>
-                        <property name="title" translatable="yes">Not set up</property>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkListBox" id="main_rule_list">
-                    <property name="selection_mode">none</property>
-                    <style>
-                      <class name="boxed-list" />
-                    </style>
+              <object class="GtkListBox" id="rule_list">
+                <property name="selection_mode">none</property>
+                <style>
+                  <class name="boxed-list" />
+                </style>
+                <child type="placeholder">
+                  <object class="AdwActionRow">
+                    <property name="activatable">False</property>
+                    <property name="title" translatable="yes">Not set up</property>
                   </object>
                 </child>
               </object>

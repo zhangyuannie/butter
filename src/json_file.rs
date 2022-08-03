@@ -1,8 +1,9 @@
 use std::{fs, io, path::PathBuf};
 
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{de::DeserializeOwned, Serialize, Deserialize};
 use tempfile::NamedTempFile;
 
+#[derive(Serialize, Deserialize)]
 pub struct JsonFile<T> {
     path: PathBuf,
     data: T,

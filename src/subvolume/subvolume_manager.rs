@@ -1,6 +1,6 @@
 use crate::subvolume::{GSubvolume, SubvolList};
 
-#[allow(unused_imports)]
+use gtk::glib::BoxedAnyObject;
 use gtk::prelude::*;
 
 use butter::daemon::interface::DaemonInterfaceClient;
@@ -179,5 +179,15 @@ impl SubvolumeManager {
         let daemon = self.imp().daemon.get().unwrap();
         daemon.lock().unwrap().set_is_schedule_enabled(is_enabled)?;
         Ok(())
+    }
+
+    pub fn schedules(&self) -> anyhow::Result<gio::ListStore> {
+        let daemon = self.imp().daemon.get().unwrap();
+        let schedules = daemon.lock().unwrap().schedules()?;
+        let ret = gio::ListStore::new(BoxedAnyObject::static_type());
+        for schedule in schedules {
+            ret.append(&BoxedAnyObject::new(schedule));
+        }
+        Ok(ret)
     }
 }

@@ -9,6 +9,8 @@ use libc::c_int;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::{json_file::JsonFile, schedule::Schedule};
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Error {
     msg: String,
@@ -49,6 +51,7 @@ pub trait DaemonInterface {
     fn create_snapshot(src: PathBuf, dest: PathBuf, flags: c_int) -> Result<Subvolume>;
     fn is_schedule_enabled() -> bool;
     fn set_is_schedule_enabled(is_enabled: bool) -> Result<()>;
+    fn schedules() -> Result<Vec<JsonFile<Schedule>>>;
 }
 
 #[derive(Debug, Serialize, Deserialize)]

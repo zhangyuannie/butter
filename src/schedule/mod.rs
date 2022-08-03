@@ -8,14 +8,13 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 
 use crate::schedule::select::{select_snapshots_to_remove, DateTimeSortable};
 
-use self::{
-    conf::{ReadScheduleDir, Schedule},
-    name::RandomName,
-};
+use self::name::RandomName;
 
 mod conf;
 mod name;
 mod select;
+
+pub use conf::{ReadScheduleDir, Schedule};
 
 pub fn cmd_snapshot() {
     for schedule in ReadScheduleDir::new().expect("Failed to read config directory") {

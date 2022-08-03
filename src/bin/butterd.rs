@@ -6,6 +6,8 @@ use anyhow::Context;
 use butter::daemon::cmd;
 use butter::daemon::interface::{BtrfsFilesystem, DaemonInterface, Result, Subvolume};
 use butter::daemon::mounted_fs::MountedTopLevelSubvolume;
+use butter::json_file::JsonFile;
+use butter::schedule::{ReadScheduleDir, Schedule};
 use libbtrfsutil::CreateSnapshotFlags;
 use libc::c_int;
 use uuid::Uuid;
@@ -149,6 +151,11 @@ impl DaemonInterface for Daemon {
             cmd::disable_systemd_unit("butter-schedule-prune.timer", true)?;
         }
         Ok(())
+    }
+
+    fn schedules(&mut self) -> Result<Vec<JsonFile<Schedule>>> {
+        let schedules = ReadScheduleDir::new().context("Failed to read config directory")?;
+        Ok(schedules.map_while(|s| s.ok()).collect())
     }
 }
 
