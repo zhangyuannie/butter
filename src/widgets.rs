@@ -8,3 +8,7 @@ mod file_chooser_entry;
 pub use file_chooser_entry::FileChooserEntry;
 mod app_header_bar;
 pub use app_header_bar::AppHeaderBar;
+mod schedule_rule_row;
+pub use schedule_rule_row::ScheduleRuleRow;
+mod schedule_rule_edit_dialog;
+pub use schedule_rule_edit_dialog::ScheduleRuleEditDialog;

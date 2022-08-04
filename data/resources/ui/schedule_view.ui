@@ -10,6 +10,7 @@
             <property name="header-suffix">
               <object class="GtkButton">
                 <property name="icon_name">list-add-symbolic</property>
+                <signal name="clicked" handler="on_add_button_clicked" swapped="true"/>
                 <style>
                   <class name="flat" />
                 </style>

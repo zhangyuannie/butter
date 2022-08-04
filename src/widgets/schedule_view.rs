@@ -1,7 +1,5 @@
-use std::cell::Ref;
-
 use adw::subclass::prelude::*;
-use butter::{json_file::JsonFile, schedule::Schedule, show_error_dialog};
+use butter::show_error_dialog;
 use gtk::{
     glib::{self, BoxedAnyObject, Object},
     prelude::*,
@@ -10,6 +8,8 @@ use gtk::{
 };
 
 use crate::subvolume::SubvolumeManager;
+
+use super::{ScheduleRuleEditDialog, ScheduleRuleRow};
 
 mod imp {
     use glib::once_cell::sync::{Lazy, OnceCell};
@@ -32,7 +32,8 @@ mod imp {
         type Type = super::ScheduleView;
 
         fn class_init(klass: &mut Self::Class) {
-            Self::bind_template(klass);
+            klass.bind_template();
+            klass.bind_template_instance_callbacks();
         }
 
         fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
@@ -66,6 +67,7 @@ mod imp {
         }
 
         fn constructed(&self, obj: &Self::Type) {
+            self.parent_constructed(obj);
             obj.refresh();
         }
     }
@@ -79,20 +81,26 @@ glib::wrapper! {
         @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget;
 }
 
+#[gtk::template_callbacks]
 impl ScheduleView {
     pub fn new(client: &SubvolumeManager) -> Self {
         Object::new(&[("client", client)]).expect("Failed to create ScheduleView")
+    }
+
+    #[template_callback]
+    pub fn on_add_button_clicked(&self) {
+        let win = self.root().and_then(|w| w.downcast::<gtk::Window>().ok());
+        let dialog = ScheduleRuleEditDialog::new(None);
+        dialog.set_transient_for(win.as_ref());
+        dialog.show();
     }
 
     pub fn refresh(&self) {
         match self.imp().client.get().unwrap().schedules() {
             Ok(model) => self.imp().rule_list.bind_model(Some(&model), |obj| {
                 let boxed = obj.downcast_ref::<BoxedAnyObject>().unwrap();
-                let schedule: Ref<JsonFile<Schedule>> = boxed.borrow();
-                adw::ActionRow::builder()
-                    .title(schedule.name())
-                    .build()
-                    .upcast()
+                let ret = ScheduleRuleRow::new(boxed);
+                ret.upcast()
             }),
             Err(err) => {
                 let win = self.root().and_then(|w| w.downcast::<gtk::Window>().ok());

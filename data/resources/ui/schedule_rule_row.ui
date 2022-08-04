@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="ScheduleRuleRow" parent="AdwActionRow">
+    <property name="activatable">True</property>
+    <signal name="activated" handler="on_activated" swapped="true"/>
+
+    <child type="suffix">
+      <object class="GtkSwitch">
+        <property name="valign">center</property>
+      </object>
+    </child>
+  </template>
+</interface>
