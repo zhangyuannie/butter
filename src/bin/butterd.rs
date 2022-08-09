@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Context;
 use butter::daemon::cmd;
-use butter::daemon::interface::{BtrfsFilesystem, DaemonInterface, Result, Subvolume};
+use butter::daemon::interface::{BtrfsFilesystem, Butterd, Result, Subvolume};
 use butter::daemon::mounted_fs::MountedTopLevelSubvolume;
 use butter::json_file::JsonFile;
 use butter::schedule::{ReadScheduleDir, Schedule};
@@ -38,7 +38,7 @@ impl Daemon {
     }
 }
 
-impl DaemonInterface for Daemon {
+impl Butterd for Daemon {
     fn list_filesystems(&mut self) -> Result<Vec<BtrfsFilesystem>> {
         let ret = cmd::btrfs_filesystem_show()?;
         Ok(ret)

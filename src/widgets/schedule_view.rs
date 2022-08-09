@@ -1,19 +1,22 @@
+use adw::prelude::*;
 use adw::subclass::prelude::*;
 use butter::show_error_dialog;
 use gtk::{
-    glib::{self, BoxedAnyObject, Object},
+    glib::{self, Object},
     prelude::*,
     subclass::prelude::*,
     CompositeTemplate,
 };
 
-use crate::subvolume::SubvolumeManager;
+use crate::schedule_repo::{ScheduleObject, ScheduleRepo};
 
 use super::{ScheduleRuleEditDialog, ScheduleRuleRow};
 
 mod imp {
     use glib::once_cell::sync::{Lazy, OnceCell};
     use gtk::glib::{ParamSpec, Value};
+
+    use crate::schedule_repo::ScheduleObject;
 
     use super::*;
 
@@ -22,7 +25,7 @@ mod imp {
     pub struct ScheduleView {
         #[template_child]
         pub rule_list: TemplateChild<gtk::ListBox>,
-        pub client: OnceCell<SubvolumeManager>,
+        pub repo: OnceCell<ScheduleRepo>,
     }
 
     #[glib::object_subclass]
@@ -45,10 +48,10 @@ mod imp {
         fn properties() -> &'static [glib::ParamSpec] {
             static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
                 vec![glib::ParamSpecObject::new(
-                    "client",
-                    "client",
-                    "client",
-                    SubvolumeManager::static_type(),
+                    "repo",
+                    "repo",
+                    "repo",
+                    ScheduleRepo::static_type(),
                     glib::ParamFlags::READWRITE | glib::ParamFlags::CONSTRUCT_ONLY,
                 )]
             });
@@ -57,18 +60,25 @@ mod imp {
 
         fn set_property(&self, _obj: &Self::Type, _id: usize, value: &Value, pspec: &ParamSpec) {
             match pspec.name() {
-                "client" => self
-                    .client
-                    .set(value.get::<SubvolumeManager>().unwrap())
-                    .unwrap(),
-
+                "repo" => self.repo.set(value.get().unwrap()).unwrap(),
                 _ => unimplemented!(),
             }
         }
 
         fn constructed(&self, obj: &Self::Type) {
             self.parent_constructed(obj);
-            obj.refresh();
+            self.rule_list.bind_model(
+                Some(self.repo.get().unwrap().model()),
+                glib::clone!(@weak obj => @default-panic, move |schedule| {
+                    let schedule = schedule.downcast_ref::<ScheduleObject>().unwrap();
+                    let ret = ScheduleRuleRow::new(schedule);
+                    ret.connect_activated(move |row| {
+                        obj.show_edit_dialog(row.imp().rule.get());
+                    });
+
+                    ret.upcast()
+                }),
+            );
         }
     }
     impl WidgetImpl for ScheduleView {}
@@ -83,32 +93,19 @@ glib::wrapper! {
 
 #[gtk::template_callbacks]
 impl ScheduleView {
-    pub fn new(client: &SubvolumeManager) -> Self {
-        Object::new(&[("client", client)]).expect("Failed to create ScheduleView")
+    pub fn new(repo: &ScheduleRepo) -> Self {
+        Object::new(&[("repo", repo)]).expect("Failed to create ScheduleView")
     }
 
-    #[template_callback]
-    pub fn on_add_button_clicked(&self) {
+    pub fn show_edit_dialog(&self, schedule: Option<&ScheduleObject>) {
         let win = self.root().and_then(|w| w.downcast::<gtk::Window>().ok());
-        let dialog = ScheduleRuleEditDialog::new(self.imp().client.get().unwrap(), None);
+        let dialog = ScheduleRuleEditDialog::new(self.imp().repo.get().unwrap(), schedule);
         dialog.set_transient_for(win.as_ref());
         dialog.show();
     }
 
-    pub fn refresh(&self) {
-        match self.imp().client.get().unwrap().schedules() {
-            Ok(model) => self.imp().rule_list.bind_model(Some(&model), |obj| {
-                let boxed = obj.downcast_ref::<BoxedAnyObject>().unwrap();
-                let ret = ScheduleRuleRow::new(boxed);
-                ret.upcast()
-            }),
-            Err(err) => {
-                let win = self.root().and_then(|w| w.downcast::<gtk::Window>().ok());
-                show_error_dialog(
-                    win.as_ref(),
-                    &err.context("failed to reload schedule rules").to_string(),
-                )
-            }
-        }
+    #[template_callback]
+    pub fn on_add_button_clicked(&self) {
+        self.show_edit_dialog(None);
     }
 }

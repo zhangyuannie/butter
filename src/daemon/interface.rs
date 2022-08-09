@@ -41,7 +41,7 @@ impl std::error::Error for Error {}
 pub type Result<T> = result::Result<T, Error>;
 
 #[rpc::service]
-pub trait DaemonInterface {
+pub trait Butterd {
     fn list_filesystems() -> Result<Vec<BtrfsFilesystem>>;
     fn filesystem() -> Option<Uuid>;
     fn set_filesystem(fs: BtrfsFilesystem) -> Result<bool>;

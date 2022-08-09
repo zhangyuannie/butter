@@ -4,9 +4,7 @@ use gtk::prelude::*;
 use gtk::subclass::prelude::*;
 use gtk::{glib, CompositeTemplate};
 
-use crate::window::Window;
-
-use super::ScheduleRuleEditDialog;
+use crate::schedule_repo::ScheduleObject;
 
 mod imp {
     use std::cell::Ref;
@@ -21,7 +19,7 @@ mod imp {
     #[derive(Default, CompositeTemplate)]
     #[template(resource = "/org/zhangyuannie/butter/ui/schedule_rule_row.ui")]
     pub struct ScheduleRuleRow {
-        pub rule: OnceCell<glib::BoxedAnyObject>,
+        pub rule: OnceCell<ScheduleObject>,
     }
 
     impl ScheduleRuleRow {
@@ -38,7 +36,6 @@ mod imp {
 
         fn class_init(klass: &mut Self::Class) {
             klass.bind_template();
-            klass.bind_template_instance_callbacks();
         }
 
         fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
@@ -53,7 +50,7 @@ mod imp {
                     "rule",
                     "rule",
                     "rule",
-                    glib::BoxedAnyObject::static_type(),
+                    ScheduleObject::static_type(),
                     glib::ParamFlags::READWRITE | glib::ParamFlags::CONSTRUCT_ONLY,
                 )]
             });
@@ -62,10 +59,7 @@ mod imp {
 
         fn set_property(&self, _obj: &Self::Type, _id: usize, value: &Value, pspec: &ParamSpec) {
             match pspec.name() {
-                "rule" => self
-                    .rule
-                    .set(value.get::<glib::BoxedAnyObject>().unwrap())
-                    .unwrap(),
+                "rule" => self.rule.set(value.get().unwrap()).unwrap(),
 
                 _ => unimplemented!(),
             }
@@ -90,17 +84,8 @@ glib::wrapper! {
     @implements gtk::Accessible, gtk::Actionable, gtk::Buildable, gtk::ConstraintTarget;
 }
 
-#[gtk::template_callbacks]
 impl ScheduleRuleRow {
-    pub fn new(rule: &glib::BoxedAnyObject) -> Self {
+    pub fn new(rule: &ScheduleObject) -> Self {
         Object::new(&[("rule", rule)]).expect("Failed to create ScheduleRuleRow")
-    }
-
-    #[template_callback]
-    fn on_activated(&self) {
-        let win = self.root().unwrap().downcast::<Window>().unwrap();
-        let dialog = ScheduleRuleEditDialog::new(&win.subvolume_manager(), self.imp().rule.get());
-        dialog.set_transient_for(Some(&win));
-        dialog.show();
     }
 }

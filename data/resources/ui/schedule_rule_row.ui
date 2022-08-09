@@ -2,7 +2,6 @@
 <interface>
   <template class="ScheduleRuleRow" parent="AdwActionRow">
     <property name="activatable">True</property>
-    <signal name="activated" handler="on_activated" swapped="true"/>
 
     <child type="suffix">
       <object class="GtkSwitch">

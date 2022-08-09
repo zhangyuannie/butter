@@ -1,14 +1,12 @@
 use adw::subclass::prelude::*;
 use butter::config;
-use butter::json_file::JsonFile;
-use butter::schedule::Schedule;
-use gtk::glib::{BoxedAnyObject, Object};
+use gtk::glib::Object;
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
 use gtk::{glib, CompositeTemplate};
 use std::path::PathBuf;
 
-use crate::subvolume::SubvolumeManager;
+use crate::schedule_repo::{ScheduleObject, ScheduleRepo};
 
 mod imp {
     use std::cell::Ref;
@@ -16,8 +14,6 @@ mod imp {
     use butter::{json_file::JsonFile, schedule::Schedule};
     use glib::once_cell::sync::{Lazy, OnceCell};
     use gtk::glib::{ParamSpec, Value};
-
-    use crate::subvolume::SubvolumeManager;
 
     use super::*;
 
@@ -38,13 +34,13 @@ mod imp {
         pub monthly_cell: TemplateChild<gtk::Adjustment>,
         #[template_child]
         pub yearly_cell: TemplateChild<gtk::Adjustment>,
-        pub client: OnceCell<SubvolumeManager>,
-        pub prev_path: OnceCell<PathBuf>,
+        pub repo: OnceCell<ScheduleRepo>,
+        pub schedule: OnceCell<ScheduleObject>,
     }
 
     impl ScheduleRuleEditDialog {
         pub fn is_new(&self) -> bool {
-            self.prev_path.get().is_none()
+            self.schedule.get().is_none()
         }
     }
 
@@ -69,17 +65,17 @@ mod imp {
             static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
                 vec![
                     glib::ParamSpecObject::new(
-                        "client",
-                        "client",
-                        "client",
-                        SubvolumeManager::static_type(),
+                        "repo",
+                        "repo",
+                        "repo",
+                        ScheduleRepo::static_type(),
                         glib::ParamFlags::READWRITE | glib::ParamFlags::CONSTRUCT_ONLY,
                     ),
                     glib::ParamSpecObject::new(
                         "rule",
                         "rule",
                         "rule",
-                        glib::BoxedAnyObject::static_type(),
+                        ScheduleObject::static_type(),
                         glib::ParamFlags::READWRITE | glib::ParamFlags::CONSTRUCT_ONLY,
                     ),
                 ]
@@ -89,16 +85,13 @@ mod imp {
 
         fn set_property(&self, _obj: &Self::Type, _id: usize, value: &Value, pspec: &ParamSpec) {
             match pspec.name() {
-                "client" => self
-                    .client
-                    .set(value.get::<SubvolumeManager>().unwrap())
-                    .unwrap(),
+                "repo" => self.repo.set(value.get().unwrap()).unwrap(),
 
                 "rule" => {
-                    let value: Option<&BoxedAnyObject> = value.get().unwrap();
-                    if let Some(boxed) = value {
-                        let rule: Ref<JsonFile<Schedule>> = boxed.borrow();
-                        self.prev_path.set(rule.path.clone()).unwrap();
+                    let maybe_schedule: Option<&ScheduleObject> = value.get().unwrap();
+                    if let Some(schedule) = maybe_schedule {
+                        self.schedule.set(schedule.clone()).unwrap();
+                        let rule: Ref<JsonFile<Schedule>> = schedule.borrow();
                         self.name_entry.set_text(rule.name().unwrap());
                         self.hourly_cell.set_value(rule.data.keep_hourly as f64);
                         self.daily_cell.set_value(rule.data.keep_daily as f64);
@@ -139,54 +132,37 @@ glib::wrapper! {
 
 #[gtk::template_callbacks]
 impl ScheduleRuleEditDialog {
-    pub fn new(client: &SubvolumeManager, rule: Option<&BoxedAnyObject>) -> Self {
-        Object::new(&[("client", client), ("rule", &rule)])
+    pub fn new(repo: &ScheduleRepo, rule: Option<&ScheduleObject>) -> Self {
+        Object::new(&[("repo", repo), ("rule", &rule)])
             .expect("Failed to create ScheduleRuleEditDialog")
     }
 
     #[template_callback]
     fn on_save_button_clicked(&self) {
         let imp = self.imp();
-        let client = imp.client.get().unwrap();
+        let repo = imp.repo.get().unwrap();
         assert!(imp.name_entry.text().len() > 0);
         let new_path = PathBuf::from(format!(
             "{}/schedules/{}.json",
             config::PKGSYSCONFDIR,
             imp.name_entry.text()
         ));
-        match imp.prev_path.get() {
-            Some(prev_path) => {
-                println!("Opening '{}'", prev_path.display());
-                let mut file = JsonFile::<Schedule>::open(prev_path.clone()).unwrap();
-                file.data.keep_hourly = imp.hourly_cell.value() as u32;
-                file.data.keep_daily = imp.daily_cell.value() as u32;
-                file.data.keep_weekly = imp.weekly_cell.value() as u32;
-                file.data.keep_monthly = imp.monthly_cell.value() as u32;
-                file.data.keep_yearly = imp.yearly_cell.value() as u32;
-                client.flush_schedule(file).unwrap();
-                if prev_path != &new_path {
-                    println!(
-                        "Renaming '{}' to '{}'",
-                        prev_path.display(),
-                        new_path.display()
-                    );
-                    client.fs_rename(prev_path.clone(), new_path).unwrap();
-                }
-            }
-            None => {
-                let file = JsonFile {
-                    path: new_path,
-                    data: Schedule {
-                        keep_hourly: imp.hourly_cell.value() as u32,
-                        keep_daily: imp.daily_cell.value() as u32,
-                        keep_weekly: imp.weekly_cell.value() as u32,
-                        keep_monthly: imp.monthly_cell.value() as u32,
-                        keep_yearly: imp.yearly_cell.value() as u32,
-                        ..Default::default()
-                    },
-                };
-                client.flush_schedule(file).unwrap();
-            }
+
+        let obj = match imp.schedule.get() {
+            Some(obj) => obj.clone(),
+            None => ScheduleObject::default(),
         };
+        obj.set_path(new_path);
+        {
+            let mut obj = obj.borrow_mut();
+            obj.data.keep_hourly = imp.hourly_cell.value() as u32;
+            obj.data.keep_daily = imp.daily_cell.value() as u32;
+            obj.data.keep_weekly = imp.weekly_cell.value() as u32;
+            obj.data.keep_monthly = imp.monthly_cell.value() as u32;
+            obj.data.keep_yearly = imp.yearly_cell.value() as u32;
+        }
+        repo.persist(&obj).unwrap();
+        repo.sync().unwrap();
+        self.close();
     }
 }

@@ -1,4 +1,6 @@
 mod application;
+mod client;
+mod schedule_repo;
 mod snapshot_creation_window;
 mod snapshot_view;
 mod subvolume;

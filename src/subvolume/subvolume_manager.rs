@@ -1,31 +1,25 @@
+use crate::schedule_repo::ScheduleRepo;
 use crate::subvolume::{GSubvolume, SubvolList};
 
-use butter::json_file::JsonFile;
-use butter::schedule::Schedule;
-use gtk::glib::BoxedAnyObject;
-use gtk::prelude::*;
-
-use butter::daemon::interface::DaemonInterfaceClient;
 use glib::once_cell::sync::OnceCell;
+use gtk::prelude::*;
 use gtk::{gio, glib, subclass::prelude::*};
 use std::collections::HashMap;
 use std::io::BufReader;
 use std::path::PathBuf;
 use std::process::{ChildStdin, ChildStdout};
-use std::sync::Mutex;
 use uuid::Uuid;
 
 use butter::daemon::interface::BtrfsFilesystem;
 
-use super::g_btrfs_filesystem::GBtrfsFilesystem;
+use crate::{client::Client, subvolume::g_btrfs_filesystem::GBtrfsFilesystem};
 
 mod imp {
-    use crate::subvolume::g_btrfs_filesystem::GBtrfsFilesystem;
 
     use super::*;
 
     pub struct SubvolumeManager {
-        pub daemon: OnceCell<Mutex<DaemonInterfaceClient>>,
+        pub daemon: OnceCell<Client>,
         pub model: SubvolList,
         pub filesystems: gio::ListStore,
     }
@@ -59,10 +53,7 @@ impl SubvolumeManager {
         let imp = ret.imp();
 
         imp.daemon
-            .set(Mutex::new(DaemonInterfaceClient {
-                reader: BufReader::new(stdout),
-                writer: stdin,
-            }))
+            .set(Client::new(BufReader::new(stdout), stdin))
             .expect("Failed to set daemon");
 
         ret.refresh();
@@ -183,25 +174,7 @@ impl SubvolumeManager {
         Ok(())
     }
 
-    pub fn schedules(&self) -> anyhow::Result<gio::ListStore> {
-        let daemon = self.imp().daemon.get().unwrap();
-        let schedules = daemon.lock().unwrap().schedules()?;
-        let ret = gio::ListStore::new(BoxedAnyObject::static_type());
-        for schedule in schedules {
-            ret.append(&BoxedAnyObject::new(schedule));
-        }
-        Ok(ret)
-    }
-
-    pub fn fs_rename(&self, from: PathBuf, to: PathBuf) -> anyhow::Result<()> {
-        let daemon = self.imp().daemon.get().unwrap();
-        daemon.lock().unwrap().fs_rename(from, to)?;
-        Ok(())
-    }
-
-    pub fn flush_schedule(&self, rule: JsonFile<Schedule>) -> anyhow::Result<()> {
-        let daemon = self.imp().daemon.get().unwrap();
-        daemon.lock().unwrap().flush_schedule(rule)?;
-        Ok(())
+    pub fn schedule_repo(&self) -> ScheduleRepo {
+        ScheduleRepo::new(self.imp().daemon.get().unwrap().clone())
     }
 }
