@@ -34,6 +34,8 @@ mod imp {
         pub monthly_cell: TemplateChild<gtk::Adjustment>,
         #[template_child]
         pub yearly_cell: TemplateChild<gtk::Adjustment>,
+        #[template_child]
+        pub remove_group: TemplateChild<adw::PreferencesGroup>,
         pub repo: OnceCell<ScheduleRepo>,
         pub schedule: OnceCell<ScheduleObject>,
     }
@@ -113,6 +115,7 @@ mod imp {
             if self.is_new() {
                 self.save_button.set_label("Create");
                 obj.set_title(Some("New Rule"));
+                self.remove_group.set_visible(false);
             } else {
                 self.save_button.set_label("Apply");
                 obj.set_title(Some("Edit Rule"));
@@ -164,5 +167,16 @@ impl ScheduleRuleEditDialog {
         repo.persist(&obj).unwrap();
         repo.sync().unwrap();
         self.close();
+    }
+
+    #[template_callback]
+    fn on_remove_button_clicked(&self) {
+        let imp = self.imp();
+        if let Some(schedule) = imp.schedule.get() {
+            let repo = imp.repo.get().unwrap();
+            repo.delete(schedule).unwrap();
+            repo.sync().unwrap();
+            self.close();
+        }
     }
 }

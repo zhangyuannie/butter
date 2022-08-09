@@ -1,9 +1,7 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use butter::show_error_dialog;
 use gtk::{
     glib::{self, Object},
-    prelude::*,
     subclass::prelude::*,
     CompositeTemplate,
 };

@@ -53,7 +53,8 @@ pub trait Butterd {
     fn set_is_schedule_enabled(is_enabled: bool) -> Result<()>;
     fn schedules() -> Result<Vec<JsonFile<Schedule>>>;
     fn fs_rename(from: PathBuf, to: PathBuf) -> Result<()>;
-    fn flush_schedule(rule: JsonFile<Schedule>) -> Result<()>;
+    fn flush_schedule(schedule: JsonFile<Schedule>) -> Result<()>;
+    fn fs_remove_file(path: PathBuf) -> Result<()>;
 }
 
 #[derive(Debug, Serialize, Deserialize)]

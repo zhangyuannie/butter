@@ -165,6 +165,10 @@ impl Butterd for Daemon {
     fn flush_schedule(&mut self, rule: JsonFile<Schedule>) -> Result<()> {
         Ok(rule.flush().context("flush_schedule failed")?)
     }
+
+    fn fs_remove_file(&mut self, path: PathBuf) -> Result<()> {
+        Ok(fs::remove_file(path).context("fs_remove_file failed")?)
+    }
 }
 
 fn main() {

@@ -144,6 +144,20 @@
           </object>
         </child>
 
+        <child>
+          <object class="AdwPreferencesGroup" id="remove_group">
+            <child>
+              <object class="GtkButton">
+                <property name="label" translatable="yes">Remove Rule</property>
+                <property name="halign">center</property>
+                <signal name="clicked" handler="on_remove_button_clicked" swapped="true" />
+                <style>
+                  <class name="destructive-action" />
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
       </object>
     </child>
   </template>

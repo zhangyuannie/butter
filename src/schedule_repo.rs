@@ -73,18 +73,25 @@ impl ScheduleRepo {
     }
 
     pub fn persist(&self, obj: &ScheduleObject) -> Result<()> {
-        match obj.imp().initial_path.get() {
-            Some(initial_path) => {
-                let mut schedule = obj.borrow().clone();
-                let new_path = schedule.path;
-                schedule.path = initial_path.clone();
-                self.with_client(|mut c| c.flush_schedule(schedule))?;
-                if initial_path != &new_path {
-                    self.with_client(|mut c| c.fs_rename(initial_path.clone(), new_path))?;
-                }
+        if obj.imp().initial_path.borrow().as_os_str().is_empty() {
+            self.with_client(|mut c| c.flush_schedule(obj.borrow().clone()))?;
+        } else {
+            let mut schedule = obj.borrow().clone();
+            let new_path = schedule.path;
+            let initial_path = obj.imp().initial_path.borrow().clone();
+            schedule.path = initial_path.clone();
+            self.with_client(|mut c| c.flush_schedule(schedule))?;
+            if initial_path != new_path {
+                self.with_client(|mut c| c.fs_rename(initial_path, new_path))?;
             }
-            None => self.with_client(|mut c| c.flush_schedule(obj.borrow().clone()))?,
-        };
+        }
+        Ok(())
+    }
+
+    pub fn delete(&self, obj: &ScheduleObject) -> Result<()> {
+        if !obj.imp().initial_path.borrow().as_os_str().is_empty() {
+            self.with_client(|mut c| c.fs_remove_file(obj.imp().initial_path.borrow().clone()))?;
+        }
         Ok(())
     }
 }
@@ -96,7 +103,7 @@ mod object_imp {
 
     #[derive(Default)]
     pub struct ScheduleObject {
-        pub initial_path: OnceCell<PathBuf>,
+        pub initial_path: RefCell<PathBuf>,
         pub data: RefCell<JsonFile<Schedule>>,
     }
 
@@ -118,7 +125,7 @@ impl ScheduleObject {
         let obj: Self = glib::Object::new(&[]).expect("Failed to create ScheduleObject");
         let imp = obj.imp();
         if exist {
-            imp.initial_path.set(inner.path.clone()).unwrap();
+            *imp.initial_path.borrow_mut() = inner.path.clone();
         }
         *imp.data.borrow_mut() = inner;
         obj
