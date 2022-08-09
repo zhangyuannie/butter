@@ -157,6 +157,14 @@ impl DaemonInterface for Daemon {
         let schedules = ReadScheduleDir::new().context("Failed to read config directory")?;
         Ok(schedules.map_while(|s| s.ok()).collect())
     }
+
+    fn fs_rename(&mut self, from: PathBuf, to: PathBuf) -> Result<()> {
+        Ok(fs::rename(from, to).context("fs_rename failed")?)
+    }
+
+    fn flush_schedule(&mut self, rule: JsonFile<Schedule>) -> Result<()> {
+        Ok(rule.flush().context("flush_schedule failed")?)
+    }
 }
 
 fn main() {

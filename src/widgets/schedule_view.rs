@@ -90,7 +90,7 @@ impl ScheduleView {
     #[template_callback]
     pub fn on_add_button_clicked(&self) {
         let win = self.root().and_then(|w| w.downcast::<gtk::Window>().ok());
-        let dialog = ScheduleRuleEditDialog::new(None);
+        let dialog = ScheduleRuleEditDialog::new(self.imp().client.get().unwrap(), None);
         dialog.set_transient_for(win.as_ref());
         dialog.show();
     }

@@ -52,6 +52,8 @@ pub trait DaemonInterface {
     fn is_schedule_enabled() -> bool;
     fn set_is_schedule_enabled(is_enabled: bool) -> Result<()>;
     fn schedules() -> Result<Vec<JsonFile<Schedule>>>;
+    fn fs_rename(from: PathBuf, to: PathBuf) -> Result<()>;
+    fn flush_schedule(rule: JsonFile<Schedule>) -> Result<()>;
 }
 
 #[derive(Debug, Serialize, Deserialize)]

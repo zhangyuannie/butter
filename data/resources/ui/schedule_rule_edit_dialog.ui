@@ -14,12 +14,136 @@
         </child>
         <child type="end">
           <object class="GtkButton" id="save_button">
-            <signal name="clicked" handler="on_save_button_clicked" swapped="true"/>
+            <signal name="clicked" handler="on_save_button_clicked" swapped="true" />
             <style>
-              <class name="suggested-action"/>
+              <class name="suggested-action" />
             </style>
           </object>
         </child>
+      </object>
+    </child>
+
+    <child>
+      <object class="AdwPreferencesPage">
+
+        <child>
+          <object class="AdwPreferencesGroup">
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Name</property>
+                <property name="title-lines">1</property>
+                <child type="suffix">
+                  <object class="GtkEntry" id="name_entry">
+                    <property name="valign">center</property>
+                    <property name="hexpand">True</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+
+        <child>
+          <object class="AdwPreferencesGroup">
+            <property name="title" translatable="yes">Retention Policy</property>
+            <child>
+              <object class="AdwActionRow">
+                <property name="activatable">False</property>
+                <property name="title" translatable="yes">Hourly</property>
+                <property name="title-lines">1</property>
+                <child type="suffix">
+                  <object class="GtkSpinButton">
+                    <property name="valign">center</property>
+                    <property name="adjustment">
+                      <object class="GtkAdjustment" id="hourly_cell">
+                        <property name="lower">0</property>
+                        <property name="upper">999</property>
+                        <property name="step-increment">1</property>
+                      </object>
+                    </property>
+                  </object>
+                </child>
+              </object>
+            </child>
+
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Daily</property>
+                <property name="title-lines">1</property>
+                <child type="suffix">
+                  <object class="GtkSpinButton">
+                    <property name="valign">center</property>
+                    <property name="adjustment">
+                      <object class="GtkAdjustment" id="daily_cell">
+                        <property name="lower">0</property>
+                        <property name="upper">999</property>
+                        <property name="step-increment">1</property>
+                      </object>
+                    </property>
+                  </object>
+                </child>
+              </object>
+            </child>
+
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Weekly</property>
+                <property name="title-lines">1</property>
+                <child type="suffix">
+                  <object class="GtkSpinButton">
+                    <property name="valign">center</property>
+                    <property name="adjustment">
+                      <object class="GtkAdjustment" id="weekly_cell">
+                        <property name="lower">0</property>
+                        <property name="upper">999</property>
+                        <property name="step-increment">1</property>
+                      </object>
+                    </property>
+                  </object>
+                </child>
+              </object>
+            </child>
+
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Monthly</property>
+                <property name="title-lines">1</property>
+                <child type="suffix">
+                  <object class="GtkSpinButton">
+                    <property name="valign">center</property>
+                    <property name="adjustment">
+                      <object class="GtkAdjustment" id="monthly_cell">
+                        <property name="lower">0</property>
+                        <property name="upper">999</property>
+                        <property name="step-increment">1</property>
+                      </object>
+                    </property>
+                  </object>
+                </child>
+              </object>
+            </child>
+
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Yearly</property>
+                <property name="title-lines">1</property>
+                <child type="suffix">
+                  <object class="GtkSpinButton">
+                    <property name="valign">center</property>
+                    <property name="adjustment">
+                      <object class="GtkAdjustment" id="yearly_cell">
+                        <property name="lower">0</property>
+                        <property name="upper">999</property>
+                        <property name="step-increment">1</property>
+                      </object>
+                    </property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+
       </object>
     </child>
   </template>

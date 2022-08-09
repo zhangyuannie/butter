@@ -19,7 +19,7 @@ pub use conf::{ReadScheduleDir, Schedule};
 pub fn cmd_snapshot() {
     for schedule in ReadScheduleDir::new().expect("Failed to read config directory") {
         if let Ok(schedule) = schedule {
-            for subvol in &schedule.as_data().subvolumes {
+            for subvol in &schedule.data.subvolumes {
                 println!(
                     "creating a snapshot from '{}' in '{}'",
                     subvol.path.display(),
@@ -60,12 +60,11 @@ pub fn cmd_snapshot() {
 pub fn cmd_prune() {
     for schedule in ReadScheduleDir::new().expect("Failed to read config directory") {
         if let Ok(schedule) = schedule {
-            let config = schedule.as_data();
-            if !config.should_prune() {
+            if !schedule.data.should_prune() {
                 continue;
             }
-            for subvol in &config.subvolumes {
-                let res = prune_single(config, &subvol.path, &subvol.target_dir);
+            for subvol in &schedule.data.subvolumes {
+                let res = prune_single(&schedule.data, &subvol.path, &subvol.target_dir);
                 if let Err(err) = res {
                     eprintln!("failed to prune '{}': {}", subvol.target_dir.display(), err);
                 }

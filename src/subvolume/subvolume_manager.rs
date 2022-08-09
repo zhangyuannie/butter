@@ -1,5 +1,7 @@
 use crate::subvolume::{GSubvolume, SubvolList};
 
+use butter::json_file::JsonFile;
+use butter::schedule::Schedule;
 use gtk::glib::BoxedAnyObject;
 use gtk::prelude::*;
 
@@ -189,5 +191,17 @@ impl SubvolumeManager {
             ret.append(&BoxedAnyObject::new(schedule));
         }
         Ok(ret)
+    }
+
+    pub fn fs_rename(&self, from: PathBuf, to: PathBuf) -> anyhow::Result<()> {
+        let daemon = self.imp().daemon.get().unwrap();
+        daemon.lock().unwrap().fs_rename(from, to)?;
+        Ok(())
+    }
+
+    pub fn flush_schedule(&self, rule: JsonFile<Schedule>) -> anyhow::Result<()> {
+        let daemon = self.imp().daemon.get().unwrap();
+        daemon.lock().unwrap().flush_schedule(rule)?;
+        Ok(())
     }
 }

@@ -4,6 +4,8 @@ use gtk::prelude::*;
 use gtk::subclass::prelude::*;
 use gtk::{glib, CompositeTemplate};
 
+use crate::window::Window;
+
 use super::ScheduleRuleEditDialog;
 
 mod imp {
@@ -71,7 +73,9 @@ mod imp {
 
         fn constructed(&self, obj: &Self::Type) {
             self.parent_constructed(obj);
-            obj.set_title(self.rule().name());
+            if let Some(name) = self.rule().name() {
+                obj.set_title(name);
+            }
         }
     }
     impl WidgetImpl for ScheduleRuleRow {}
@@ -94,9 +98,9 @@ impl ScheduleRuleRow {
 
     #[template_callback]
     fn on_activated(&self) {
-        let win = self.root().and_then(|w| w.downcast::<gtk::Window>().ok());
-        let dialog = ScheduleRuleEditDialog::new(self.imp().rule.get());
-        dialog.set_transient_for(win.as_ref());
+        let win = self.root().unwrap().downcast::<Window>().unwrap();
+        let dialog = ScheduleRuleEditDialog::new(&win.subvolume_manager(), self.imp().rule.get());
+        dialog.set_transient_for(Some(&win));
         dialog.show();
     }
 }

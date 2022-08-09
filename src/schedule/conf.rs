@@ -7,7 +7,7 @@ use std::{
 
 use crate::{config, JsonFile};
 
-#[derive(Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Schedule {
     pub is_enabled: bool,
     #[serde(default, skip_serializing_if = "is_default")]
@@ -34,7 +34,7 @@ impl Schedule {
     }
 }
 
-#[derive(Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ScheduleSubvolume {
     pub path: PathBuf,
     pub target_dir: PathBuf,

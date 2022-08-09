@@ -1,12 +1,11 @@
 use std::{fs, io, path::PathBuf};
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use tempfile::NamedTempFile;
 
-#[derive(Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct JsonFile<T> {
-    path: PathBuf,
-    data: T,
+    pub path: PathBuf,
+    pub data: T,
 }
 
 impl<T: Serialize + DeserializeOwned> JsonFile<T> {
@@ -16,18 +15,14 @@ impl<T: Serialize + DeserializeOwned> JsonFile<T> {
         Ok(Self { path, data })
     }
 
+    /// Not atomic
     pub fn flush(&self) -> io::Result<()> {
-        let tmpfile = NamedTempFile::new_in(self.path.parent().unwrap())?;
-        serde_json::to_writer_pretty(&tmpfile, &self.data)?;
-        tmpfile.persist(&self.path)?;
+        let data = serde_json::to_vec_pretty(&self.data)?;
+        fs::write(&self.path, data)?;
         Ok(())
     }
 
-    pub fn as_data(&self) -> &T {
-        &self.data
-    }
-
-    pub fn name(&self) -> &str {
-        self.path.file_stem().unwrap().to_str().unwrap()
+    pub fn name(&self) -> Option<&str> {
+        Some(self.path.file_stem()?.to_str()?)
     }
 }
