@@ -14,7 +14,7 @@ mod conf;
 mod name;
 mod select;
 
-pub use conf::{ReadScheduleDir, Schedule};
+pub use conf::{ReadScheduleDir, Schedule, ScheduleSubvolume};
 
 pub fn cmd_snapshot() {
     for schedule in ReadScheduleDir::new().expect("Failed to read config directory") {

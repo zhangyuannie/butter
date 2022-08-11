@@ -1,7 +1,7 @@
+use adw::prelude::*;
 use adw::subclass::prelude::*;
 use butter::config;
 use gtk::glib::Object;
-use gtk::prelude::*;
 use gtk::subclass::prelude::*;
 use gtk::{glib, CompositeTemplate};
 use std::path::PathBuf;
@@ -9,13 +9,26 @@ use std::path::PathBuf;
 use crate::schedule_repo::{ScheduleObject, ScheduleRepo};
 
 mod imp {
-    use std::cell::Ref;
+    use std::cell::{Ref, RefCell};
 
-    use butter::{json_file::JsonFile, schedule::Schedule};
+    use butter::{
+        json_file::JsonFile,
+        schedule::{Schedule, ScheduleSubvolume},
+    };
     use glib::once_cell::sync::{Lazy, OnceCell};
-    use gtk::glib::{ParamSpec, Value};
+    use gtk::{
+        gio::ListStore,
+        glib::{ParamSpec, Value},
+    };
 
     use super::*;
+
+    pub struct ScheduleTargetModel(ListStore);
+    impl Default for ScheduleTargetModel {
+        fn default() -> Self {
+            Self(ListStore::new(glib::BoxedAnyObject::static_type()))
+        }
+    }
 
     #[derive(Default, CompositeTemplate)]
     #[template(resource = "/org/zhangyuannie/butter/ui/schedule_rule_edit_dialog.ui")]
@@ -36,8 +49,17 @@ mod imp {
         pub yearly_cell: TemplateChild<gtk::Adjustment>,
         #[template_child]
         pub remove_group: TemplateChild<adw::PreferencesGroup>,
+        #[template_child]
+        pub stack: TemplateChild<gtk::Stack>,
+        #[template_child]
+        pub header_prefix_stack: TemplateChild<gtk::Stack>,
+        #[template_child]
+        pub subvolume_list: TemplateChild<gtk::ListBox>,
+        #[template_child]
+        pub add_schedule_subvolume_row: TemplateChild<adw::ActionRow>,
         pub repo: OnceCell<ScheduleRepo>,
         pub schedule: OnceCell<ScheduleObject>,
+        pub subvolumes: RefCell<Vec<ScheduleSubvolume>>,
     }
 
     impl ScheduleRuleEditDialog {
@@ -100,6 +122,9 @@ mod imp {
                         self.weekly_cell.set_value(rule.data.keep_weekly as f64);
                         self.monthly_cell.set_value(rule.data.keep_monthly as f64);
                         self.yearly_cell.set_value(rule.data.keep_yearly as f64);
+                        self.subvolumes
+                            .borrow_mut()
+                            .extend_from_slice(&rule.data.subvolumes);
                     } else {
                         self.hourly_cell.set_value(24.0);
                         self.daily_cell.set_value(30.0);
@@ -120,6 +145,7 @@ mod imp {
                 self.save_button.set_label("Apply");
                 obj.set_title(Some("Edit Rule"));
             }
+            obj.reload_subvolume_list();
         }
     }
     impl WidgetImpl for ScheduleRuleEditDialog {}
@@ -138,6 +164,33 @@ impl ScheduleRuleEditDialog {
     pub fn new(repo: &ScheduleRepo, rule: Option<&ScheduleObject>) -> Self {
         Object::new(&[("repo", repo), ("rule", &rule)])
             .expect("Failed to create ScheduleRuleEditDialog")
+    }
+
+    fn reload_subvolume_list(&self) {
+        let imp = self.imp();
+        if let Some(mut child) = imp.subvolume_list.first_child() {
+            while let Some(sibling) = child.next_sibling() {
+                imp.subvolume_list.remove(&child);
+                child = sibling;
+            }
+        }
+        for (idx, subvol) in imp.subvolumes.borrow().iter().enumerate() {
+            let remove_btn = gtk::Button::builder()
+                .icon_name("edit-delete-symbolic")
+                .valign(gtk::Align::Center)
+                .css_classes(vec!["flat".to_string(), "circular".to_string()])
+                .build();
+            remove_btn.connect_clicked(glib::clone!(@weak self as dialog => move |_| {
+                dialog.imp().subvolumes.borrow_mut().remove(idx);
+                dialog.reload_subvolume_list();
+            }));
+            let row = adw::ActionRow::builder()
+                .title(&subvol.path.to_string_lossy())
+                .subtitle(&subvol.target_dir.to_string_lossy())
+                .build();
+            row.add_suffix(&remove_btn);
+            imp.subvolume_list.insert(&row, idx as i32);
+        }
     }
 
     #[template_callback]
@@ -163,6 +216,8 @@ impl ScheduleRuleEditDialog {
             obj.data.keep_weekly = imp.weekly_cell.value() as u32;
             obj.data.keep_monthly = imp.monthly_cell.value() as u32;
             obj.data.keep_yearly = imp.yearly_cell.value() as u32;
+            obj.data.subvolumes.clear();
+            obj.data.subvolumes.extend_from_slice(&imp.subvolumes.borrow());
         }
         repo.persist(&obj).unwrap();
         repo.sync().unwrap();
@@ -179,4 +234,23 @@ impl ScheduleRuleEditDialog {
             self.close();
         }
     }
+
+    #[template_callback]
+    fn on_back_button_clicked(&self) {
+        self.imp().stack.set_visible_child_name("main");
+        self.imp()
+            .header_prefix_stack
+            .set_visible_child_name("cancel");
+    }
+
+    #[template_callback]
+    fn show_subvolumes(&self) {
+        self.imp().stack.set_visible_child_name("subvol");
+        self.imp()
+            .header_prefix_stack
+            .set_visible_child_name("back");
+    }
+
+    #[template_callback]
+    fn add_schedule_subvolume(&self) {}
 }
