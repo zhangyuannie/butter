@@ -222,11 +222,72 @@
                       <object class="GtkListBox" id="subvolume_list">
                         <property name="selection_mode">none</property>
                         <child>
-                          <object class="AdwActionRow" id="add_schedule_subvolume_row">
+                          <object class="AdwExpanderRow" id="add_subvolume_row">
                             <property name="title" translatable="yes">Add Subvolume…</property>
-                            <property name="icon-name">list-add-symbolic</property>
-                            <property name="activatable">True</property>
-                            <signal name="activated" handler="add_schedule_subvolume" swapped="yes" />
+                            <child type="prefix">
+                              <object class="GtkButton">
+                                <property name="icon-name">list-add-symbolic</property>
+                                <property name="valign">center</property>
+                                <property name="can-focus">false</property>
+                                <property name="can-target">false</property>
+                                <style>
+                                  <class name="flat" />
+                                </style>
+                              </object>
+                            </child>
+
+                            <child>
+                              <object class="AdwPreferencesRow">
+                                <property name="activatable">false</property>
+                                <child>
+                                  <object class="GtkBox">
+                                    <property name="orientation">vertical</property>
+                                    <child>
+                                      <object class="AdwActionRow">
+                                        <property name="title">Subvolume</property>
+                                        <property name="subtitle">Path of the existing subvolume to snapshot</property>
+                                        <child type="suffix">
+                                          <object class="FileChooserEntry" id="subvol_path_entry">
+                                            <property name="valign">center</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="AdwActionRow">
+                                        <property name="title">Snapshot Folder</property>
+                                        <property name="subtitle">Where to create the snapshot</property>
+                                        <child type="suffix">
+                                          <object class="FileChooserEntry" id="target_dir_entry">
+                                            <property name="valign">center</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkListBoxRow">
+                                        <property name="activatable">false</property>
+                                        <property name="selectable">false</property>
+                                        <child>
+                                          <object class="GtkButton">
+                                            <property name="label">Add</property>
+                                            <property name="margin-top">8</property>
+                                            <property name="margin-bottom">8</property>
+                                            <property name="halign">center</property>
+                                            <signal name="clicked" handler="on_add_subvolume_clicked" swapped="true" />
+                                            <style>
+                                              <class name="suggested-action" />
+                                            </style>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+
+                              </object>
+                            </child>
+
                           </object>
                         </child>
                         <style>

@@ -17,9 +17,10 @@ pub fn build_ui(app: &Application) {
     let snapshot_page = view_stack.add(&SnapshotView::new(&app.subvolume_manager()));
     snapshot_page.set_name(Some("snapshot"));
     snapshot_page.set_title(Some(gettext("Snapshot").as_str()));
-    snapshot_page.set_icon_name(Some("insert-object-symbolic"));
+    snapshot_page.set_icon_name(Some("edit-copy-symbolic"));
 
-    let schedule_page = view_stack.add(&ScheduleView::new(&app.subvolume_manager().schedule_repo()));
+    let schedule_page =
+        view_stack.add(&ScheduleView::new(&app.subvolume_manager().schedule_repo()));
     schedule_page.set_name(Some("schedule"));
     schedule_page.set_title(Some(gettext("Schedule").as_str()));
     schedule_page.set_icon_name(Some("alarm-symbolic"));

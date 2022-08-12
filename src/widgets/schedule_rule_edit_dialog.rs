@@ -1,6 +1,7 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use butter::config;
+use butter::schedule::ScheduleSubvolume;
 use gtk::glib::Object;
 use gtk::subclass::prelude::*;
 use gtk::{glib, CompositeTemplate};
@@ -20,6 +21,8 @@ mod imp {
         gio::ListStore,
         glib::{ParamSpec, Value},
     };
+
+    use crate::widgets::FileChooserEntry;
 
     use super::*;
 
@@ -56,7 +59,11 @@ mod imp {
         #[template_child]
         pub subvolume_list: TemplateChild<gtk::ListBox>,
         #[template_child]
-        pub add_schedule_subvolume_row: TemplateChild<adw::ActionRow>,
+        pub add_subvolume_row: TemplateChild<adw::ExpanderRow>,
+        #[template_child]
+        pub subvol_path_entry: TemplateChild<FileChooserEntry>,
+        #[template_child]
+        pub target_dir_entry: TemplateChild<FileChooserEntry>,
         pub repo: OnceCell<ScheduleRepo>,
         pub schedule: OnceCell<ScheduleObject>,
         pub subvolumes: RefCell<Vec<ScheduleSubvolume>>,
@@ -176,7 +183,7 @@ impl ScheduleRuleEditDialog {
         }
         for (idx, subvol) in imp.subvolumes.borrow().iter().enumerate() {
             let remove_btn = gtk::Button::builder()
-                .icon_name("edit-delete-symbolic")
+                .icon_name("list-remove-symbolic")
                 .valign(gtk::Align::Center)
                 .css_classes(vec!["flat".to_string(), "circular".to_string()])
                 .build();
@@ -188,7 +195,7 @@ impl ScheduleRuleEditDialog {
                 .title(&subvol.path.to_string_lossy())
                 .subtitle(&subvol.target_dir.to_string_lossy())
                 .build();
-            row.add_suffix(&remove_btn);
+            row.add_prefix(&remove_btn);
             imp.subvolume_list.insert(&row, idx as i32);
         }
     }
@@ -217,7 +224,9 @@ impl ScheduleRuleEditDialog {
             obj.data.keep_monthly = imp.monthly_cell.value() as u32;
             obj.data.keep_yearly = imp.yearly_cell.value() as u32;
             obj.data.subvolumes.clear();
-            obj.data.subvolumes.extend_from_slice(&imp.subvolumes.borrow());
+            obj.data
+                .subvolumes
+                .extend_from_slice(&imp.subvolumes.borrow());
         }
         repo.persist(&obj).unwrap();
         repo.sync().unwrap();
@@ -252,5 +261,17 @@ impl ScheduleRuleEditDialog {
     }
 
     #[template_callback]
-    fn add_schedule_subvolume(&self) {}
+    fn on_add_subvolume_clicked(&self) {
+        let imp = self.imp();
+        if imp.subvol_path_entry.text().len() > 0 && imp.target_dir_entry.text().len() > 0 {
+            imp.subvolumes.borrow_mut().push(ScheduleSubvolume {
+                path: imp.subvol_path_entry.text().to_string().into(),
+                target_dir: imp.target_dir_entry.text().to_string().into(),
+            });
+            self.reload_subvolume_list();
+            imp.subvol_path_entry.set_text("");
+            imp.target_dir_entry.set_text("");
+            imp.add_subvolume_row.set_expanded(false);
+        }
+    }
 }
