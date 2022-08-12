@@ -10,5 +10,6 @@
     <file compressed="true" preprocess="xml-stripblanks">ui/schedule_view.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">ui/snapshot_creation_window.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">ui/snapshot_rename_popover.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">ui/snapshot_view.ui</file>
   </gresource>
 </gresources>

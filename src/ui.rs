@@ -4,13 +4,11 @@ use gtk::{gio, glib};
 
 use crate::application::Application;
 use crate::config;
-use crate::snapshot_view::SnapshotView;
 use crate::subvolume::GBtrfsFilesystem;
-use crate::widgets::ScheduleView;
-use crate::window::Window;
+use crate::widgets::{AppWindow, ScheduleView, SnapshotView};
 
 pub fn build_ui(app: &Application) {
-    let window = Window::new(&app);
+    let window = AppWindow::new(&app);
     let view_stack = window.view_stack();
     let header_bar = window.header_bar();
 

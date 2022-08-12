@@ -1,7 +1,6 @@
 use crate::application::Application;
-use crate::snapshot_view::SnapshotView;
 use crate::subvolume::SubvolumeManager;
-use crate::widgets::AppHeaderBar;
+use crate::widgets::{AppHeaderBar, SnapshotView};
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
 use gtk::{gio, glib};
@@ -15,7 +14,7 @@ mod imp {
 
     #[derive(CompositeTemplate)]
     #[template(resource = "/org/zhangyuannie/butter/ui/app_window.ui")]
-    pub struct Window {
+    pub struct AppWindow {
         #[template_child]
         pub content_box: TemplateChild<gtk::Box>,
         #[template_child]
@@ -27,7 +26,7 @@ mod imp {
         pub settings: gio::Settings,
     }
 
-    impl Default for Window {
+    impl Default for AppWindow {
         fn default() -> Self {
             Self {
                 content_box: TemplateChild::default(),
@@ -40,9 +39,9 @@ mod imp {
     }
 
     #[glib::object_subclass]
-    impl ObjectSubclass for Window {
+    impl ObjectSubclass for AppWindow {
         const NAME: &'static str = "AppWindow";
-        type Type = super::Window;
+        type Type = super::AppWindow;
         type ParentType = adw::ApplicationWindow;
 
         fn class_init(klass: &mut Self::Class) {
@@ -54,7 +53,7 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for Window {
+    impl ObjectImpl for AppWindow {
         fn constructed(&self, obj: &Self::Type) {
             self.parent_constructed(obj);
 
@@ -94,8 +93,8 @@ mod imp {
             );
         }
     }
-    impl WidgetImpl for Window {}
-    impl WindowImpl for Window {
+    impl WidgetImpl for AppWindow {}
+    impl WindowImpl for AppWindow {
         fn close_request(&self, window: &Self::Type) -> gtk::Inhibit {
             if let Err(err) = window.save_window_state() {
                 println!("Failed to save window state, {}", &err);
@@ -103,18 +102,18 @@ mod imp {
             self.parent_close_request(window)
         }
     }
-    impl ApplicationWindowImpl for Window {}
-    impl AdwApplicationWindowImpl for Window {}
+    impl ApplicationWindowImpl for AppWindow {}
+    impl AdwApplicationWindowImpl for AppWindow {}
 }
 
 glib::wrapper! {
-    pub struct Window(ObjectSubclass<imp::Window>)
+    pub struct AppWindow(ObjectSubclass<imp::AppWindow>)
         @extends adw::ApplicationWindow,gtk::ApplicationWindow, gtk::Window, gtk::Widget,
         @implements gio::ActionGroup, gio::ActionMap, gtk::Accessible, gtk::Buildable,
                     gtk::ConstraintTarget, gtk::Native, gtk::Root, gtk::ShortcutManager;
 }
 
-impl Window {
+impl AppWindow {
     pub fn new(app: &Application) -> Self {
         glib::Object::new(&[("application", app)]).unwrap()
     }

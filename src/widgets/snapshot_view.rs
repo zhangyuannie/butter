@@ -5,10 +5,8 @@ use gtk::{
 };
 
 use crate::{
-    snapshot_creation_window::SnapshotCreationWindow,
     subvolume::{GSubvolume, SubvolumeManager},
-    widgets::LabelCell,
-    window::Window,
+    widgets::{AppWindow, LabelCell, SnapshotCreationWindow},
 };
 
 mod imp {
@@ -32,7 +30,7 @@ mod imp {
     };
 
     #[derive(CompositeTemplate, Default)]
-    #[template(file = "../data/resources/ui/snapshot_view.ui")]
+    #[template(resource = "/org/zhangyuannie/butter/ui/snapshot_view.ui")]
     pub struct SnapshotView {
         #[template_child(id = "snapshot_column_view")]
         pub column_view: TemplateChild<gtk::ColumnView>,
@@ -65,7 +63,7 @@ mod imp {
 
             let header_menu: gio::MenuModel = {
                 let menu_builder = gtk::Builder::from_string(include_str!(
-                    "../data/resources/ui/selection_menu.ui"
+                    "../../data/resources/ui/selection_menu.ui"
                 ));
                 menu_builder.object("header_menu_model").unwrap()
             };
@@ -379,7 +377,7 @@ impl SnapshotView {
                 .rename_snapshot(obj.path().to_path_buf(), new_path);
 
             if let Err(error) = res {
-                let win = view.root().unwrap().downcast::<Window>().unwrap();
+                let win = view.root().unwrap().downcast::<AppWindow>().unwrap();
                 let dialog = gtk::MessageDialog::new(
                     Some(&win),
                     DialogFlags::DESTROY_WITH_PARENT | DialogFlags::MODAL,
@@ -405,7 +403,7 @@ impl SnapshotView {
         let col_view = imp.column_view.get();
 
         let selection_menu_builder =
-            gtk::Builder::from_string(include_str!("../data/resources/ui/selection_menu.ui"));
+            gtk::Builder::from_string(include_str!("../../data/resources/ui/selection_menu.ui"));
         imp.selection_menu
             .set(selection_menu_builder.object("selection_menu").unwrap())
             .unwrap();
