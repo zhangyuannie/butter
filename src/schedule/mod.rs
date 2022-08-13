@@ -74,9 +74,10 @@ pub fn cmd_prune() {
 }
 
 fn prune_single(schedule: &Schedule, subvol: &Path, snapshot_dir: &Path) -> anyhow::Result<()> {
+    #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
     struct Snapshot {
-        path: PathBuf,
         created: NaiveDateTime,
+        path: PathBuf,
     }
     impl DateTimeSortable for Snapshot {
         fn created(&self) -> &NaiveDateTime {
@@ -84,23 +85,25 @@ fn prune_single(schedule: &Schedule, subvol: &Path, snapshot_dir: &Path) -> anyh
         }
     }
     let parent_uuid = libbtrfsutil::subvolume_info(subvol)?.uuid();
-    let snapshots = fs::read_dir(snapshot_dir)?.filter_map(|entry| {
-        let entry = entry.ok()?;
-        if entry.file_name().as_bytes()[0] == b'.' {
-            return None;
-        }
-        let path = entry.path();
-        let info = libbtrfsutil::subvolume_info(&path).ok()?;
+    let snapshots = fs::read_dir(snapshot_dir)?
+        .filter_map(|entry| {
+            let entry = entry.ok()?;
+            if entry.file_name().as_bytes()[0] == b'.' {
+                return None;
+            }
+            let path = entry.path();
+            let info = libbtrfsutil::subvolume_info(&path).ok()?;
 
-        if info.parent_uuid()? != parent_uuid {
-            None
-        } else {
-            Some(Snapshot {
-                path,
-                created: DateTime::<Utc>::from(info.created()).naive_local(),
-            })
-        }
-    });
+            if info.parent_uuid()? != parent_uuid {
+                None
+            } else {
+                Some(Snapshot {
+                    path,
+                    created: DateTime::<Utc>::from(info.created()).naive_local(),
+                })
+            }
+        })
+        .collect();
 
     let to_remove = select_snapshots_to_remove(snapshots, schedule);
 

@@ -2,17 +2,16 @@ use chrono::{Datelike, NaiveDateTime, Timelike};
 
 use super::conf::Schedule;
 
-pub trait DateTimeSortable {
+pub trait DateTimeSortable: Ord {
     fn created(&self) -> &NaiveDateTime;
 }
 
-pub fn select_snapshots_to_remove<I, T: DateTimeSortable>(
-    snapshots: I,
+pub fn select_snapshots_to_remove<T: DateTimeSortable>(
+    mut snapshots: Vec<T>,
     schedule: &Schedule,
-) -> Vec<T>
-where
-    I: Iterator<Item = T>,
-{
+) -> Vec<T> {
+    snapshots.sort();
+    snapshots.reverse();
     struct Bucket {
         keep: u32,
         last: i32,
