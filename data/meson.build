@@ -1,13 +1,24 @@
 data_conf = configuration_data()
 data_conf.set('LIBEXECDIR', libexecdir)
 data_conf.set('BINDIR', bindir)
+data_conf.set('ID', id)
 
 configure_file(
-  input: '@0@.policy.in'.format(id),
-  output: '@0@.policy'.format(id),
+  input: '@0@.policy.in'.format(id.to_lower()),
+  output: '@0@.policy'.format(id.to_lower()),
   configuration: data_conf,
   install: true,
   install_dir: datadir / 'polkit-1' / 'actions',
+)
+
+install_data(
+  f'@id@.desktop',
+  install_dir: datadir / 'applications',
+)
+
+install_data(
+  f'@id@.gschema.xml',
+  install_dir: datadir / 'glib-2.0' / 'schemas',
 )
 
 systemd = dependency('systemd')
@@ -45,16 +56,6 @@ meson.add_install_script(script_restorecon,
   systemd_unit_dir / 'butter-schedule-snapshot.timer',
   systemd_unit_dir / 'butter-schedule-prune.timer',
   bindir / 'butter',
-)
-
-install_data(
-  '@0@.desktop'.format(id),
-  install_dir: datadir / 'applications',
-)
-
-install_data(
-  '@0@.gschema.xml'.format(id),
-  install_dir: datadir / 'glib-2.0' / 'schemas',
 )
 
 subdir('icons')

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <schemalist>
-  <schema path="/org/zhangyuannie/butter/" id="org.zhangyuannie.butter" gettext-domain="butter">
+  <schema path="/org/zhangyuannie/butter/" id="org.zhangyuannie.Butter" gettext-domain="butter">
     <key name="window-size" type="(ii)">
       <default>(600, 400)</default>
       <summary>Window width and height</summary>

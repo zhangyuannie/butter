@@ -8,7 +8,7 @@ project(
 i18n = import('i18n')
 gnome = import('gnome')
 
-id = 'org.zhangyuannie.butter'
+id = 'org.zhangyuannie.Butter'
 
 cargo = find_program('cargo', required: true)
 

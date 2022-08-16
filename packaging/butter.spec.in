@@ -39,11 +39,11 @@ Application for Btrfs snapshot management
 %dir %{_sysconfdir}/butter/schedules
 %{_bindir}/butter
 %{_libexecdir}/butterd
-%{_datadir}/applications/org.zhangyuannie.butter.desktop
+%{_datadir}/applications/org.zhangyuannie.Butter.desktop
 %{_datadir}/butter/
-%{_datadir}/glib-2.0/schemas/org.zhangyuannie.butter.gschema.xml
-%{_datadir}/icons/hicolor/scalable/apps/org.zhangyuannie.butter.svg
-%{_datadir}/icons/hicolor/symbolic/apps/org.zhangyuannie.butter-symbolic.svg
+%{_datadir}/glib-2.0/schemas/org.zhangyuannie.Butter.gschema.xml
+%{_datadir}/icons/hicolor/scalable/apps/org.zhangyuannie.Butter.svg
+%{_datadir}/icons/hicolor/symbolic/apps/org.zhangyuannie.Butter-symbolic.svg
 %{_datadir}/polkit-1/actions/org.zhangyuannie.butter.policy
 %{_unitdir}/%{name}*
 

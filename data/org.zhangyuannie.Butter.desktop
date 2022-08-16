@@ -3,5 +3,5 @@ Name=Butter
 Type=Application
 Exec=butter
 Categories=System;Filesystem;GTK;
-Icon=org.zhangyuannie.butter
+Icon=org.zhangyuannie.Butter
 StartupNotify=true
