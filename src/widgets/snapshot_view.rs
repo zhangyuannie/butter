@@ -34,7 +34,10 @@ mod imp {
     pub struct SnapshotView {
         #[template_child(id = "snapshot_column_view")]
         pub column_view: TemplateChild<gtk::ColumnView>,
-        pub selection_menu: OnceCell<gtk::PopoverMenu>,
+        #[template_child]
+        pub header_menu_model: TemplateChild<gio::MenuModel>,
+        #[template_child]
+        pub selection_menu: TemplateChild<gtk::PopoverMenu>,
         pub rename_popover: SnapshotRenamePopover,
         pub single_select_actions: RefCell<Vec<SimpleAction>>,
         pub subvolume_manager: OnceCell<WeakRef<SubvolumeManager>>,
@@ -61,12 +64,7 @@ mod imp {
             self.parent_constructed(obj);
             self.setup_model(obj);
 
-            let header_menu: gio::MenuModel = {
-                let menu_builder = gtk::Builder::from_string(include_str!(
-                    "../../data/resources/ui/selection_menu.ui"
-                ));
-                menu_builder.object("header_menu_model").unwrap()
-            };
+            let header_menu = self.header_menu_model.get();
 
             obj.setup_menu();
 
@@ -152,9 +150,7 @@ mod imp {
         }
         fn dispose(&self, obj: &Self::Type) {
             obj.teardown_rename_popover();
-            if let Some(widget) = obj.imp().selection_menu.get() {
-                widget.unparent()
-            }
+            self.selection_menu.unparent();
         }
 
         fn properties() -> &'static [ParamSpec] {
@@ -402,12 +398,7 @@ impl SnapshotView {
         let imp = self.imp();
         let col_view = imp.column_view.get();
 
-        let selection_menu_builder =
-            gtk::Builder::from_string(include_str!("../../data/resources/ui/selection_menu.ui"));
-        imp.selection_menu
-            .set(selection_menu_builder.object("selection_menu").unwrap())
-            .unwrap();
-        let selection_menu = imp.selection_menu.get().unwrap();
+        let selection_menu = imp.selection_menu.get();
 
         // double click
         col_view.connect_activate(glib::clone!(@weak self as view => move |_, idx| {
