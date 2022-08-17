@@ -19,6 +19,8 @@ mod imp {
     #[derive(Default, CompositeTemplate)]
     #[template(resource = "/org/zhangyuannie/butter/ui/schedule_rule_row.ui")]
     pub struct ScheduleRuleRow {
+        #[template_child]
+        pub switch: TemplateChild<gtk::Switch>,
         pub rule: OnceCell<ScheduleObject>,
     }
 
@@ -70,6 +72,7 @@ mod imp {
             if let Some(name) = self.rule().name() {
                 obj.set_title(name);
             }
+            self.switch.set_active(self.rule().data.is_enabled);
         }
     }
     impl WidgetImpl for ScheduleRuleRow {}
@@ -87,5 +90,9 @@ glib::wrapper! {
 impl ScheduleRuleRow {
     pub fn new(rule: &ScheduleObject) -> Self {
         Object::new(&[("rule", rule)]).expect("Failed to create ScheduleRuleRow")
+    }
+
+    pub fn switch(&self) -> &gtk::Switch {
+        &self.imp().switch
     }
 }

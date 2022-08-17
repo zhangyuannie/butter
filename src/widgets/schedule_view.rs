@@ -11,6 +11,7 @@ use crate::schedule_repo::{ScheduleObject, ScheduleRepo};
 use super::{ScheduleRuleEditDialog, ScheduleRuleRow};
 
 mod imp {
+    use butter::show_error_dialog;
     use glib::once_cell::sync::{Lazy, OnceCell};
     use gtk::glib::{ParamSpec, Value};
 
@@ -69,12 +70,24 @@ mod imp {
                 Some(self.repo.get().unwrap().model()),
                 glib::clone!(@weak obj => @default-panic, move |schedule| {
                     let schedule = schedule.downcast_ref::<ScheduleObject>().unwrap();
-                    let ret = ScheduleRuleRow::new(schedule);
-                    ret.connect_activated(move |row| {
+                    let row = ScheduleRuleRow::new(schedule);
+                    row.connect_activated(glib::clone!(@weak obj => move |row| {
                         obj.show_edit_dialog(row.imp().rule.get());
-                    });
+                    }));
+                    row.switch().connect_state_set(glib::clone!(@weak obj, @weak row => @default-return glib::signal::Inhibit(true), move |switch, state| {
+                        let repo = obj.imp().repo.get().unwrap();
+                        let rule = row.imp().rule.get().unwrap().clone();
+                        rule.borrow_mut().data.is_enabled = state;
+                        if let Err(error) = repo.persist(&rule) {
+                            let win = obj.root().and_then(|w| w.downcast::<gtk::Window>().ok());
+                            show_error_dialog(win.as_ref(), &error.to_string());
+                        } else {
+                            switch.set_state(state);
+                        }
+                        glib::signal::Inhibit(true)
+                    }));
 
-                    ret.upcast()
+                    row.upcast()
                 }),
             );
         }

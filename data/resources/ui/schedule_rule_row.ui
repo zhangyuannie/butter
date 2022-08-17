@@ -4,7 +4,7 @@
     <property name="activatable">True</property>
 
     <child type="suffix">
-      <object class="GtkSwitch">
+      <object class="GtkSwitch" id="switch">
         <property name="valign">center</property>
       </object>
     </child>
