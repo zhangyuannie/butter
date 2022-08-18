@@ -18,7 +18,7 @@
           <attribute name="action">view.open</attribute>
         </item>
         <item>
-          <attribute name="label" translatable="yes">Rename</attribute>
+          <attribute name="label" translatable="yes">Rename…</attribute>
           <attribute name="action">view.rename</attribute>
         </item>
         <item>

@@ -244,8 +244,8 @@
                                     <property name="orientation">vertical</property>
                                     <child>
                                       <object class="AdwActionRow">
-                                        <property name="title">Subvolume</property>
-                                        <property name="subtitle">Path of the existing subvolume to snapshot</property>
+                                        <property name="title" translatable="yes">Subvolume</property>
+                                        <property name="subtitle" translatable="yes">Path of the existing subvolume to snapshot</property>
                                         <child type="suffix">
                                           <object class="FileChooserEntry" id="subvol_path_entry">
                                             <property name="valign">center</property>
@@ -255,8 +255,8 @@
                                     </child>
                                     <child>
                                       <object class="AdwActionRow">
-                                        <property name="title">Snapshot Folder</property>
-                                        <property name="subtitle">Where to create the snapshot</property>
+                                        <property name="title" translatable="yes">Snapshot Folder</property>
+                                        <property name="subtitle" translatable="yes">Where to create the snapshots</property>
                                         <child type="suffix">
                                           <object class="FileChooserEntry" id="target_dir_entry">
                                             <property name="valign">center</property>

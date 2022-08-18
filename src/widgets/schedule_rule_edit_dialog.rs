@@ -2,6 +2,7 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use butter::config;
 use butter::schedule::ScheduleSubvolume;
+use gettext::gettext;
 use gtk::glib::Object;
 use gtk::subclass::prelude::*;
 use gtk::{glib, CompositeTemplate};
@@ -145,12 +146,12 @@ mod imp {
         fn constructed(&self, obj: &Self::Type) {
             self.parent_constructed(obj);
             if self.is_new() {
-                self.save_button.set_label("Create");
-                obj.set_title(Some("New Rule"));
+                self.save_button.set_label(&gettext("Create"));
+                obj.set_title(Some(&gettext("New Rule")));
                 self.remove_group.set_visible(false);
             } else {
-                self.save_button.set_label("Apply");
-                obj.set_title(Some("Edit Rule"));
+                self.save_button.set_label(&gettext("Apply"));
+                obj.set_title(Some(&gettext("Edit Rule")));
             }
             obj.reload_subvolume_list();
         }

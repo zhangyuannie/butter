@@ -1,8 +1,11 @@
 data/resources/ui/app_header_bar.ui
 data/resources/ui/file_chooser_entry.ui
-data/resources/ui/selection_menu.ui
+data/resources/ui/schedule_rule_edit_dialog.ui
+data/resources/ui/schedule_view.ui
 data/resources/ui/snapshot_creation_window.ui
 data/resources/ui/snapshot_rename_popover.ui
+data/resources/ui/snapshot_view.ui
 
-src/snapshot_view.rs
 src/ui.rs
+src/widgets/schedule_rule_edit_dialog.rs
+src/widgets/snapshot_view.rs
