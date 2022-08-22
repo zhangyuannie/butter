@@ -8,6 +8,10 @@ Butter is a simple GTK application for Btrfs snapshot management.
 
 ### Distribution repositories
 
+Latest stable release:
+
+- Fedora: https://copr.fedorainfracloud.org/coprs/zhangyuannie/butter
+
 Development versions tracking the main branch:
 
 - Arch: https://aur.archlinux.org/packages/butter-git
@@ -19,7 +23,7 @@ See [BUILDING.md](BUILDING.md) for instructions.
 
 ## Contributing
 
-Please make sure to read our [Contributing Guidelines](CONTRIBUTING.md)  before making a pull request.
+Please take a look at our [Contributing Guidelines](CONTRIBUTING.md).
 
 ## License
 
