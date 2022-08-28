@@ -1,9 +1,8 @@
 use adw::subclass::prelude::*;
-use gtk::glib::{Binding, Object};
+use gtk::glib::Object;
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
 use gtk::{glib, CompositeTemplate, Label};
-use std::cell::RefCell;
 
 mod imp {
     use super::*;
@@ -13,7 +12,6 @@ mod imp {
     pub struct LabelCell {
         #[template_child]
         pub label: TemplateChild<Label>,
-        pub bindings: RefCell<Vec<Binding>>,
     }
 
     #[glib::object_subclass]
@@ -53,18 +51,7 @@ impl LabelCell {
         Object::new(&[]).expect("Failed to create LabelCell")
     }
 
-    pub fn add_binding(&self, binding: Binding) {
-        let mut bindings = self.imp().bindings.borrow_mut();
-        bindings.push(binding);
-    }
-
-    pub fn unbind_all(&self) {
-        for binding in self.imp().bindings.borrow_mut().drain(..) {
-            binding.unbind();
-        }
-    }
-
-    pub fn label(&self) -> gtk::Label {
-        self.imp().label.get()
+    pub fn label(&self) -> &gtk::Label {
+        &self.imp().label
     }
 }

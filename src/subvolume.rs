@@ -5,9 +5,6 @@ mod g_btrfs_filesystem;
 mod subvolume_manager;
 pub use g_btrfs_filesystem::GBtrfsFilesystem;
 
-mod created_sorter;
-pub use created_sorter::GSubvolumeCreatedSorter;
-
 use butter::daemon::interface;
 pub use subvolume_manager::SubvolumeManager;
 use uuid::Uuid;
@@ -31,7 +28,7 @@ mod imp {
 
     #[glib::object_subclass]
     impl ObjectSubclass for GSubvolume {
-        const NAME: &'static str = "Subvolume";
+        const NAME: &'static str = "SubvolumeObject";
         type Type = super::GSubvolume;
     }
 
@@ -40,31 +37,38 @@ mod imp {
             static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
                 vec![
                     glib::ParamSpecString::new(
-                        "name",
-                        "Name",
-                        "Filename",
+                        Attribute::NAME,
+                        Attribute::NAME,
+                        Attribute::NAME,
                         None,
                         ParamFlags::READABLE,
                     ),
                     glib::ParamSpecString::new(
-                        "path",
-                        "Path",
-                        "Absolute Path",
+                        Attribute::PATH,
+                        Attribute::PATH,
+                        Attribute::PATH,
                         None,
                         ParamFlags::READABLE,
                     ),
                     glib::ParamSpecString::new(
-                        "parent-path",
-                        "Parent Path",
-                        "Path of the subvolume this is a snapshot of",
+                        Attribute::PARENT_PATH,
+                        Attribute::PARENT_PATH,
+                        Attribute::PARENT_PATH,
                         None,
                         ParamFlags::READABLE,
                     ),
                     glib::ParamSpecBoxed::new(
-                        "created",
-                        "Created",
-                        "Creation Time",
+                        Attribute::CREATED,
+                        Attribute::CREATED,
+                        Attribute::CREATED,
                         glib::DateTime::static_type(),
+                        ParamFlags::READABLE,
+                    ),
+                    glib::ParamSpecString::new(
+                        Attribute::UUID,
+                        Attribute::UUID,
+                        Attribute::UUID,
+                        None,
                         ParamFlags::READABLE,
                     ),
                 ]
@@ -74,12 +78,11 @@ mod imp {
 
         fn property(&self, obj: &Self::Type, _id: usize, pspec: &ParamSpec) -> Value {
             match pspec.name() {
-                "name" => obj.name().to_value(),
-                "path" => obj.path().to_str().to_value(),
-                "parent-path" => obj
-                    .parent()
-                    .map_or("".to_value(), |parent| parent.path().to_str().to_value()),
-                "created" => obj.g_created().to_value(),
+                Attribute::NAME => obj.name().to_value(),
+                Attribute::PATH => obj.attribute_str(Attribute::Path).to_value(),
+                Attribute::PARENT_PATH => obj.attribute_str(Attribute::ParentPath).to_value(),
+                Attribute::CREATED => obj.g_created().to_value(),
+                Attribute::UUID => obj.attribute_str(Attribute::Uuid).to_value(),
                 _ => unimplemented!(),
             }
         }
@@ -88,6 +91,49 @@ mod imp {
 
 glib::wrapper! {
     pub struct GSubvolume(ObjectSubclass<imp::GSubvolume>);
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum Attribute {
+    /// Filename
+    Name,
+    /// Absolute path
+    Path,
+    /// Path of the subvolume this is a snapshot of
+    ParentPath,
+    /// Creation time
+    Created,
+    Uuid,
+}
+
+impl Attribute {
+    const NAME: &'static str = "name";
+    const PATH: &'static str = "path";
+    const PARENT_PATH: &'static str = "parent-path";
+    const CREATED: &'static str = "created";
+    const UUID: &'static str = "uuid";
+
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Name => Self::NAME,
+            Self::Path => Self::PATH,
+            Self::ParentPath => Self::PARENT_PATH,
+            Self::Created => Self::CREATED,
+            Self::Uuid => Self::UUID,
+        }
+    }
+
+    pub fn sorter(&self) -> gtk::Sorter {
+        match self {
+            Attribute::Created => GSubvolumeCreatedSorter::new().upcast(),
+            _ => gtk::StringSorter::new(Some(&gtk::PropertyExpression::new(
+                GSubvolume::static_type(),
+                None::<&gtk::Expression>,
+                self.as_str(),
+            )))
+            .upcast(),
+        }
+    }
 }
 
 impl GSubvolume {
@@ -141,5 +187,62 @@ impl GSubvolume {
 
     pub fn set_parent(&self, subvol: Option<&GSubvolume>) {
         self.imp().parent.set(subvol)
+    }
+
+    pub fn attribute_str(&self, attribute: Attribute) -> String {
+        match attribute {
+            Attribute::Name => self.name().to_string(),
+            Attribute::Path => self.path().to_string_lossy().to_string(),
+            Attribute::ParentPath => self.parent().map_or("".to_string(), |parent| {
+                parent.path().to_string_lossy().to_string()
+            }),
+            Attribute::Created => self.g_created().format("%c").unwrap().into(),
+            Attribute::Uuid => self.uuid().to_string(),
+        }
+    }
+}
+
+mod created_sorter_imp {
+    use crate::subvolume::GSubvolume;
+
+    use super::*;
+
+    #[derive(Default)]
+    pub struct GSubvolumeCreatedSorter;
+
+    #[glib::object_subclass]
+    impl ObjectSubclass for GSubvolumeCreatedSorter {
+        const NAME: &'static str = "GSubvolumeCreatedSorter";
+        type ParentType = gtk::Sorter;
+        type Type = super::GSubvolumeCreatedSorter;
+    }
+
+    impl ObjectImpl for GSubvolumeCreatedSorter {}
+    impl SorterImpl for GSubvolumeCreatedSorter {
+        fn compare(
+            &self,
+            _sorter: &Self::Type,
+            item1: &glib::Object,
+            item2: &glib::Object,
+        ) -> gtk::Ordering {
+            let e1 = item1.downcast_ref::<GSubvolume>().unwrap().created();
+            let e2 = item2.downcast_ref::<GSubvolume>().unwrap().created();
+            e1.cmp(&e2).into()
+        }
+
+        fn order(&self, _sorter: &Self::Type) -> gtk::SorterOrder {
+            gtk::SorterOrder::Partial
+        }
+    }
+}
+
+glib::wrapper! {
+    pub struct GSubvolumeCreatedSorter(ObjectSubclass<created_sorter_imp::GSubvolumeCreatedSorter>)
+        @extends gtk::Sorter;
+}
+
+impl GSubvolumeCreatedSorter {
+    pub fn new() -> Self {
+        glib::Object::new(&[]).unwrap()
     }
 }

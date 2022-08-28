@@ -5,7 +5,7 @@ use gtk::{
 };
 
 use crate::{
-    subvolume::{GSubvolume, SubvolumeManager},
+    subvolume::{Attribute, GSubvolume, SubvolumeManager},
     widgets::{AppWindow, LabelCell, SnapshotCreationWindow},
 };
 
@@ -25,7 +25,7 @@ mod imp {
     use std::cell::RefCell;
 
     use crate::{
-        subvolume::{GSubvolume, GSubvolumeCreatedSorter, SubvolumeManager},
+        subvolume::{Attribute, GSubvolume, SubvolumeManager},
         widgets::SnapshotRenamePopover,
     };
 
@@ -69,74 +69,25 @@ mod imp {
             obj.setup_menu();
 
             obj.setup_column(
-                "name",
-                |obj, label| {
-                    obj.bind_property("name", &label, "label")
-                        .flags(glib::BindingFlags::SYNC_CREATE)
-                        .build()
-                },
-                Some(|builder| {
-                    let exp = gtk::PropertyExpression::new(
-                        GSubvolume::static_type(),
-                        None::<&gtk::Expression>,
-                        "name",
-                    );
-                    builder.sorter(&gtk::StringSorter::new(Some(&exp))).build()
-                }),
+                Attribute::Name,
                 gettext("Name").as_str(),
                 false,
                 &header_menu,
             );
             obj.setup_column(
-                "path",
-                |obj, label| {
-                    obj.bind_property("path", &label, "label")
-                        .flags(glib::BindingFlags::SYNC_CREATE)
-                        .build()
-                },
-                Some(|builder| {
-                    let exp = gtk::PropertyExpression::new(
-                        GSubvolume::static_type(),
-                        None::<&gtk::Expression>,
-                        "path",
-                    );
-                    builder.sorter(&gtk::StringSorter::new(Some(&exp))).build()
-                }),
+                Attribute::Path,
                 gettext("Path").as_str(),
                 false,
                 &header_menu,
             );
             let created_col = obj.setup_column(
-                "created",
-                |obj, label| {
-                    obj.bind_property("created", &label, "label")
-                        .transform_to(|_, value| {
-                            let datetime = value.get::<glib::DateTime>().unwrap();
-                            Some(datetime.format("%c").unwrap().to_value())
-                        })
-                        .flags(glib::BindingFlags::SYNC_CREATE)
-                        .build()
-                },
-                Some(|builder| builder.sorter(&GSubvolumeCreatedSorter::new()).build()),
+                Attribute::Created,
                 gettext("Created").as_str(),
                 false,
                 &header_menu,
             );
             obj.setup_column(
-                "parent-path",
-                |obj, label| {
-                    obj.bind_property("parent-path", &label, "label")
-                        .flags(glib::BindingFlags::SYNC_CREATE)
-                        .build()
-                },
-                Some(|builder| {
-                    let exp = gtk::PropertyExpression::new(
-                        GSubvolume::static_type(),
-                        None::<&gtk::Expression>,
-                        "parent-path",
-                    );
-                    builder.sorter(&gtk::StringSorter::new(Some(&exp))).build()
-                }),
+                Attribute::ParentPath,
                 gettext("Source").as_str(),
                 true,
                 &header_menu,
@@ -148,6 +99,7 @@ mod imp {
             obj.setup_clicks();
             obj.setup_rename_popover();
         }
+
         fn dispose(&self, obj: &Self::Type) {
             obj.teardown_rename_popover();
             self.selection_menu.unparent();
@@ -224,9 +176,7 @@ impl SnapshotView {
 
     fn setup_column(
         &self,
-        property: &'static str,
-        create_binding: fn(GSubvolume, gtk::Label) -> glib::Binding,
-        build_with: Option<fn(gtk::builders::ColumnViewColumnBuilder) -> gtk::ColumnViewColumn>,
+        attribute: Attribute,
         title: &str,
         expand: bool,
         menu: &gio::MenuModel,
@@ -239,42 +189,28 @@ impl SnapshotView {
             list_item.set_child(Some(&cell));
         });
         factory.connect_bind(move |_, list_item| {
-            let obj = list_item
-                .item()
-                .expect("Item must exist")
-                .downcast::<GSubvolume>()
-                .expect("Item must be Subvolume");
-
-            let cell = list_item.child().unwrap().downcast::<LabelCell>().unwrap();
-
-            let binding = create_binding(obj, cell.label());
-
-            cell.add_binding(binding);
+            let obj: GSubvolume = list_item.item().unwrap().downcast().unwrap();
+            let cell: LabelCell = list_item.child().unwrap().downcast().unwrap();
+            cell.label().set_label(&obj.attribute_str(attribute));
         });
         factory.connect_unbind(move |_, list_item| {
-            let cell = list_item
-                .child()
-                .expect("Child must exist")
-                .downcast::<LabelCell>()
-                .expect("Child must be LabelCell");
-
-            cell.unbind_all();
+            let cell = list_item.child().unwrap().downcast::<LabelCell>().unwrap();
+            cell.label().set_label("");
         });
         let cvc = ColumnViewColumn::builder()
             .title(title)
             .factory(&factory)
             .expand(expand)
             .resizable(true)
-            .header_menu(menu);
+            .header_menu(menu)
+            .sorter(&attribute.sorter())
+            .build();
 
-        let cvc = if let Some(build) = build_with {
-            build(cvc)
-        } else {
-            cvc.build()
-        };
-
-        let show_action =
-            gio::PropertyAction::new(format!("{}{}", "show-", property).as_str(), &cvc, "visible");
+        let show_action = gio::PropertyAction::new(
+            format!("show-{}", attribute.as_str()).as_str(),
+            &cvc,
+            "visible",
+        );
 
         self.imp().actions.add_action(&show_action);
 
