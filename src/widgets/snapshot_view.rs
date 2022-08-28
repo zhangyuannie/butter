@@ -1,7 +1,8 @@
 use adw::subclass::prelude::*;
+use butter::show_error_dialog;
 use gtk::{
-    gdk, gio, glib, prelude::*, BitsetIter, ColumnView, ColumnViewColumn, DialogFlags,
-    SignalListItemFactory, Widget,
+    gdk, gio, glib, prelude::*, BitsetIter, ColumnView, ColumnViewColumn, SignalListItemFactory,
+    Widget,
 };
 
 use crate::{
@@ -310,17 +311,7 @@ impl SnapshotView {
 
             if let Err(error) = res {
                 let win = view.root().unwrap().downcast::<AppWindow>().unwrap();
-                let dialog = gtk::MessageDialog::new(
-                    Some(&win),
-                    DialogFlags::DESTROY_WITH_PARENT | DialogFlags::MODAL,
-                    gtk::MessageType::Error,
-                    gtk::ButtonsType::Close,
-                    &error.to_string(),
-                );
-                dialog.connect_response(|dialog, _| {
-                    dialog.destroy();
-                });
-                dialog.show();
+                show_error_dialog(Some(&win), &error.to_string());
             }
             popover.popdown();
         }));

@@ -6,6 +6,7 @@ use gtk::{glib, prelude::*, CompositeTemplate};
 use crate::subvolume::{GSubvolume, SubvolumeManager};
 
 mod imp {
+    use butter::show_error_dialog;
     use glib::object::WeakRef;
     use glib::once_cell::sync::OnceCell;
     use gtk::glib::{once_cell::sync::Lazy, ParamFlags, ParamSpec, ParamSpecObject, Value};
@@ -69,17 +70,7 @@ mod imp {
                 match res {
                     Ok(_) => obj.close(),
                     Err(error) => {
-                        let dialog = gtk::MessageDialog::new(
-                            Some(&obj),
-                            gtk::DialogFlags::DESTROY_WITH_PARENT |  gtk::DialogFlags::MODAL,
-                            gtk::MessageType::Error,
-                            gtk::ButtonsType::Close,
-                            &error.to_string(),
-                        );
-                        dialog.connect_response(|dialog, _| {
-                            dialog.destroy();
-                        });
-                        dialog.show();
+                        show_error_dialog(Some(&obj), &error.to_string());
                     }
                 }
             }));

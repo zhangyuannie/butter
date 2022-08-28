@@ -1,4 +1,5 @@
 use adw::prelude::*;
+use butter::show_error_dialog;
 use gettext::gettext;
 use gtk::{gio, glib};
 
@@ -56,19 +57,8 @@ pub fn build_ui(app: &Application) {
         switch.set_state(app.subvolume_manager().is_schedule_enabled());
         switch.connect_state_set(glib::clone!(@weak subvol_mgr => @default-return glib::signal::Inhibit(true), move |switch, state| {
             if let Err(error) = subvol_mgr.set_is_schedule_enabled(state) {
-                let dialog = gtk::MessageDialog::new(
-                    None::<&gtk::Window>,
-                    gtk::DialogFlags::DESTROY_WITH_PARENT |  gtk::DialogFlags::MODAL,
-                    gtk::MessageType::Error,
-                    gtk::ButtonsType::Close,
-                    &error.to_string(),
-                );
-                dialog.connect_response(|dialog, _| {
-                    dialog.destroy();
-                });
-                dialog.show();
+                show_error_dialog(None::<&gtk::Window>,&error.to_string());
             }
-            println!("e: {}", subvol_mgr.is_schedule_enabled());
             switch.set_state(subvol_mgr.is_schedule_enabled());
             glib::signal::Inhibit(true)
         }));
