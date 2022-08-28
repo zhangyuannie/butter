@@ -8,17 +8,17 @@ mod imp {
     use super::*;
 
     #[derive(Default, CompositeTemplate)]
-    #[template(resource = "/org/zhangyuannie/butter/ui/label_cell.ui")]
-    pub struct LabelCell {
+    #[template(resource = "/org/zhangyuannie/butter/ui/subvolume_label_cell.ui")]
+    pub struct SubvolumeLabelCell {
         #[template_child]
         pub label: TemplateChild<Label>,
     }
 
     #[glib::object_subclass]
-    impl ObjectSubclass for LabelCell {
-        const NAME: &'static str = "LabelCell";
+    impl ObjectSubclass for SubvolumeLabelCell {
+        const NAME: &'static str = "SubvolumeLabelCell";
         type ParentType = adw::Bin;
-        type Type = super::LabelCell;
+        type Type = super::SubvolumeLabelCell;
 
         fn class_init(klass: &mut Self::Class) {
             Self::bind_template(klass);
@@ -29,26 +29,26 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for LabelCell {}
-    impl WidgetImpl for LabelCell {}
-    impl BinImpl for LabelCell {}
+    impl ObjectImpl for SubvolumeLabelCell {}
+    impl WidgetImpl for SubvolumeLabelCell {}
+    impl BinImpl for SubvolumeLabelCell {}
 }
 
 glib::wrapper! {
-    pub struct LabelCell(ObjectSubclass<imp::LabelCell>)
+    pub struct SubvolumeLabelCell(ObjectSubclass<imp::SubvolumeLabelCell>)
     @extends gtk::Widget, adw::Bin,
     @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget;
 }
 
-impl Default for LabelCell {
+impl Default for SubvolumeLabelCell {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl LabelCell {
+impl SubvolumeLabelCell {
     pub fn new() -> Self {
-        Object::new(&[]).expect("Failed to create LabelCell")
+        Object::new(&[]).expect("Failed to create SubvolumeLabelCell")
     }
 
     pub fn label(&self) -> &gtk::Label {

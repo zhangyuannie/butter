@@ -4,12 +4,12 @@
     <file compressed="true" preprocess="xml-stripblanks">ui/app_header_bar.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">ui/app_window.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">ui/file_chooser_entry.ui</file>
-    <file compressed="true" preprocess="xml-stripblanks">ui/label_cell.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">ui/schedule_rule_edit_dialog.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">ui/schedule_rule_row.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">ui/schedule_view.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">ui/snapshot_creation_window.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">ui/snapshot_rename_popover.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">ui/snapshot_view.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">ui/subvolume_label_cell.ui</file>
   </gresource>
 </gresources>

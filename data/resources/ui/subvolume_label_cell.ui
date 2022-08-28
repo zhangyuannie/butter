@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <template class="LabelCell" parent="AdwBin">
+  <template class="SubvolumeLabelCell" parent="AdwBin">
     <child>
       <object class="GtkLabel" id="label">
         <property name="halign">start</property>

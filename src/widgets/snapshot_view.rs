@@ -7,7 +7,7 @@ use gtk::{
 
 use crate::{
     subvolume::{Attribute, GSubvolume, SubvolumeManager},
-    widgets::{AppWindow, LabelCell, SnapshotCreationWindow},
+    widgets::{AppWindow, SnapshotCreationWindow, SubvolumeLabelCell},
 };
 
 mod imp {
@@ -186,16 +186,20 @@ impl SnapshotView {
 
         let factory = SignalListItemFactory::new();
         factory.connect_setup(move |_, list_item| {
-            let cell = LabelCell::new();
+            let cell = SubvolumeLabelCell::new();
             list_item.set_child(Some(&cell));
         });
         factory.connect_bind(move |_, list_item| {
             let obj: GSubvolume = list_item.item().unwrap().downcast().unwrap();
-            let cell: LabelCell = list_item.child().unwrap().downcast().unwrap();
+            let cell: SubvolumeLabelCell = list_item.child().unwrap().downcast().unwrap();
             cell.label().set_label(&obj.attribute_str(attribute));
         });
         factory.connect_unbind(move |_, list_item| {
-            let cell = list_item.child().unwrap().downcast::<LabelCell>().unwrap();
+            let cell = list_item
+                .child()
+                .unwrap()
+                .downcast::<SubvolumeLabelCell>()
+                .unwrap();
             cell.label().set_label("");
         });
         let cvc = ColumnViewColumn::builder()
