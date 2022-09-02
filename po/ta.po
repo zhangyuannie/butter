@@ -1,0 +1,178 @@
+# Tamil translations for butter package.
+# Copyright (C) 2022 THE butter'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the butter package.
+# Automatically generated, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: butter\n"
+"Report-Msgid-Bugs-To: https://github.com/zhangyuannie/butter/issues\n"
+"POT-Creation-Date: 2022-09-02 20:24+0530\n"
+"PO-Revision-Date: 2022-09-02 20:45+0530\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: ta\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.1.1\n"
+
+#: data/resources/ui/app_header_bar.ui:76
+msgid "Preferences"
+msgstr "விருப்பங்கள்"
+
+#: data/resources/ui/app_header_bar.ui:80
+msgid "About Butter"
+msgstr "பட்டர் பற்றி"
+
+#: data/resources/ui/file_chooser_entry.ui:14
+msgid "Browse…"
+msgstr "உலாவவும்..."
+
+#: data/resources/ui/schedule_rule_edit_dialog.ui:18
+#: data/resources/ui/snapshot_creation_window.ui:12
+msgid "Cancel"
+msgstr "ரத்துசெய்"
+
+#: data/resources/ui/schedule_rule_edit_dialog.ui:61
+#: src/widgets/snapshot_view.rs:86
+msgid "Name"
+msgstr "பெயர்"
+
+#: data/resources/ui/schedule_rule_edit_dialog.ui:76
+msgid "Retention Policy"
+msgstr "தக்கவைத்தல் கொள்கை"
+
+#: data/resources/ui/schedule_rule_edit_dialog.ui:77
+msgid "Defines how many snapshots should be kept."
+msgstr "எத்தனை ஸ்னாப்ஷாட்களை வைத்திருக்க வேண்டும் என்பதை வரையறுக்கிறது."
+
+#: data/resources/ui/schedule_rule_edit_dialog.ui:81
+msgid "Hourly"
+msgstr "மணி நேர"
+
+#: data/resources/ui/schedule_rule_edit_dialog.ui:100
+msgid "Daily"
+msgstr "தினசரி"
+
+#: data/resources/ui/schedule_rule_edit_dialog.ui:119
+msgid "Weekly"
+msgstr "வாரந்தோறும்"
+
+#: data/resources/ui/schedule_rule_edit_dialog.ui:138
+msgid "Monthly"
+msgstr "மாதந்தோறும்"
+
+#: data/resources/ui/schedule_rule_edit_dialog.ui:157
+msgid "Yearly"
+msgstr "ஆண்டுதோறும்"
+
+#: data/resources/ui/schedule_rule_edit_dialog.ui:180
+msgid "Subvolumes"
+msgstr "துணைத் தொகுதிகள்"
+
+#: data/resources/ui/schedule_rule_edit_dialog.ui:181
+msgid "Targeted subvolumes to snapshot"
+msgstr "ஸ்னாப்ஷாட்டுக்கு இலக்கிடப்பட்ட துணைத்தொகுதிகள்"
+
+#: data/resources/ui/schedule_rule_edit_dialog.ui:199
+msgid "Remove Rule"
+msgstr "விதியை அகற்று"
+
+#: data/resources/ui/schedule_rule_edit_dialog.ui:226
+msgid "Add Subvolume…"
+msgstr "துணைத் தொகுதியைச் சேர்…"
+
+#: data/resources/ui/schedule_rule_edit_dialog.ui:247
+#: data/resources/ui/snapshot_creation_window.ui:80
+msgid "Subvolume"
+msgstr "துணைத்தொகுதி"
+
+#: data/resources/ui/schedule_rule_edit_dialog.ui:248
+msgid "Path of the existing subvolume to snapshot"
+msgstr "ஸ்னாப்ஷாட்டுக்கான தற்போதைய துணைத்தொகுதியின் பாதை"
+
+#: data/resources/ui/schedule_rule_edit_dialog.ui:258
+msgid "Snapshot Folder"
+msgstr "ஸ்னாப்ஷாட் கோப்புறை"
+
+#: data/resources/ui/schedule_rule_edit_dialog.ui:259
+msgid "Where to create the snapshots"
+msgstr "ஸ்னாப்ஷாட்களை எங்கே உருவாக்குவது"
+
+#: data/resources/ui/schedule_view.ui:9
+msgid "Rules"
+msgstr "விதிகள்"
+
+#: data/resources/ui/schedule_view.ui:29
+msgid "Not set up"
+msgstr "அமைக்கப்படவில்லை"
+
+#: data/resources/ui/snapshot_creation_window.ui:4
+msgid "New Snapshot"
+msgstr "புதிய ஸ்னாப்ஷாட்"
+
+#: data/resources/ui/snapshot_creation_window.ui:18
+#: src/widgets/schedule_rule_edit_dialog.rs:149
+msgid "Create"
+msgstr "உருவாக்குங்கள்"
+
+#: data/resources/ui/snapshot_creation_window.ui:42
+msgid "Snapshot Name"
+msgstr "ஸ்னாப்ஷாட் பெயர்"
+
+#: data/resources/ui/snapshot_creation_window.ui:61
+msgid "Snapshot Location"
+msgstr "ஸ்னாப்ஷாட் இடம்"
+
+#: data/resources/ui/snapshot_creation_window.ui:99
+msgid "Readonly"
+msgstr "படிக்க மட்டும்"
+
+#: data/resources/ui/snapshot_rename_popover.ui:12
+msgid "Rename"
+msgstr "மறுபெயரிடவும்"
+
+#: data/resources/ui/snapshot_view.ui:17
+msgid "Open"
+msgstr "திறக்கவும்"
+
+#: data/resources/ui/snapshot_view.ui:21
+msgid "Rename…"
+msgstr "மறுபெயரிடுங்கள்…"
+
+#: data/resources/ui/snapshot_view.ui:25
+msgid "Delete"
+msgstr "நீக்கவும்"
+
+#: data/resources/ui/snapshot_view.ui:34 src/widgets/snapshot_view.rs:105
+msgid "Path"
+msgstr "பாதை"
+
+#: data/resources/ui/snapshot_view.ui:38 src/widgets/snapshot_view.rs:121
+msgid "Created"
+msgstr "உருவாக்கப்பட்டது"
+
+#: data/resources/ui/snapshot_view.ui:42 src/widgets/snapshot_view.rs:140
+msgid "Source"
+msgstr "மூல"
+
+#: src/ui.rs:17
+msgid "Snapshot"
+msgstr "ஸ்னாப்ஷாட்"
+
+#: src/ui.rs:23
+msgid "Schedule"
+msgstr "அட்டவணை"
+
+#: src/widgets/schedule_rule_edit_dialog.rs:150
+msgid "New Rule"
+msgstr "புதிய விதிமுறை"
+
+#: src/widgets/schedule_rule_edit_dialog.rs:153
+msgid "Apply"
+msgstr "விண்ணப்பிக்கவும்"
+
+#: src/widgets/schedule_rule_edit_dialog.rs:154
+msgid "Edit Rule"
+msgstr "விதியைத் திருத்து"
