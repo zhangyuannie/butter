@@ -27,7 +27,7 @@ msgstr "பட்டர் பற்றி"
 
 #: data/resources/ui/file_chooser_entry.ui:14
 msgid "Browse…"
-msgstr "உலாவவும்..."
+msgstr "உலாவவும்…"
 
 #: data/resources/ui/schedule_rule_edit_dialog.ui:18
 #: data/resources/ui/snapshot_creation_window.ui:12
