@@ -38,7 +38,7 @@ cargo_build = custom_target(
   install: true,
   install_dir: [bindir, libexecdir],
   command: [
-    script_cargo_build, meson.project_source_root(), meson.project_build_root(),
+    script_cargo_build, meson.project_source_root(), meson.project_build_root(), '*',
     '&&',
     'cp', 'target' / 'release' / 'butter', '@OUTPUT0@',
     '&&',
