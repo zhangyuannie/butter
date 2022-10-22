@@ -23,6 +23,7 @@ BuildRequires:  desktop-file-utils
 BuildRequires:  clang
 BuildRequires:  systemd
 BuildRequires:  systemd-rpm-macros
+BuildRequires:  python3-devel
 
 Requires:       gtk4%{?_isa} >= 4.4.0
 Requires:       libadwaita%{?_isa} >= 1.0.0
@@ -39,6 +40,7 @@ Application for Btrfs snapshot management
 %dir %{_sysconfdir}/butter/schedules
 %{_bindir}/butter
 %{_libexecdir}/butterd
+%{_libexecdir}/butterd0
 %{_datadir}/applications/org.zhangyuannie.Butter.desktop
 %{_datadir}/butter/
 %{_datadir}/glib-2.0/schemas/org.zhangyuannie.Butter.gschema.xml

@@ -29,19 +29,19 @@ cargo_options = [
 
 cargo_env = [ 'CARGO_HOME=' + meson.project_build_root() / '.cargo' ]
 
-cargo_build = custom_target(
-  'cargo_build',
+custom_target(
+  'cargo_build_butter',
   build_by_default: true,
   build_always_stale: true,
-  output: ['butter', 'butterd'],
+  output: ['butter', 'butterd0'],
   console: true,
   install: true,
   install_dir: [bindir, libexecdir],
   command: [
-    script_cargo_build, meson.project_source_root(), meson.project_build_root(), '*',
-    '&&',
-    'cp', 'target' / 'release' / 'butter', '@OUTPUT0@',
-    '&&',
-    'cp', 'target' / 'release' / 'butterd', '@OUTPUT1@',
+    script_cargo_build,
+    '--source-root', '@SOURCE_ROOT@',
+    '--build-root', '@BUILD_ROOT@',
+    '--package', 'butter',
+    '--output', '@OUTPUT@',
   ],
 )

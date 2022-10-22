@@ -1,18 +1,43 @@
-#!/bin/sh
+#!/usr/bin/env python3
+import argparse
+import os
+import subprocess
+import shutil
 
-export MESON_SOURCE_ROOT="$1"
-export MESON_BUILD_ROOT="$2"
-export BINARY_NAME="$3"
+parser = argparse.ArgumentParser()
+parser.add_argument("--source-root", required=True)
+parser.add_argument("--build-root", required=True)
+parser.add_argument("--package", required=True)
+parser.add_argument("--output", action="extend", nargs="+")
+args = parser.parse_args()
 
-if [ "$(id -u)" -eq 0 ]; then
-    export CARGO_HOME="${MESON_BUILD_ROOT}/cargo"
-    if [ -e "${MESON_BUILD_ROOT}/target/release/butter" ] && [ -e "${MESON_BUILD_ROOT}/target/release/butterd" ]; then
-        echo "cargo build skipped: running as root"
-        exit 0
-    fi
-fi
+source_root: str = args.source_root
+build_root: str = args.build_root
+package: str = args.package
+outputs: list[str] = args.output
 
-cargo build --manifest-path "${MESON_SOURCE_ROOT}/Cargo.toml" \
-            --target-dir "${MESON_BUILD_ROOT}/target" \
-            --bin "${BINARY_NAME}" \
-            --release
+bins = [os.path.basename(p) for p in outputs]
+bin_paths = [f"{build_root}/target/release/{bin}" for bin in bins]
+
+if os.geteuid() == 0:
+    os.environ["CARGO_HOME"] = f"{source_root}/cargo"
+    if all(os.path.exists(p) for p in bin_paths):
+        print("cargo build skipped: running as root")
+        exit(0)
+
+subprocess.run(
+    [
+        "cargo",
+        "build",
+        "--manifest-path",
+        f"{source_root}/Cargo.toml",
+        "--target-dir",
+        f"{build_root}/target",
+        "--package",
+        package,
+        "--release",
+    ]
+).check_returncode()
+
+for src, dst in zip(bin_paths, outputs):
+    shutil.copy(src, dst)

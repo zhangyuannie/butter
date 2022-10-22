@@ -2,8 +2,9 @@
 
 ## Dependencies
 
-- cargo
-- meson >= 0.59
+- cargo (build-time only)
+- meson >= 0.59 (build-time only)
+- python 3 (build-time only)
 - libadwaita >= 1.0.0
 - gtk >= 4.4.0
 - btrfs-progs >= 5.10.0
@@ -15,6 +16,7 @@
 You can install these dependencies with:
 
 - Arch
+
   ```
   # pacman -S meson rust gtk4 libadwaita btrfs-progs clang
   ```
