@@ -26,7 +26,7 @@ You can find us on [#org.zhangyuannie.Butter:matrix.org](https://matrix.to/#/#or
 
 ## Libraries
 
-- For system libraries (e.g. gtk), they must be available on current supported releases of Fedora Linux.
+- For system libraries (e.g. gtk), they must be available on the latest supported release of Fedora Linux.
 - For rust crates, all versions are fine.
 
 ## Translations
