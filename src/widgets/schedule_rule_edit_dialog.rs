@@ -4,7 +4,6 @@ use butter::config;
 use butter::schedule::ScheduleSubvolume;
 use gettext::gettext;
 use gtk::glib::Object;
-use gtk::subclass::prelude::*;
 use gtk::{glib, CompositeTemplate};
 use std::path::PathBuf;
 
@@ -115,7 +114,7 @@ mod imp {
             PROPERTIES.as_ref()
         }
 
-        fn set_property(&self, _obj: &Self::Type, _id: usize, value: &Value, pspec: &ParamSpec) {
+        fn set_property(&self, _id: usize, value: &Value, pspec: &ParamSpec) {
             match pspec.name() {
                 "repo" => self.repo.set(value.get().unwrap()).unwrap(),
 
@@ -143,8 +142,9 @@ mod imp {
             }
         }
 
-        fn constructed(&self, obj: &Self::Type) {
-            self.parent_constructed(obj);
+        fn constructed(&self) {
+            self.parent_constructed();
+            let obj = self.instance();
             if self.is_new() {
                 self.save_button.set_label(&gettext("Create"));
                 obj.set_title(Some(&gettext("New Rule")));
@@ -171,7 +171,6 @@ glib::wrapper! {
 impl ScheduleRuleEditDialog {
     pub fn new(repo: &ScheduleRepo, rule: Option<&ScheduleObject>) -> Self {
         Object::new(&[("repo", repo), ("rule", &rule)])
-            .expect("Failed to create ScheduleRuleEditDialog")
     }
 
     fn reload_subvolume_list(&self) {

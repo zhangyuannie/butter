@@ -8,7 +8,7 @@ use gtk::{gio, glib};
 mod imp {
     use adw::prelude::*;
     use adw::subclass::prelude::*;
-    use gtk::{gio, glib, subclass::prelude::*, CompositeTemplate};
+    use gtk::{gio, glib, CompositeTemplate};
 
     use crate::{config::APP_ID, widgets::AppHeaderBar};
 
@@ -54,9 +54,9 @@ mod imp {
     }
 
     impl ObjectImpl for AppWindow {
-        fn constructed(&self, obj: &Self::Type) {
-            self.parent_constructed(obj);
-
+        fn constructed(&self) {
+            self.parent_constructed();
+            let obj = self.instance();
             obj.load_window_state();
 
             let new_action = gio::SimpleAction::new("new", None);
@@ -95,11 +95,12 @@ mod imp {
     }
     impl WidgetImpl for AppWindow {}
     impl WindowImpl for AppWindow {
-        fn close_request(&self, window: &Self::Type) -> gtk::Inhibit {
+        fn close_request(&self) -> gtk::Inhibit {
+            let window = self.instance();
             if let Err(err) = window.save_window_state() {
                 println!("Failed to save window state, {}", &err);
             }
-            self.parent_close_request(window)
+            self.parent_close_request()
         }
     }
     impl ApplicationWindowImpl for AppWindow {}
@@ -115,7 +116,7 @@ glib::wrapper! {
 
 impl AppWindow {
     pub fn new(app: &Application) -> Self {
-        glib::Object::new(&[("application", app)]).unwrap()
+        glib::Object::new(&[("application", app)])
     }
 
     pub fn content_box(&self) -> gtk::Box {

@@ -2,7 +2,6 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gtk::{
     glib::{self, Object},
-    subclass::prelude::*,
     CompositeTemplate,
 };
 
@@ -57,15 +56,16 @@ mod imp {
             PROPERTIES.as_ref()
         }
 
-        fn set_property(&self, _obj: &Self::Type, _id: usize, value: &Value, pspec: &ParamSpec) {
+        fn set_property(&self, _id: usize, value: &Value, pspec: &ParamSpec) {
             match pspec.name() {
                 "repo" => self.repo.set(value.get().unwrap()).unwrap(),
                 _ => unimplemented!(),
             }
         }
 
-        fn constructed(&self, obj: &Self::Type) {
-            self.parent_constructed(obj);
+        fn constructed(&self) {
+            self.parent_constructed();
+            let obj = self.instance();
             self.rule_list.bind_model(
                 Some(self.repo.get().unwrap().model()),
                 glib::clone!(@weak obj => @default-panic, move |schedule| {
@@ -105,7 +105,7 @@ glib::wrapper! {
 #[gtk::template_callbacks]
 impl ScheduleView {
     pub fn new(repo: &ScheduleRepo) -> Self {
-        Object::new(&[("repo", repo)]).expect("Failed to create ScheduleView")
+        Object::new(&[("repo", repo)])
     }
 
     pub fn show_edit_dialog(&self, schedule: Option<&ScheduleObject>) {

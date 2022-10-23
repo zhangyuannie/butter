@@ -32,8 +32,8 @@ pub fn build_ui(app: &Application) {
 
     // filesystem dropdown
     {
-        let exp = gtk::ClosureExpression::new::<String, _, gtk::ClosureExpression>(
-            None,
+        let exp = gtk::ClosureExpression::new::<String>(
+            &[] as &[gtk::Expression],
             glib::closure!(|sv: GBtrfsFilesystem| sv.display()),
         );
 

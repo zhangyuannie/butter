@@ -20,7 +20,6 @@ mod imp {
         gio::SimpleAction,
         glib::{self, once_cell::sync::Lazy, ParamFlags, ParamSpec, ParamSpecObject, Value},
         prelude::*,
-        subclass::prelude::*,
         CompositeTemplate,
     };
     use std::cell::RefCell;
@@ -61,9 +60,10 @@ mod imp {
     }
 
     impl ObjectImpl for SnapshotView {
-        fn constructed(&self, obj: &Self::Type) {
-            self.parent_constructed(obj);
-            self.setup_model(obj);
+        fn constructed(&self) {
+            self.parent_constructed();
+            self.setup_model();
+            let obj = self.instance();
 
             let header_menu = self.header_menu_model.get();
 
@@ -101,8 +101,8 @@ mod imp {
             obj.setup_rename_popover();
         }
 
-        fn dispose(&self, obj: &Self::Type) {
-            obj.teardown_rename_popover();
+        fn dispose(&self) {
+            self.instance().teardown_rename_popover();
             self.selection_menu.unparent();
         }
 
@@ -119,7 +119,7 @@ mod imp {
             PROPERTIES.as_ref()
         }
 
-        fn set_property(&self, _obj: &Self::Type, _id: usize, value: &Value, pspec: &ParamSpec) {
+        fn set_property(&self, _id: usize, value: &Value, pspec: &ParamSpec) {
             match pspec.name() {
                 "subvolume-manager" => self
                     .subvolume_manager
@@ -134,12 +134,12 @@ mod imp {
     impl BinImpl for SnapshotView {}
 
     impl SnapshotView {
-        fn setup_model(&self, obj: &super::SnapshotView) {
+        fn setup_model(&self) {
             let filter = gtk::CustomFilter::new(|obj| {
                 obj.downcast_ref::<GSubvolume>().unwrap().is_snapshot()
             });
             let model =
-                gtk::FilterListModel::new(Some(obj.subvolume_manager().model()), Some(&filter));
+                gtk::FilterListModel::new(Some(self.subvolume_manager().model()), Some(&filter));
 
             let model = gtk::SortListModel::new(Some(&model), self.column_view.sorter().as_ref());
             let model = gtk::MultiSelection::new(Some(&model));
@@ -150,6 +150,10 @@ mod imp {
             self.rename_popover.set_text(prefill);
             self.rename_popover.set_pointing_to(Some(pointing_to));
             self.rename_popover.popup();
+        }
+
+        pub fn subvolume_manager(&self) -> SubvolumeManager {
+            self.subvolume_manager.get().unwrap().upgrade().unwrap()
         }
     }
 }
@@ -162,7 +166,7 @@ glib::wrapper! {
 
 impl SnapshotView {
     pub fn new(subvolume_manager: &SubvolumeManager) -> Self {
-        glib::Object::new(&[("subvolume-manager", subvolume_manager)]).unwrap()
+        glib::Object::new(&[("subvolume-manager", subvolume_manager)])
     }
 
     fn model(&self) -> gtk::SelectionModel {
@@ -375,12 +379,7 @@ impl SnapshotView {
     }
 
     fn subvolume_manager(&self) -> SubvolumeManager {
-        self.imp()
-            .subvolume_manager
-            .get()
-            .unwrap()
-            .upgrade()
-            .unwrap()
+        self.imp().subvolume_manager()
     }
 }
 

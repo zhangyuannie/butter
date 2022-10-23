@@ -35,17 +35,16 @@ mod imp {
 
     impl ObjectImpl for SnapshotRenamePopover {
         fn signals() -> &'static [Signal] {
-            static SIGNALS: Lazy<Vec<Signal>> = Lazy::new(|| {
-                vec![Signal::builder("clicked", &[], <()>::static_type().into()).build()]
-            });
+            static SIGNALS: Lazy<Vec<Signal>> =
+                Lazy::new(|| vec![Signal::builder("clicked").build()]);
             SIGNALS.as_ref()
         }
     }
     impl WidgetImpl for SnapshotRenamePopover {}
     impl PopoverImpl for SnapshotRenamePopover {}
     impl EditableImpl for SnapshotRenamePopover {
-        fn delegate(&self, editable: &Self::Type) -> Option<gtk::Editable> {
-            Some(editable.imp().entry.get().upcast())
+        fn delegate(&self) -> Option<gtk::Editable> {
+            Some(self.entry.get().upcast())
         }
     }
 }
@@ -61,7 +60,7 @@ glib::wrapper! {
 #[gtk::template_callbacks]
 impl SnapshotRenamePopover {
     pub fn new() -> Self {
-        Object::new(&[]).expect("Failed to create SnapshotRenamePopover")
+        Object::new(&[])
     }
 
     #[template_callback]

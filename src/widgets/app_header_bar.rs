@@ -3,7 +3,7 @@ use gtk::{glib, subclass::prelude::*};
 mod imp {
     use adw::subclass::prelude::*;
     use gtk::glib::{self, once_cell::sync::Lazy};
-    use gtk::{prelude::*, subclass::prelude::*, CompositeTemplate};
+    use gtk::{prelude::*, CompositeTemplate};
 
     #[allow(non_snake_case, non_upper_case_globals)]
     mod Property {
@@ -67,7 +67,7 @@ mod imp {
             PROPERTIES.as_ref()
         }
 
-        fn property(&self, _obj: &Self::Type, id: usize, _pspec: &glib::ParamSpec) -> glib::Value {
+        fn property(&self, id: usize, _pspec: &glib::ParamSpec) -> glib::Value {
             match id {
                 Property::TitleStart => self.start_stack.visible_child_name().to_value(),
                 Property::TitleEnd => self.end_stack.visible_child_name().to_value(),
@@ -75,13 +75,7 @@ mod imp {
             }
         }
 
-        fn set_property(
-            &self,
-            _obj: &Self::Type,
-            id: usize,
-            value: &glib::Value,
-            _pspec: &glib::ParamSpec,
-        ) {
+        fn set_property(&self, id: usize, value: &glib::Value, _pspec: &glib::ParamSpec) {
             match id {
                 Property::TitleStart => self
                     .start_stack
@@ -109,7 +103,7 @@ impl Default for AppHeaderBar {
 
 impl AppHeaderBar {
     pub fn new() -> Self {
-        glib::Object::new(&[]).expect("Failed to create AppHeaderBar")
+        glib::Object::new(&[])
     }
 
     pub fn view_switcher_title(&self) -> &adw::ViewSwitcherTitle {

@@ -49,8 +49,9 @@ mod imp {
     }
 
     impl ObjectImpl for SnapshotCreationWindow {
-        fn constructed(&self, obj: &Self::Type) {
-            self.parent_constructed(obj);
+        fn constructed(&self) {
+            self.parent_constructed();
+            let obj = self.instance();
             self.create_button.set_sensitive(false);
             self.name_entry
                 .connect_text_notify(glib::clone!(@weak obj => move |entry| {
@@ -89,7 +90,7 @@ mod imp {
             PROPERTIES.as_ref()
         }
 
-        fn set_property(&self, _obj: &Self::Type, _id: usize, value: &Value, pspec: &ParamSpec) {
+        fn set_property(&self, _id: usize, value: &Value, pspec: &ParamSpec) {
             match pspec.name() {
                 "subvolume-manager" => self
                     .subvolume_manager
@@ -113,7 +114,7 @@ glib::wrapper! {
 
 impl SnapshotCreationWindow {
     pub fn new(subvolume_manager: &SubvolumeManager) -> Self {
-        glib::Object::new(&[("subvolume-manager", subvolume_manager)]).unwrap()
+        glib::Object::new(&[("subvolume-manager", subvolume_manager)])
     }
 
     fn setup_dropdown(&self) {
@@ -125,8 +126,8 @@ impl SnapshotCreationWindow {
         let model =
             gtk::FilterListModel::new(Some(self.subvolume_manager().model()), Some(&filter));
 
-        let exp = gtk::ClosureExpression::new::<String, _, gtk::ClosureExpression>(
-            None,
+        let exp = gtk::ClosureExpression::new::<String>(
+            &[] as &[gtk::Expression],
             glib::closure!(|sv: GSubvolume| {
                 let path = String::from(sv.path().to_string_lossy());
                 if path == "/" {

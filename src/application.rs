@@ -43,7 +43,7 @@ mod imp {
             PROPERTIES.as_ref()
         }
 
-        fn set_property(&self, _obj: &Self::Type, _id: usize, value: &Value, pspec: &ParamSpec) {
+        fn set_property(&self, _id: usize, value: &Value, pspec: &ParamSpec) {
             match pspec.name() {
                 "subvolume-manager" => {
                     let input_subvolume_manager = value.get().unwrap();
@@ -53,7 +53,7 @@ mod imp {
             }
         }
 
-        fn property(&self, _obj: &Self::Type, _id: usize, pspec: &ParamSpec) -> Value {
+        fn property(&self, _id: usize, pspec: &ParamSpec) -> Value {
             match pspec.name() {
                 "subvolume-manager" => self.subvolume_manager.borrow().to_value(),
                 _ => unimplemented!(),
@@ -62,9 +62,9 @@ mod imp {
     }
 
     impl ApplicationImpl for Application {
-        fn activate(&self, application: &Self::Type) {
-            self.parent_activate(application);
-            build_ui(application);
+        fn activate(&self) {
+            self.parent_activate();
+            build_ui(&self.instance());
         }
     }
     impl GtkApplicationImpl for Application {}
@@ -84,7 +84,6 @@ impl Application {
             ("flags", &gio::ApplicationFlags::empty()),
             ("subvolume-manager", &Some(manager)),
         ])
-        .expect("Failed to create Application")
     }
 
     pub fn subvolume_manager(&self) -> SubvolumeManager {

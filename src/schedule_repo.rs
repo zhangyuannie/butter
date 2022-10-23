@@ -44,7 +44,7 @@ glib::wrapper! {
 
 impl ScheduleRepo {
     pub fn new(client: Client) -> Self {
-        let ret: Self = glib::Object::new(&[]).expect("Failed to create ScheduleRepo");
+        let ret: Self = glib::Object::new(&[]);
         let imp = ret.imp();
         imp.client.set(client).unwrap();
         ret.sync().unwrap();
@@ -122,7 +122,7 @@ glib::wrapper! {
 
 impl ScheduleObject {
     fn new_imp(inner: JsonFile<Schedule>, exist: bool) -> Self {
-        let obj: Self = glib::Object::new(&[]).expect("Failed to create ScheduleObject");
+        let obj: Self = glib::Object::new(&[]);
         let imp = obj.imp();
         if exist {
             *imp.initial_path.borrow_mut() = inner.path.clone();

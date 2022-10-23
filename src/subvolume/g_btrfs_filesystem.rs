@@ -34,9 +34,9 @@ mod imp {
             PROPERTIES.as_ref()
         }
 
-        fn property(&self, obj: &Self::Type, _id: usize, pspec: &ParamSpec) -> Value {
+        fn property(&self, _id: usize, pspec: &ParamSpec) -> Value {
             match pspec.name() {
-                "label" => obj.label().to_value(),
+                "label" => self.instance().label().to_value(),
                 _ => unimplemented!(),
             }
         }
@@ -49,7 +49,7 @@ glib::wrapper! {
 
 impl GBtrfsFilesystem {
     pub fn new(fs: interface::BtrfsFilesystem) -> Self {
-        let obj: Self = Object::new(&[]).expect("Failed to create GBtrfsFilesystem");
+        let obj: Self = Object::new(&[]);
         obj.imp().data.set(fs).unwrap();
         obj
     }

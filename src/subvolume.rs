@@ -76,7 +76,8 @@ mod imp {
             PROPERTIES.as_ref()
         }
 
-        fn property(&self, obj: &Self::Type, _id: usize, pspec: &ParamSpec) -> Value {
+        fn property(&self, _id: usize, pspec: &ParamSpec) -> Value {
+            let obj = self.instance();
             match pspec.name() {
                 Attribute::NAME => obj.name().to_value(),
                 Attribute::PATH => obj.attribute_str(Attribute::Path).to_value(),
@@ -138,7 +139,7 @@ impl Attribute {
 
 impl GSubvolume {
     pub fn new(subvol: interface::Subvolume) -> Self {
-        let obj: Self = Object::new(&[]).expect("Failed to create GSubvolume");
+        let obj: Self = Object::new(&[]);
         obj.imp().data.set(subvol).unwrap();
         obj
     }
@@ -219,18 +220,13 @@ mod created_sorter_imp {
 
     impl ObjectImpl for GSubvolumeCreatedSorter {}
     impl SorterImpl for GSubvolumeCreatedSorter {
-        fn compare(
-            &self,
-            _sorter: &Self::Type,
-            item1: &glib::Object,
-            item2: &glib::Object,
-        ) -> gtk::Ordering {
+        fn compare(&self, item1: &glib::Object, item2: &glib::Object) -> gtk::Ordering {
             let e1 = item1.downcast_ref::<GSubvolume>().unwrap().created();
             let e2 = item2.downcast_ref::<GSubvolume>().unwrap().created();
             e1.cmp(&e2).into()
         }
 
-        fn order(&self, _sorter: &Self::Type) -> gtk::SorterOrder {
+        fn order(&self) -> gtk::SorterOrder {
             gtk::SorterOrder::Partial
         }
     }
@@ -243,6 +239,6 @@ glib::wrapper! {
 
 impl GSubvolumeCreatedSorter {
     pub fn new() -> Self {
-        glib::Object::new(&[]).unwrap()
+        glib::Object::new(&[])
     }
 }

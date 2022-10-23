@@ -49,7 +49,7 @@ glib::wrapper! {
 
 impl SubvolumeManager {
     pub fn new(stdin: ChildStdin, stdout: ChildStdout) -> Self {
-        let ret: Self = glib::Object::new(&[]).expect("Failed to create SubvolumeManager");
+        let ret: Self = glib::Object::new(&[]);
         let imp = ret.imp();
 
         imp.daemon

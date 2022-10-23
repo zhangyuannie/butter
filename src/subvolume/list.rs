@@ -24,13 +24,13 @@ mod imp {
     impl ObjectImpl for SubvolList {}
 
     impl ListModelImpl for SubvolList {
-        fn item_type(&self, _list_model: &Self::Type) -> glib::Type {
+        fn item_type(&self) -> glib::Type {
             GSubvolume::static_type()
         }
-        fn n_items(&self, _list_model: &Self::Type) -> u32 {
+        fn n_items(&self) -> u32 {
             self.subvols.borrow().len() as u32
         }
-        fn item(&self, _list_model: &Self::Type, position: u32) -> Option<glib::Object> {
+        fn item(&self, position: u32) -> Option<glib::Object> {
             let subvols = self.subvols.borrow();
 
             subvols
@@ -47,7 +47,7 @@ glib::wrapper! {
 
 impl SubvolList {
     pub fn new() -> Self {
-        glib::Object::new(&[]).expect("Failed to create SubvolumeList")
+        glib::Object::new(&[])
     }
 
     pub fn by_id(&self, id: &Uuid) -> Option<GSubvolume> {

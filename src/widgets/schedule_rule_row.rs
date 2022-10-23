@@ -1,7 +1,6 @@
 use adw::subclass::prelude::*;
 use gtk::glib::Object;
 use gtk::prelude::*;
-use gtk::subclass::prelude::*;
 use gtk::{glib, CompositeTemplate};
 
 use crate::schedule_repo::ScheduleObject;
@@ -59,7 +58,7 @@ mod imp {
             PROPERTIES.as_ref()
         }
 
-        fn set_property(&self, _obj: &Self::Type, _id: usize, value: &Value, pspec: &ParamSpec) {
+        fn set_property(&self, _id: usize, value: &Value, pspec: &ParamSpec) {
             match pspec.name() {
                 "rule" => self.rule.set(value.get().unwrap()).unwrap(),
 
@@ -67,10 +66,10 @@ mod imp {
             }
         }
 
-        fn constructed(&self, obj: &Self::Type) {
-            self.parent_constructed(obj);
+        fn constructed(&self) {
+            self.parent_constructed();
             if let Some(name) = self.rule().name() {
-                obj.set_title(name);
+                self.instance().set_title(name);
             }
             self.switch.set_active(self.rule().data.is_enabled);
         }
@@ -89,7 +88,7 @@ glib::wrapper! {
 
 impl ScheduleRuleRow {
     pub fn new(rule: &ScheduleObject) -> Self {
-        Object::new(&[("rule", rule)]).expect("Failed to create ScheduleRuleRow")
+        Object::new(&[("rule", rule)])
     }
 
     pub fn switch(&self) -> &gtk::Switch {

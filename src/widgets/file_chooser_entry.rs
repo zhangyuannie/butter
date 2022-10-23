@@ -3,7 +3,7 @@ use gtk::{glib, prelude::*};
 mod imp {
     use super::*;
     use adw::subclass::prelude::*;
-    use gtk::{subclass::prelude::*, CompositeTemplate};
+    use gtk::CompositeTemplate;
     use std::cell::RefCell;
 
     #[derive(CompositeTemplate, Default)]
@@ -33,8 +33,9 @@ mod imp {
     }
 
     impl ObjectImpl for FileChooserEntry {
-        fn constructed(&self, obj: &Self::Type) {
-            self.parent_constructed(obj);
+        fn constructed(&self) {
+            self.parent_constructed();
+            let obj = self.instance();
             self.browse_button
                 .connect_clicked(glib::clone!(@weak obj => move |_| {
                     let window = obj.root().unwrap().downcast::<gtk::Window>().unwrap();
@@ -63,8 +64,8 @@ mod imp {
     impl WidgetImpl for FileChooserEntry {}
     impl BinImpl for FileChooserEntry {}
     impl EditableImpl for FileChooserEntry {
-        fn delegate(&self, editable: &Self::Type) -> Option<gtk::Editable> {
-            Some(editable.imp().entry.get().upcast())
+        fn delegate(&self) -> Option<gtk::Editable> {
+            Some(self.entry.get().upcast())
         }
     }
 }
@@ -78,7 +79,7 @@ glib::wrapper! {
 
 impl FileChooserEntry {
     pub fn new() -> Self {
-        glib::Object::new(&[]).expect("Failed to create FileChooserEntry")
+        glib::Object::new(&[])
     }
 }
 
