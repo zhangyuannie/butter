@@ -47,6 +47,8 @@ Application for Btrfs snapshot management
 %{_datadir}/icons/hicolor/scalable/apps/org.zhangyuannie.Butter.svg
 %{_datadir}/icons/hicolor/symbolic/apps/org.zhangyuannie.Butter-symbolic.svg
 %{_datadir}/polkit-1/actions/org.zhangyuannie.butter.policy
+%{_datadir}/dbus-1/system.d/org.zhangyuannie.Butter1.conf
+%{_datadir}/dbus-1/system-services/org.zhangyuannie.Butter1.service
 %{_unitdir}/%{name}*
 
 %prep

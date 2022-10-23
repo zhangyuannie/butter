@@ -3,6 +3,14 @@ install_data(
   install_dir: datadir / 'dbus-1' / 'system.d',
 )
 
+configure_file(
+  input: 'data/org.zhangyuannie.Butter1.service.in',
+  output: 'org.zhangyuannie.Butter1.service',
+  configuration: data_conf,
+  install: true,
+  install_dir: datadir / 'dbus-1' / 'system-services',
+)
+
 custom_target(
   'cargo_build_butterd',
   build_by_default: true,
