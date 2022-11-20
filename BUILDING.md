@@ -7,7 +7,6 @@
 - python 3 (build-time only)
 - libadwaita >= 1.0.0
 - gtk >= 4.4.0
-- btrfs-progs >= 5.10.0
 - libbtrfsutil >= 1.2.0
 - kernel >= 4.18
 - polkit
