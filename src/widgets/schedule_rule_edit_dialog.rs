@@ -1,18 +1,18 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use butter::config;
-use butter::schedule::ScheduleSubvolume;
 use gettext::gettext;
 use gtk::glib::Object;
 use gtk::{glib, CompositeTemplate};
 use std::path::PathBuf;
 
+use crate::config;
+use crate::schedule::ScheduleSubvolume;
 use crate::schedule_repo::{ScheduleObject, ScheduleRepo};
 
 mod imp {
     use std::cell::{Ref, RefCell};
 
-    use butter::{
+    use crate::{
         json_file::JsonFile,
         schedule::{Schedule, ScheduleSubvolume},
     };

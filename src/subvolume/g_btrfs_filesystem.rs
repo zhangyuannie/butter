@@ -1,7 +1,7 @@
-use butter::daemon::interface::{self, BtrfsFilesystem};
-
 use glib::Object;
 use gtk::{glib, prelude::*, subclass::prelude::*};
+
+use crate::subvolume::proxy::BtrfsFilesystem;
 
 mod imp {
     use super::*;
@@ -11,7 +11,7 @@ mod imp {
 
     #[derive(Default)]
     pub struct GBtrfsFilesystem {
-        pub data: OnceCell<interface::BtrfsFilesystem>,
+        pub data: OnceCell<BtrfsFilesystem>,
     }
 
     #[glib::object_subclass]
@@ -48,25 +48,25 @@ glib::wrapper! {
 }
 
 impl GBtrfsFilesystem {
-    pub fn new(fs: interface::BtrfsFilesystem) -> Self {
+    pub fn new(fs: BtrfsFilesystem) -> Self {
         let obj: Self = Object::new(&[]);
         obj.imp().data.set(fs).unwrap();
         obj
     }
 
-    pub fn data(&self) -> &interface::BtrfsFilesystem {
+    pub fn data(&self) -> &BtrfsFilesystem {
         self.imp().data.get().unwrap()
     }
 
-    pub fn label(&self) -> Option<&str> {
-        self.data().label.as_ref().map(String::as_str)
+    pub fn label(&self) -> &str {
+        self.data().label.as_str()
     }
 
     pub fn display(&self) -> String {
-        if let Some(label) = self.label() {
-            label.to_string()
+        if self.label().is_empty() {
+            format!("\"{}\"", self.data().devices.get(0).unwrap())
         } else {
-            format!("\"{}\"", self.data().devices.get(0).unwrap().display())
+            self.label().to_string()
         }
     }
 }

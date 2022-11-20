@@ -1,15 +1,16 @@
 mod application;
 mod client;
+mod config;
+mod daemon;
+mod json_file;
+mod schedule;
 mod schedule_repo;
 mod subvolume;
 mod ui;
 mod widgets;
 
+use crate::schedule::{cmd_prune, cmd_snapshot};
 use adw::prelude::*;
-use butter::{
-    config,
-    schedule::{cmd_prune, cmd_snapshot},
-};
 use gtk::gio;
 use std::process::{Command, Stdio};
 use subvolume::SubvolumeManager;

@@ -4,10 +4,11 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Context;
 use butter::daemon::cmd;
-use butter::daemon::interface::{BtrfsFilesystem, Butterd, Result, Subvolume};
+use butter::daemon::interface::{Butterd, Result, Subvolume};
 use butter::daemon::mounted_fs::MountedTopLevelSubvolume;
 use butter::json_file::JsonFile;
 use butter::schedule::{ReadScheduleDir, Schedule};
+use butter::subvolume::proxy::BtrfsFilesystem;
 use libbtrfsutil::CreateSnapshotFlags;
 use libc::c_int;
 use uuid::Uuid;
@@ -39,11 +40,6 @@ impl Daemon {
 }
 
 impl Butterd for Daemon {
-    fn list_filesystems(&mut self) -> Result<Vec<BtrfsFilesystem>> {
-        let ret = cmd::btrfs_filesystem_show()?;
-        Ok(ret)
-    }
-
     fn filesystem(&mut self) -> Option<Uuid> {
         self.fs.as_ref().and_then(|fs| Some(fs.info.uuid))
     }

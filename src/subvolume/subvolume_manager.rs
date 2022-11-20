@@ -10,9 +10,9 @@ use std::path::PathBuf;
 use std::process::{ChildStdin, ChildStdout};
 use uuid::Uuid;
 
-use butter::daemon::interface::BtrfsFilesystem;
-
 use crate::{client::Client, subvolume::g_btrfs_filesystem::GBtrfsFilesystem};
+
+use super::proxy::{BtrfsFilesystem, Butter1ProxyBlocking};
 
 mod imp {
 
@@ -95,8 +95,9 @@ impl SubvolumeManager {
     }
 
     pub fn refresh_filesystems(&self) {
-        let daemon = self.imp().daemon.get().unwrap();
-        let filesystems = daemon.lock().unwrap().list_filesystems().unwrap();
+        let conn = zbus::blocking::Connection::system().unwrap();
+        let butterd = Butter1ProxyBlocking::new(&conn).unwrap();
+        let filesystems = butterd.list_filesystems().unwrap();
         if self.filesystem().is_none() {
             self.set_filesystem(filesystems[0].clone()).unwrap();
         }

@@ -5,7 +5,7 @@ use std::{
     path::PathBuf,
 };
 
-use crate::{config, JsonFile};
+use crate::{config, json_file::JsonFile};
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Schedule {

@@ -9,7 +9,7 @@ use libc::c_int;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{json_file::JsonFile, schedule::Schedule};
+use crate::{json_file::JsonFile, schedule::Schedule, subvolume::proxy::BtrfsFilesystem};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Error {
@@ -42,7 +42,6 @@ pub type Result<T> = result::Result<T, Error>;
 
 #[rpc::service]
 pub trait Butterd {
-    fn list_filesystems() -> Result<Vec<BtrfsFilesystem>>;
     fn filesystem() -> Option<Uuid>;
     fn set_filesystem(fs: BtrfsFilesystem) -> Result<bool>;
     fn list_subvolumes() -> Result<Vec<Subvolume>>;
@@ -74,11 +73,4 @@ impl Default for Subvolume {
             snapshot_source_uuid: Default::default(),
         }
     }
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
-pub struct BtrfsFilesystem {
-    pub label: Option<String>,
-    pub uuid: Uuid,
-    pub devices: Vec<PathBuf>,
 }

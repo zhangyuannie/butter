@@ -2,9 +2,9 @@ use std::cell::{Ref, RefMut};
 use std::path::PathBuf;
 use std::sync::MutexGuard;
 
+use crate::daemon::interface::ButterdClient;
+use crate::{json_file::JsonFile, schedule::Schedule};
 use anyhow::Result;
-use butter::daemon::interface::ButterdClient;
-use butter::{json_file::JsonFile, schedule::Schedule};
 use glib::once_cell::sync::OnceCell;
 use gtk::gio::ListStore;
 use gtk::subclass::prelude::*;

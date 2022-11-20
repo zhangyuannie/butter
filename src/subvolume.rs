@@ -1,11 +1,12 @@
 mod list;
+pub mod proxy;
 pub use list::SubvolList;
 
 mod g_btrfs_filesystem;
 mod subvolume_manager;
 pub use g_btrfs_filesystem::GBtrfsFilesystem;
 
-use butter::daemon::interface;
+use crate::daemon::interface;
 pub use subvolume_manager::SubvolumeManager;
 use uuid::Uuid;
 

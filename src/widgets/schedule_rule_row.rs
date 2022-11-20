@@ -9,11 +9,11 @@ mod imp {
     use std::cell::Ref;
 
     use adw::traits::PreferencesRowExt;
-    use butter::{json_file::JsonFile, schedule::Schedule};
     use glib::once_cell::sync::{Lazy, OnceCell};
     use gtk::glib::{ParamSpec, Value};
 
     use super::*;
+    use crate::{json_file::JsonFile, schedule::Schedule};
 
     #[derive(Default, CompositeTemplate)]
     #[template(resource = "/org/zhangyuannie/butter/ui/schedule_rule_row.ui")]

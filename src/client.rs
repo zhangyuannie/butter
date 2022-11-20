@@ -1,9 +1,10 @@
-use butter::daemon::interface::ButterdClient;
 use std::{
     io::BufReader,
     process::{ChildStdin, ChildStdout},
     sync::{Arc, LockResult, Mutex, MutexGuard},
 };
+
+use crate::daemon::interface::ButterdClient;
 
 #[derive(Clone, Debug)]
 pub struct Client(Arc<Mutex<ButterdClient>>);
