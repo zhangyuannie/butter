@@ -99,7 +99,7 @@ pub fn read_all_mounted_btrfs_fs() -> io::Result<Vec<BtrfsFilesystem>> {
                     devices: dev_infos
                         .iter()
                         .map(|dev| unsafe {
-                            CStr::from_ptr(dev.path.as_ptr() as *const i8)
+                            CStr::from_ptr(dev.path.as_ptr() as *const c_char)
                                 .to_string_lossy()
                                 .to_string()
                         })
