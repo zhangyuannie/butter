@@ -2,9 +2,11 @@ use std::collections::HashMap;
 
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
+use tokio::try_join;
 use uuid::Uuid;
-use zbus::{dbus_interface, zvariant::Type, DBusError, MessageHeader};
+use zbus::{dbus_interface, zvariant::Type, Connection, DBusError, MessageHeader};
 use zbus_polkit::policykit1::{self, CheckAuthorizationFlags, Subject};
+use zbus_systemd::systemd1;
 
 use crate::btrfs;
 
@@ -24,6 +26,7 @@ impl From<anyhow::Error> for Error {
 }
 
 pub struct Service<'c> {
+    pub conn: Connection,
     pub polkit: policykit1::AuthorityProxy<'c>,
 }
 
@@ -54,7 +57,8 @@ impl<'c> Service<'c> {
     }
 }
 
-static READ_FILESYSTEM: &str = "org.zhangyuannie.butter.read-filesystem";
+static FILESYSTEM_AID: &str = "org.zhangyuannie.butter.filesystem";
+static SCHEDULE_AID: &str = "org.zhangyuannie.butter.schedule";
 
 #[dbus_interface(name = "org.zhangyuannie.Butter1")]
 impl Service<'static> {
@@ -62,9 +66,81 @@ impl Service<'static> {
         &self,
         #[zbus(header)] hdr: MessageHeader<'_>,
     ) -> Result<Vec<BtrfsFilesystem>, Error> {
-        self.check_authorization(&hdr, READ_FILESYSTEM).await?;
+        self.check_authorization(&hdr, FILESYSTEM_AID).await?;
         let ret = btrfs::read_all_mounted_btrfs_fs().context("failed to read mounted btrfs fs")?;
         Ok(ret)
+    }
+
+    async fn enable_schedule(&self, #[zbus(header)] hdr: MessageHeader<'_>) -> Result<(), Error> {
+        self.check_authorization(&hdr, SCHEDULE_AID).await?;
+        let systemd = systemd1::ManagerProxy::new(&self.conn).await?;
+
+        systemd
+            .enable_unit_files(
+                vec![
+                    "butter-schedule-snapshot.timer".to_string(),
+                    "butter-schedule-prune.timer".to_string(),
+                ],
+                false,
+                true,
+            )
+            .await?;
+
+        try_join!(
+            systemd.start_unit(
+                "butter-schedule-snapshot.timer".to_string(),
+                "replace".to_string(),
+            ),
+            systemd.start_unit(
+                "butter-schedule-prune.timer".to_string(),
+                "replace".to_string(),
+            )
+        )?;
+
+        Ok(())
+    }
+
+    async fn disable_schedule(&self, #[zbus(header)] hdr: MessageHeader<'_>) -> Result<(), Error> {
+        self.check_authorization(&hdr, SCHEDULE_AID).await?;
+        let systemd = systemd1::ManagerProxy::new(&self.conn).await?;
+
+        systemd
+            .disable_unit_files(
+                vec![
+                    "butter-schedule-snapshot.timer".to_string(),
+                    "butter-schedule-prune.timer".to_string(),
+                ],
+                false,
+            )
+            .await?;
+
+        try_join!(
+            systemd.stop_unit(
+                "butter-schedule-snapshot.timer".to_string(),
+                "replace".to_string(),
+            ),
+            systemd.stop_unit(
+                "butter-schedule-prune.timer".to_string(),
+                "replace".to_string(),
+            )
+        )?;
+
+        Ok(())
+    }
+
+    async fn schedule_state(&self) -> Result<&str, Error> {
+        let systemd = systemd1::ManagerProxy::new(&self.conn).await?;
+        let p = systemd
+            .get_unit("butter-schedule-snapshot.timer".to_string())
+            .await?;
+
+        let unit = systemd1::UnitProxy::new(&self.conn, p).await?;
+        let state = unit.active_state().await?;
+        if state == "active" || state == "reloading" {
+            Ok("active")
+        } else {
+            Ok("inactive")
+        }
     }
 }
 

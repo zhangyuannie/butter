@@ -48,8 +48,6 @@ pub trait Butterd {
     fn move_subvolume(from: PathBuf, to: PathBuf) -> Result<()>;
     fn delete_subvolume(path: PathBuf) -> Result<()>;
     fn create_snapshot(src: PathBuf, dest: PathBuf, flags: c_int) -> Result<Subvolume>;
-    fn is_schedule_enabled() -> bool;
-    fn set_is_schedule_enabled(is_enabled: bool) -> Result<()>;
     fn schedules() -> Result<Vec<JsonFile<Schedule>>>;
     fn fs_rename(from: PathBuf, to: PathBuf) -> Result<()>;
     fn flush_schedule(schedule: JsonFile<Schedule>) -> Result<()>;

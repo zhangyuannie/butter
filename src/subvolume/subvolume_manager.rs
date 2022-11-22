@@ -165,14 +165,19 @@ impl SubvolumeManager {
     }
 
     pub fn is_schedule_enabled(&self) -> bool {
-        let daemon = self.imp().daemon.get().unwrap();
-        daemon.lock().unwrap().is_schedule_enabled()
+        let conn = zbus::blocking::Connection::system().unwrap();
+        let butterd = Butter1ProxyBlocking::new(&conn).unwrap();
+        butterd.schedule_state().unwrap() == "active"
     }
 
     pub fn set_is_schedule_enabled(&self, is_enabled: bool) -> anyhow::Result<()> {
-        let daemon = self.imp().daemon.get().unwrap();
-        daemon.lock().unwrap().set_is_schedule_enabled(is_enabled)?;
-        Ok(())
+        let conn = zbus::blocking::Connection::system()?;
+        let butterd = Butter1ProxyBlocking::new(&conn)?;
+        if is_enabled {
+            Ok(butterd.enable_schedule()?)
+        } else {
+            Ok(butterd.disable_schedule()?)
+        }
     }
 
     pub fn schedule_repo(&self) -> ScheduleRepo {

@@ -8,6 +8,9 @@ use zbus::{dbus_proxy, zvariant::Type};
 )]
 trait Butter1 {
     fn list_filesystems(&self) -> zbus::Result<Vec<BtrfsFilesystem>>;
+    fn enable_schedule(&self) -> zbus::Result<()>;
+    fn disable_schedule(&self) -> zbus::Result<()>;
+    fn schedule_state(&self) -> zbus::Result<String>;
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize, Type)]

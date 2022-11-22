@@ -20,7 +20,13 @@ async fn main() -> Result<()> {
     let authority = policykit1::AuthorityProxy::new(&conn).await?;
 
     conn.object_server()
-        .at("/org/zhangyuannie/Butter1", Service { polkit: authority })
+        .at(
+            "/org/zhangyuannie/Butter1",
+            Service {
+                conn: conn.clone(),
+                polkit: authority,
+            },
+        )
         .await?;
     conn.request_name("org.zhangyuannie.Butter1").await?;
 
