@@ -68,6 +68,15 @@ fn fs_label_from_mounted<T: AsFd>(fd: T) -> nix::Result<String> {
     Ok(ret.to_string_lossy().to_string())
 }
 
+fn subvol_from_mnt_options(options: &str) -> Option<&str> {
+    for seg in options.split(',') {
+        if seg.starts_with("subvol=") {
+            return Some(&seg[7..]);
+        }
+    }
+    None
+}
+
 /// Get all mounted Btrfs filesystems.
 /// This probably has a lot of edge case such as seed devices and what's not
 pub fn read_all_mounted_btrfs_fs() -> io::Result<Vec<BtrfsFilesystem>> {
@@ -87,7 +96,17 @@ pub fn read_all_mounted_btrfs_fs() -> io::Result<Vec<BtrfsFilesystem>> {
             let (fs_info, dev_infos) = fs_info(&file)?;
 
             let fs_uuid = Uuid::from_bytes(fs_info.fsid);
+
+            let subvol_path =
+                subvol_from_mnt_options(&entry.options).ok_or(io::ErrorKind::InvalidData)?;
+
             if ret.contains_key(&fs_uuid) {
+                ret.get_mut(&fs_uuid)
+                    .unwrap()
+                    .mounts
+                    .entry(subvol_path.to_string())
+                    .or_insert(Vec::new())
+                    .push(mnt_path.to_string_lossy().to_string());
                 continue;
             }
 
@@ -104,6 +123,10 @@ pub fn read_all_mounted_btrfs_fs() -> io::Result<Vec<BtrfsFilesystem>> {
                                 .to_string()
                         })
                         .collect(),
+                    mounts: HashMap::from([(
+                        subvol_path.to_string(),
+                        vec![mnt_path.to_string_lossy().to_string()],
+                    )]),
                 },
             );
         }

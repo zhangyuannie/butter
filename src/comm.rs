@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use zbus::zvariant::Type;
@@ -8,4 +10,7 @@ pub struct BtrfsFilesystem {
     pub uuid: Uuid,
     // TODO: PathBuf
     pub devices: Vec<String>,
+    // TODO: PathBuf
+    /// mount dirs by subvol
+    pub mounts: HashMap<String, Vec<String>>,
 }
