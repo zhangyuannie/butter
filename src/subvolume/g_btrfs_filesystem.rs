@@ -1,8 +1,7 @@
 use glib::Object;
 use gtk::{glib, prelude::*, subclass::prelude::*};
 
-use crate::subvolume::proxy::BtrfsFilesystem;
-
+use crate::comm::BtrfsFilesystem;
 mod imp {
     use super::*;
     use glib::once_cell::sync::OnceCell;

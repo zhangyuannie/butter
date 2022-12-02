@@ -1,10 +1,9 @@
 use std::collections::HashMap;
 
 use anyhow::Context;
-use serde::{Deserialize, Serialize};
+use butter::comm::BtrfsFilesystem;
 use tokio::try_join;
-use uuid::Uuid;
-use zbus::{dbus_interface, zvariant::Type, Connection, DBusError, MessageHeader};
+use zbus::{dbus_interface, Connection, DBusError, MessageHeader};
 use zbus_polkit::policykit1::{self, CheckAuthorizationFlags, Subject};
 use zbus_systemd::systemd1;
 
@@ -142,12 +141,4 @@ impl Service<'static> {
             Ok("inactive")
         }
     }
-}
-
-#[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize, Type)]
-pub struct BtrfsFilesystem {
-    pub label: String,
-    pub uuid: Uuid,
-    // TODO: PathBuf
-    pub devices: Vec<String>,
 }

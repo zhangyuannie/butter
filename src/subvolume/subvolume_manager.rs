@@ -1,3 +1,4 @@
+use crate::comm::BtrfsFilesystem;
 use crate::schedule_repo::ScheduleRepo;
 use crate::subvolume::{GSubvolume, SubvolList};
 
@@ -12,7 +13,7 @@ use uuid::Uuid;
 
 use crate::{client::Client, subvolume::g_btrfs_filesystem::GBtrfsFilesystem};
 
-use super::proxy::{BtrfsFilesystem, Butter1ProxyBlocking};
+use super::proxy::Butter1ProxyBlocking;
 
 mod imp {
 

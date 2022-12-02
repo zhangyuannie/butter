@@ -10,11 +10,11 @@ use std::{
     ptr::addr_of_mut,
 };
 
+use butter::comm::BtrfsFilesystem;
 use nix::errno::Errno;
 use uuid::Uuid;
 
 use crate::{
-    interface::BtrfsFilesystem,
     ioctl::{self, BtrfsDevInfoArgs, BtrfsFsInfoArgs, BTRFS_LABEL_SIZE},
     mnt_entry::MntEntries,
 };

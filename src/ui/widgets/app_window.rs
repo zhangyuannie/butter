@@ -1,16 +1,17 @@
-use crate::application::Application;
 use crate::subvolume::SubvolumeManager;
-use crate::widgets::{AppHeaderBar, SnapshotView};
+use crate::ui::application::Application;
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
 use gtk::{gio, glib};
 
+use super::{AppHeaderBar, SnapshotView};
+
 mod imp {
-    use adw::prelude::*;
+    use super::*;
     use adw::subclass::prelude::*;
     use gtk::{gio, glib, CompositeTemplate};
 
-    use crate::{config::APP_ID, widgets::AppHeaderBar};
+    use crate::config::APP_ID;
 
     #[derive(CompositeTemplate)]
     #[template(resource = "/org/zhangyuannie/butter/ui/app_window.ui")]

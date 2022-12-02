@@ -214,6 +214,7 @@ name = "butterd"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "butter",
  "env_logger",
  "log",
  "nix",

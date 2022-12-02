@@ -10,11 +10,11 @@ use crate::schedule_repo::{ScheduleObject, ScheduleRepo};
 use super::{ScheduleRuleEditDialog, ScheduleRuleRow};
 
 mod imp {
-    use butter::show_error_dialog;
     use glib::once_cell::sync::{Lazy, OnceCell};
     use gtk::glib::{ParamSpec, Value};
 
     use crate::schedule_repo::ScheduleObject;
+    use crate::ui::show_error_dialog;
 
     use super::*;
 

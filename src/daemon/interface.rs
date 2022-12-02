@@ -9,7 +9,7 @@ use libc::c_int;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{json_file::JsonFile, schedule::Schedule, subvolume::proxy::BtrfsFilesystem};
+use crate::{comm::BtrfsFilesystem, json_file::JsonFile, schedule::Schedule};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Error {

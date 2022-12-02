@@ -1,5 +1,4 @@
 use adw::subclass::prelude::*;
-use butter::show_error_dialog;
 use gtk::{
     gdk, gio, glib, prelude::*, BitsetIter, ColumnView, ColumnViewColumn, SignalListItemFactory,
     Widget,
@@ -7,7 +6,10 @@ use gtk::{
 
 use crate::{
     subvolume::{Attribute, GSubvolume, SubvolumeManager},
-    widgets::{AppWindow, SnapshotCreationWindow, SubvolumeLabelCell},
+    ui::{
+        show_error_dialog,
+        widgets::{AppWindow, SnapshotCreationWindow, SubvolumeLabelCell},
+    },
 };
 
 mod imp {
@@ -26,7 +28,7 @@ mod imp {
 
     use crate::{
         subvolume::{Attribute, GSubvolume, SubvolumeManager},
-        widgets::SnapshotRenamePopover,
+        ui::widgets::SnapshotRenamePopover,
     };
 
     #[derive(CompositeTemplate, Default)]

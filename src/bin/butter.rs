@@ -1,21 +1,13 @@
-mod application;
-mod client;
-mod config;
-mod daemon;
-mod json_file;
-mod schedule;
-mod schedule_repo;
-mod subvolume;
-mod ui;
-mod widgets;
-
-use crate::schedule::{cmd_prune, cmd_snapshot};
-use adw::prelude::*;
-use gtk::gio;
 use std::process::{Command, Stdio};
-use subvolume::SubvolumeManager;
 
+use butter::{
+    config,
+    schedule::{cmd_prune, cmd_snapshot},
+    subvolume::SubvolumeManager,
+    ui::Application,
+};
 use clap::{Parser, Subcommand};
+use gtk::{gio, prelude::*};
 
 #[derive(Parser)]
 struct Cli {
@@ -70,6 +62,6 @@ fn gui() {
     let res = gio::Resource::load(config::GRESOURCE_FILE).expect("Unable to load gresource file");
     gio::resources_register(&res);
 
-    let app = application::Application::new(subvol_manager);
+    let app = Application::new(subvol_manager);
     app.run();
 }

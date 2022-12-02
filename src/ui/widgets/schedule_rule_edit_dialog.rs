@@ -22,7 +22,7 @@ mod imp {
         glib::{ParamSpec, Value},
     };
 
-    use crate::widgets::FileChooserEntry;
+    use crate::ui::widgets::FileChooserEntry;
 
     use super::*;
 
