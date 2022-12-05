@@ -3,11 +3,11 @@ use std::num::NonZeroU64;
 use std::path::{Path, PathBuf};
 
 use anyhow::Context;
-use butter::comm::BtrfsFilesystem;
 use butter::daemon::interface::{Butterd, Result, Subvolume};
 use butter::daemon::mounted_fs::MountedTopLevelSubvolume;
 use butter::json_file::JsonFile;
 use butter::schedule::{ReadScheduleDir, Schedule};
+use butterd::BtrfsFilesystem;
 use libbtrfsutil::CreateSnapshotFlags;
 use libc::c_int;
 use uuid::Uuid;

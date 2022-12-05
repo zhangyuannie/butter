@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
 use anyhow::Context;
-use butter::comm::BtrfsFilesystem;
+use butterd::{BtrfsFilesystem, Subvolume};
 use tokio::try_join;
 use zbus::{dbus_interface, Connection, DBusError, MessageHeader};
 use zbus_polkit::policykit1::{self, CheckAuthorizationFlags, Subject};
 use zbus_systemd::systemd1;
 
-use crate::btrfs;
+use crate::{btrfs, subvol::SubvolumeExt};
 
 #[derive(DBusError, Debug)]
 #[dbus_error(prefix = "org.zhangyuannie.Butter1")]
@@ -68,6 +68,10 @@ impl Service<'static> {
         self.check_authorization(&hdr, FILESYSTEM_AID).await?;
         let ret = btrfs::read_all_mounted_btrfs_fs().context("failed to read mounted btrfs fs")?;
         Ok(ret)
+    }
+
+    async fn list_subvolumes(&self, fs: BtrfsFilesystem) -> Result<Vec<Subvolume>, Error> {
+        Ok(fs.subvolumes()?)
     }
 
     async fn enable_schedule(&self, #[zbus(header)] hdr: MessageHeader<'_>) -> Result<(), Error> {

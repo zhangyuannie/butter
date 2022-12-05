@@ -1,7 +1,7 @@
-use crate::comm::BtrfsFilesystem;
 use crate::schedule_repo::ScheduleRepo;
 use crate::subvolume::{GSubvolume, SubvolList};
 
+use butterd::BtrfsFilesystem;
 use glib::once_cell::sync::OnceCell;
 use gtk::prelude::*;
 use gtk::{gio, glib, subclass::prelude::*};

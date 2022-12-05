@@ -1,16 +1,17 @@
 use std::{
     collections::HashMap,
-    ffi::CStr,
+    ffi::{CStr, OsStr},
     fs, io,
     mem::{self, MaybeUninit},
     os::{
         raw::c_char,
-        unix::prelude::{AsFd, AsRawFd},
+        unix::prelude::{AsFd, AsRawFd, OsStrExt},
     },
+    path::PathBuf,
     ptr::addr_of_mut,
 };
 
-use butter::comm::BtrfsFilesystem;
+use butterd::BtrfsFilesystem;
 use nix::errno::Errno;
 use uuid::Uuid;
 
@@ -68,10 +69,10 @@ fn fs_label_from_mounted<T: AsFd>(fd: T) -> nix::Result<String> {
     Ok(ret.to_string_lossy().to_string())
 }
 
-fn subvol_from_mnt_options(options: &str) -> Option<&str> {
+fn subvol_id_from_mnt_options(options: &str) -> Option<u64> {
     for seg in options.split(',') {
-        if seg.starts_with("subvol=") {
-            return Some(&seg[7..]);
+        if seg.starts_with("subvolid=") {
+            return seg[9..].parse::<u64>().ok();
         }
     }
     None
@@ -97,16 +98,16 @@ pub fn read_all_mounted_btrfs_fs() -> io::Result<Vec<BtrfsFilesystem>> {
 
             let fs_uuid = Uuid::from_bytes(fs_info.fsid);
 
-            let subvol_path =
-                subvol_from_mnt_options(&entry.options).ok_or(io::ErrorKind::InvalidData)?;
+            let subvol_id =
+                subvol_id_from_mnt_options(&entry.options).ok_or(io::ErrorKind::InvalidData)?;
 
             if ret.contains_key(&fs_uuid) {
                 ret.get_mut(&fs_uuid)
                     .unwrap()
                     .mounts
-                    .entry(subvol_path.to_string())
+                    .entry(subvol_id)
                     .or_insert(Vec::new())
-                    .push(mnt_path.to_string_lossy().to_string());
+                    .push(mnt_path.to_owned());
                 continue;
             }
 
@@ -118,15 +119,12 @@ pub fn read_all_mounted_btrfs_fs() -> io::Result<Vec<BtrfsFilesystem>> {
                     devices: dev_infos
                         .iter()
                         .map(|dev| unsafe {
-                            CStr::from_ptr(dev.path.as_ptr() as *const c_char)
-                                .to_string_lossy()
-                                .to_string()
+                            PathBuf::from(OsStr::from_bytes(
+                                CStr::from_ptr(dev.path.as_ptr() as *const c_char).to_bytes(),
+                            ))
                         })
                         .collect(),
-                    mounts: HashMap::from([(
-                        subvol_path.to_string(),
-                        vec![mnt_path.to_string_lossy().to_string()],
-                    )]),
+                    mounts: HashMap::from([(subvol_id, vec![mnt_path.to_owned()])]),
                 },
             );
         }

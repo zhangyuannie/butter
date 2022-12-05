@@ -1,5 +1,4 @@
 pub mod client;
-pub mod comm;
 pub mod config;
 pub mod daemon;
 pub mod json_file;

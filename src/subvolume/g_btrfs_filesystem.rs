@@ -1,7 +1,7 @@
+use butterd::BtrfsFilesystem;
 use glib::Object;
 use gtk::{glib, prelude::*, subclass::prelude::*};
 
-use crate::comm::BtrfsFilesystem;
 mod imp {
     use super::*;
     use glib::once_cell::sync::OnceCell;
@@ -63,7 +63,7 @@ impl GBtrfsFilesystem {
 
     pub fn display(&self) -> String {
         if self.label().is_empty() {
-            format!("\"{}\"", self.data().devices.get(0).unwrap())
+            format!("\"{}\"", self.data().devices[0].display())
         } else {
             self.label().to_string()
         }

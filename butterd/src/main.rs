@@ -2,6 +2,7 @@ mod btrfs;
 mod interface;
 mod ioctl;
 mod mnt_entry;
+mod subvol;
 
 use std::future;
 

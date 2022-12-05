@@ -5,11 +5,12 @@ use std::{
     time::SystemTime,
 };
 
+use butterd::BtrfsFilesystem;
 use libc::c_int;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{comm::BtrfsFilesystem, json_file::JsonFile, schedule::Schedule};
+use crate::{json_file::JsonFile, schedule::Schedule};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Error {
