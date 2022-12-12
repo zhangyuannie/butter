@@ -1131,9 +1131,9 @@ dependencies = [
 
 [[package]]
 name = "libbtrfsutil"
-version = "0.5.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6493339d8200bc26e7dd7d2f7ffb33ba21f9e7fcd0f4d2aceebc7d9a4cadb034"
+checksum = "3a9a2daa47355b264a21f275208541c4814eca3108927663887a126a70a98aad"
 dependencies = [
  "bitflags",
  "libbtrfsutil-sys",
@@ -2167,9 +2167,9 @@ checksum = "f40009d85759725a34da6d89a94e63d7bdc50a862acf0dbc7c8e488f1edcb6f5"
 
 [[package]]
 name = "zbus"
-version = "3.6.0"
+version = "3.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97bbdedb5a1e2305b063530df8bef02ce6411f0bf06115f5f75c96a8403e023d"
+checksum = "938ea6da98c75c2c37a86007bd17fd8e208cbec24e086108c87ece98e9edec0d"
 dependencies = [
  "async-broadcast",
  "async-channel",
@@ -2208,9 +2208,9 @@ dependencies = [
 
 [[package]]
 name = "zbus_macros"
-version = "3.6.0"
+version = "3.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd220acb2216d9597653c3ed379dae064b57a13cfaa9306b5853c79de47c145c"
+checksum = "45066039ebf3330820e495e854f8b312abb68f0a39e97972d092bd72e8bb3e8e"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",

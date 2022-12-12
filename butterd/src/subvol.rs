@@ -92,9 +92,11 @@ impl SubvolumeExt for BtrfsFilesystem {
             .values()
             .map(|subvol| Subvolume {
                 subvol_path: subvol.subvol_path.to_owned(),
-                mount_path: Optional::from(subvol
-                    .mnt_path(&subvol_by_id)
-                    .and_then(|p| Some(p.to_owned()))),
+                mount_path: Optional::from(
+                    subvol
+                        .mnt_path(&subvol_by_id)
+                        .and_then(|p| Some(p.to_owned())),
+                ),
                 uuid: subvol.info.uuid(),
                 id: subvol.info.id(),
                 created_unix_secs: subvol.info.otime(),

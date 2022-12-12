@@ -1,6 +1,7 @@
 use butterd::BtrfsFilesystem;
 use glib::Object;
 use gtk::{glib, prelude::*, subclass::prelude::*};
+use uuid::Uuid;
 
 mod imp {
     use super::*;
@@ -59,6 +60,10 @@ impl GBtrfsFilesystem {
 
     pub fn label(&self) -> &str {
         self.data().label.as_str()
+    }
+
+    pub fn uuid(&self) -> Uuid {
+        self.data().uuid
     }
 
     pub fn display(&self) -> String {

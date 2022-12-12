@@ -1,9 +1,9 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fs, os::raw::c_int, path::PathBuf};
 
 use anyhow::Context;
 use butterd::{BtrfsFilesystem, Subvolume};
 use tokio::try_join;
-use zbus::{dbus_interface, Connection, DBusError, MessageHeader};
+use zbus::{dbus_interface, zvariant::Optional, Connection, DBusError, MessageHeader};
 use zbus_polkit::policykit1::{self, CheckAuthorizationFlags, Subject};
 use zbus_systemd::systemd1;
 
@@ -16,6 +16,7 @@ enum Error {
     ZBus(zbus::Error),
     Failed(String),
     AuthFailed(String),
+    ClientError(String),
 }
 
 impl From<anyhow::Error> for Error {
@@ -57,7 +58,8 @@ impl<'c> Service<'c> {
 }
 
 static FILESYSTEM_AID: &str = "org.zhangyuannie.butter.filesystem";
-static SCHEDULE_AID: &str = "org.zhangyuannie.butter.schedule";
+static SCHEDULE_AID: &str = "org.zhangyuannie.butter.manage-schedule";
+static SUBVOLUME_AID: &str = "org.zhangyuannie.butter.manage-subvolume";
 
 #[dbus_interface(name = "org.zhangyuannie.Butter1")]
 impl Service<'static> {
@@ -72,6 +74,72 @@ impl Service<'static> {
 
     async fn list_subvolumes(&self, fs: BtrfsFilesystem) -> Result<Vec<Subvolume>, Error> {
         Ok(fs.subvolumes()?)
+    }
+
+    async fn move_subvolume(
+        &self,
+        #[zbus(header)] hdr: MessageHeader<'_>,
+        src_mnt: PathBuf,
+        dst_mnt: PathBuf,
+    ) -> Result<(), Error> {
+        self.check_authorization(&hdr, SUBVOLUME_AID).await?;
+        if src_mnt.is_relative() || dst_mnt.is_relative() {
+            return Err(Error::ClientError("path must be absolute".to_string()));
+        }
+        fs::rename(src_mnt, dst_mnt).context("failed to move subvolume")?;
+        Ok(())
+    }
+
+    async fn delete_subvolume(
+        &mut self,
+        #[zbus(header)] hdr: MessageHeader<'_>,
+        mnt: PathBuf,
+    ) -> Result<(), Error> {
+        self.check_authorization(&hdr, SUBVOLUME_AID).await?;
+        if mnt.is_relative() {
+            return Err(Error::ClientError("path must be absolute".to_string()));
+        }
+        libbtrfsutil::delete_subvolume(mnt, libbtrfsutil::DeleteSubvolumeFlags::RECURSIVE)
+            .context("failed to delete subvolume")?;
+        Ok(())
+    }
+
+    async fn create_snapshot(
+        &mut self,
+        #[zbus(header)] hdr: MessageHeader<'_>,
+        src_mnt: PathBuf,
+        dst_mnt: PathBuf,
+        flags: i32,
+    ) -> Result<Subvolume, Error> {
+        self.check_authorization(&hdr, SUBVOLUME_AID).await?;
+        if src_mnt.is_relative() || dst_mnt.is_relative() {
+            return Err(Error::ClientError("path must be absolute".to_string()));
+        }
+        if let Some(dest_parent) = dst_mnt.parent() {
+            fs::create_dir_all(dest_parent).context("failed to create target parent")?;
+        }
+
+        libbtrfsutil::create_snapshot(
+            &src_mnt,
+            &dst_mnt,
+            libbtrfsutil::CreateSnapshotFlags::from_bits_truncate(flags as c_int),
+            None,
+        )
+        .context("failed to create snapshot")?;
+
+        let info = libbtrfsutil::subvolume_info(&dst_mnt).context("failed to get snapshot info")?;
+
+        let subvol_path =
+            libbtrfsutil::subvolume_path(&dst_mnt).context("failed to get subvolume path")?;
+
+        Ok(Subvolume {
+            subvol_path,
+            mount_path: Optional::from(Some(dst_mnt)),
+            uuid: info.uuid(),
+            id: info.id(),
+            created_unix_secs: info.otime(),
+            snapshot_source_uuid: Optional::from(info.parent_uuid()),
+        })
     }
 
     async fn enable_schedule(&self, #[zbus(header)] hdr: MessageHeader<'_>) -> Result<(), Error> {

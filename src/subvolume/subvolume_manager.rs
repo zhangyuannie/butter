@@ -7,7 +7,7 @@ use gtk::prelude::*;
 use gtk::{gio, glib, subclass::prelude::*};
 use std::collections::HashMap;
 use std::io::BufReader;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{ChildStdin, ChildStdout};
 use uuid::Uuid;
 
@@ -16,13 +16,15 @@ use crate::{client::Client, subvolume::g_btrfs_filesystem::GBtrfsFilesystem};
 use super::proxy::Butter1ProxyBlocking;
 
 mod imp {
-
     use super::*;
+
+    use std::cell::RefCell;
 
     pub struct SubvolumeManager {
         pub daemon: OnceCell<Client>,
         pub model: SubvolList,
         pub filesystems: gio::ListStore,
+        pub cur_fs: RefCell<Option<GBtrfsFilesystem>>,
     }
 
     impl Default for SubvolumeManager {
@@ -31,6 +33,7 @@ mod imp {
                 daemon: Default::default(),
                 model: Default::default(),
                 filesystems: gio::ListStore::new(GBtrfsFilesystem::static_type()),
+                cur_fs: Default::default(),
             }
         }
     }
@@ -70,29 +73,37 @@ impl SubvolumeManager {
         self.refresh_subvolumes();
     }
 
-    pub fn refresh_subvolumes(&self) {
-        let daemon = self.imp().daemon.get().unwrap();
-        let subvols = daemon.lock().unwrap().list_subvolumes().unwrap();
-        let subvols = {
-            let mut map: HashMap<Uuid, GSubvolume> = HashMap::with_capacity(subvols.len());
-            for subvol in subvols {
-                map.insert(subvol.uuid, GSubvolume::new(subvol));
-            }
-            map
-        };
+    fn butterd(&self) -> anyhow::Result<Butter1ProxyBlocking> {
+        let conn = zbus::blocking::Connection::system()?;
+        let butterd = Butter1ProxyBlocking::new(&conn)?;
+        Ok(butterd)
+    }
 
-        // populate parent now
-        for (_, subvol) in &subvols {
-            if let Some(uuid) = subvol.parent_uuid() {
-                subvol.set_parent(subvols.get(&uuid));
+    pub fn refresh_subvolumes(&self) -> anyhow::Result<()> {
+        if let Some(cur_fs) = self.imp().cur_fs.borrow().as_ref() {
+            let subvols = self.butterd()?.list_subvolumes(cur_fs.data())?;
+            let subvols = {
+                let mut map: HashMap<Uuid, GSubvolume> = HashMap::with_capacity(subvols.len());
+                for subvol in subvols {
+                    map.insert(subvol.uuid, GSubvolume::new(subvol));
+                }
+                map
+            };
+
+            // populate parent now
+            for (_, subvol) in &subvols {
+                if let Some(uuid) = subvol.parent_uuid() {
+                    subvol.set_parent(subvols.get(&uuid));
+                }
+            }
+
+            let model = self.model();
+            model.clear();
+            for (_, subvol) in subvols {
+                model.insert(subvol);
             }
         }
-
-        let model = self.model();
-        model.clear();
-        for (_, subvol) in subvols {
-            model.insert(subvol);
-        }
+        Ok(())
     }
 
     pub fn refresh_filesystems(&self) {
@@ -115,52 +126,45 @@ impl SubvolumeManager {
     }
 
     pub fn filesystem(&self) -> Option<Uuid> {
-        let daemon = self.imp().daemon.get().unwrap();
-        daemon.lock().unwrap().filesystem()
+        self.imp().cur_fs.borrow().as_ref().and_then(|x| Some(x.uuid()))
     }
 
     pub fn set_filesystem(&self, fs: BtrfsFilesystem) -> anyhow::Result<()> {
-        let daemon = self.imp().daemon.get().unwrap();
-        let updated = daemon.lock().unwrap().set_filesystem(fs)?;
-        if updated {
-            self.refresh_subvolumes();
+        if let Some(cur_fs) = self.imp().cur_fs.borrow().as_ref() {
+            if cur_fs.uuid() == fs.uuid {
+                return Ok(());
+            }
         }
+        self.imp().cur_fs.replace(Some(GBtrfsFilesystem::new(fs)));
+        self.refresh_subvolumes();
+
         Ok(())
     }
 
-    pub fn delete_snapshot(&self, path: PathBuf) -> anyhow::Result<()> {
-        let daemon = self.imp().daemon.get().unwrap();
-        daemon.lock().unwrap().delete_subvolume(path)?;
+    pub fn delete_snapshot(&self, path: &Path) -> anyhow::Result<()> {
+        self.butterd()?.delete_subvolume(path)?;
         self.refresh_subvolumes();
         Ok(())
     }
 
-    pub fn rename_snapshot(&self, before_path: PathBuf, after_path: PathBuf) -> anyhow::Result<()> {
-        let daemon = self.imp().daemon.get().unwrap();
-        daemon
-            .lock()
-            .unwrap()
-            .move_subvolume(before_path, after_path)?;
+    pub fn rename_snapshot(&self, before_path: &Path, after_path: &Path) -> anyhow::Result<()> {
+        self.butterd()?.move_subvolume(before_path, after_path)?;
         self.refresh_subvolumes();
         Ok(())
     }
 
     pub fn create_snapshot(
         &mut self,
-        src: PathBuf,
-        dest: PathBuf,
+        src: &Path,
+        dest: &Path,
         readonly: bool,
     ) -> anyhow::Result<()> {
-        let daemon = self.imp().daemon.get().unwrap();
-        daemon.lock().unwrap().create_snapshot(
-            src,
-            dest,
-            if readonly {
-                libbtrfsutil::CreateSnapshotFlags::READ_ONLY.bits()
-            } else {
-                0
-            },
-        )?;
+        let flags = if readonly {
+            libbtrfsutil::CreateSnapshotFlags::READ_ONLY.bits()
+        } else {
+            0
+        };
+        self.butterd()?.create_snapshot(&src, &dest, flags)?;
         self.refresh_subvolumes();
         Ok(())
     }

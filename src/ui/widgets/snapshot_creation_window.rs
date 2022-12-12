@@ -62,8 +62,8 @@ mod imp {
                 let imp = obj.imp();
                 let item = imp.subvol_dropdown.selected_item().unwrap().downcast::<GSubvolume>().unwrap();
                 let res = obj.subvolume_manager().create_snapshot(
-                    item.path().to_path_buf(),
-                    obj.target_path(),
+                    item.mount_path().unwrap(),
+                    obj.target_path().as_path(),
                     imp.readonly_switch.is_active(),
                 );
 
@@ -128,7 +128,7 @@ impl SnapshotCreationWindow {
         let exp = gtk::ClosureExpression::new::<String>(
             &[] as &[gtk::Expression],
             glib::closure!(|sv: GSubvolume| {
-                let path = String::from(sv.path().to_string_lossy());
+                let path = String::from(sv.subvol_path().to_string_lossy());
                 if path == "/" {
                     "<FS_TREE>".to_string()
                 } else {

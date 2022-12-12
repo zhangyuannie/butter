@@ -263,7 +263,7 @@ impl SnapshotView {
             let idx = selection.nth(0);
             let item = extract_ith_list_item(&col_view, idx).unwrap();
             let subvol: GSubvolume = selection_model.item(idx).unwrap().downcast().unwrap();
-            imp.show_rename_popover(&item.allocation(), subvol.name());
+            imp.show_rename_popover(&item.allocation(), &subvol.name());
         }));
 
         let delete_action = gio::SimpleAction::new("delete", None);
@@ -277,8 +277,8 @@ impl SnapshotView {
                         .expect("Item must exist")
                         .downcast()
                         .unwrap();
-                    view.subvolume_manager().delete_snapshot(obj.path().to_path_buf()).unwrap();
-                    println!("delete: {}", obj.path().display());
+                    view.subvolume_manager().delete_snapshot(obj.mount_path().unwrap()).unwrap();
+                    println!("delete: {}", obj.mount_path().unwrap().display());
                 }
             }),
         );
@@ -312,18 +312,19 @@ impl SnapshotView {
                 .downcast()
                 .unwrap();
 
-            let mut new_path = obj.path().to_path_buf();
+            let mut new_path = obj.mount_path().unwrap().to_path_buf();
             new_path.set_file_name(popover.text());
+
+            popover.popdown();
 
             let res = view
                 .subvolume_manager()
-                .rename_snapshot(obj.path().to_path_buf(), new_path);
+                .rename_snapshot(obj.mount_path().unwrap(), new_path.as_path());
 
             if let Err(error) = res {
                 let win = view.root().unwrap().downcast::<AppWindow>().unwrap();
                 show_error_dialog(Some(&win), &error.to_string());
             }
-            popover.popdown();
         }));
     }
 
