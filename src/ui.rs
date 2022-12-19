@@ -1,4 +1,5 @@
 mod application;
+pub mod store;
 mod widgets;
 
 use gtk::prelude::*;

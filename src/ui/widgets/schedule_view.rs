@@ -5,7 +5,7 @@ use gtk::{
     CompositeTemplate,
 };
 
-use crate::schedule_repo::{ScheduleObject, ScheduleRepo};
+use crate::{rule::GRule, ui::store::Store};
 
 use super::{ScheduleRuleEditDialog, ScheduleRuleRow};
 
@@ -13,8 +13,7 @@ mod imp {
     use glib::once_cell::sync::{Lazy, OnceCell};
     use gtk::glib::{ParamSpec, Value};
 
-    use crate::schedule_repo::ScheduleObject;
-    use crate::ui::show_error_dialog;
+    use crate::{rule::GRule, ui::show_error_dialog};
 
     use super::*;
 
@@ -23,7 +22,7 @@ mod imp {
     pub struct ScheduleView {
         #[template_child]
         pub rule_list: TemplateChild<gtk::ListBox>,
-        pub repo: OnceCell<ScheduleRepo>,
+        pub store: OnceCell<Store>,
     }
 
     #[glib::object_subclass]
@@ -46,10 +45,10 @@ mod imp {
         fn properties() -> &'static [glib::ParamSpec] {
             static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
                 vec![glib::ParamSpecObject::new(
-                    "repo",
-                    "repo",
-                    "repo",
-                    ScheduleRepo::static_type(),
+                    "store",
+                    None,
+                    None,
+                    Store::static_type(),
                     glib::ParamFlags::READWRITE | glib::ParamFlags::CONSTRUCT_ONLY,
                 )]
             });
@@ -58,7 +57,7 @@ mod imp {
 
         fn set_property(&self, _id: usize, value: &Value, pspec: &ParamSpec) {
             match pspec.name() {
-                "repo" => self.repo.set(value.get().unwrap()).unwrap(),
+                "store" => self.store.set(value.get().unwrap()).unwrap(),
                 _ => unimplemented!(),
             }
         }
@@ -67,18 +66,19 @@ mod imp {
             self.parent_constructed();
             let obj = self.instance();
             self.rule_list.bind_model(
-                Some(self.repo.get().unwrap().model()),
+                Some(self.store.get().unwrap().rule_model()),
                 glib::clone!(@weak obj => @default-panic, move |schedule| {
-                    let schedule = schedule.downcast_ref::<ScheduleObject>().unwrap();
+                    let schedule = schedule.downcast_ref::<GRule>().unwrap();
                     let row = ScheduleRuleRow::new(schedule);
                     row.connect_activated(glib::clone!(@weak obj => move |row| {
                         obj.show_edit_dialog(row.imp().rule.get());
                     }));
                     row.switch().connect_state_set(glib::clone!(@weak obj, @weak row => @default-return glib::signal::Inhibit(true), move |switch, state| {
-                        let repo = obj.imp().repo.get().unwrap();
-                        let rule = row.imp().rule.get().unwrap().clone();
-                        rule.borrow_mut().data.is_enabled = state;
-                        if let Err(error) = repo.persist(&rule) {
+                        let store = obj.imp().store.get().unwrap();
+                        let rule = row.imp().rule.get().unwrap();
+                        let mut new_rule = rule.inner().clone();
+                        new_rule.is_enabled = state;
+                        if let Err(error) = store.update_rule(rule.inner(), &new_rule) {
                             let win = obj.root().and_then(|w| w.downcast::<gtk::Window>().ok());
                             show_error_dialog(win.as_ref(), &error.to_string());
                         } else {
@@ -104,13 +104,13 @@ glib::wrapper! {
 
 #[gtk::template_callbacks]
 impl ScheduleView {
-    pub fn new(repo: &ScheduleRepo) -> Self {
-        Object::new(&[("repo", repo)])
+    pub fn new(store: &Store) -> Self {
+        Object::new(&[("store", store)])
     }
 
-    pub fn show_edit_dialog(&self, schedule: Option<&ScheduleObject>) {
+    pub fn show_edit_dialog(&self, schedule: Option<&GRule>) {
         let win = self.root().and_then(|w| w.downcast::<gtk::Window>().ok());
-        let dialog = ScheduleRuleEditDialog::new(self.imp().repo.get().unwrap(), schedule);
+        let dialog = ScheduleRuleEditDialog::new(self.imp().store.get().unwrap(), schedule);
         dialog.set_transient_for(win.as_ref());
         dialog.show();
     }

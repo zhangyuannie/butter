@@ -1,81 +1,75 @@
-use crate::schedule_repo::ScheduleRepo;
-use crate::subvolume::{GSubvolume, SubvolList};
-
-use butterd::BtrfsFilesystem;
-use glib::once_cell::sync::OnceCell;
-use gtk::prelude::*;
-use gtk::{gio, glib, subclass::prelude::*};
 use std::collections::HashMap;
-use std::io::BufReader;
-use std::path::{Path, PathBuf};
-use std::process::{ChildStdin, ChildStdout};
+use std::path::Path;
+
+use gtk::{gio, glib, subclass::prelude::*};
 use uuid::Uuid;
 
-use crate::{client::Client, subvolume::g_btrfs_filesystem::GBtrfsFilesystem};
-
-use super::proxy::Butter1ProxyBlocking;
+use crate::daemon::proxy::Butter1ProxyBlocking;
+use crate::filesystem::{Filesystem, GFilesystem};
+use crate::rule::{GRule, Rule};
+use crate::subvolume::{GSubvolume, SubvolList};
 
 mod imp {
-    use super::*;
-
     use std::cell::RefCell;
 
-    pub struct SubvolumeManager {
-        pub daemon: OnceCell<Client>,
+    use gtk::{gio, glib, prelude::*, subclass::prelude::*};
+    use once_cell::sync::OnceCell;
+    use zbus::blocking::Connection;
+
+    use crate::{filesystem::GFilesystem, rule::GRule, subvolume::SubvolList};
+
+    pub struct Store {
+        pub conn: OnceCell<Connection>,
         pub model: SubvolList,
         pub filesystems: gio::ListStore,
-        pub cur_fs: RefCell<Option<GBtrfsFilesystem>>,
+        pub cur_fs: RefCell<Option<GFilesystem>>,
+        pub rules: gio::ListStore,
     }
 
-    impl Default for SubvolumeManager {
+    impl Default for Store {
         fn default() -> Self {
             Self {
-                daemon: Default::default(),
+                conn: Default::default(),
                 model: Default::default(),
-                filesystems: gio::ListStore::new(GBtrfsFilesystem::static_type()),
+                filesystems: gio::ListStore::new(GFilesystem::static_type()),
                 cur_fs: Default::default(),
+                rules: gio::ListStore::new(GRule::static_type()),
             }
         }
     }
 
     #[glib::object_subclass]
-    impl ObjectSubclass for SubvolumeManager {
-        const NAME: &'static str = "SubvolumeManager";
-        type Type = super::SubvolumeManager;
+    impl ObjectSubclass for Store {
+        const NAME: &'static str = "BtrStore";
+        type Type = super::Store;
     }
 
-    impl ObjectImpl for SubvolumeManager {}
+    impl ObjectImpl for Store {}
 }
 
 glib::wrapper! {
-    pub struct SubvolumeManager(ObjectSubclass<imp::SubvolumeManager>);
+    pub struct Store(ObjectSubclass<imp::Store>);
 }
 
-impl SubvolumeManager {
-    pub fn new(stdin: ChildStdin, stdout: ChildStdout) -> Self {
+impl Store {
+    pub fn new() -> anyhow::Result<Self> {
         let ret: Self = glib::Object::new(&[]);
-        let imp = ret.imp();
-
-        imp.daemon
-            .set(Client::new(BufReader::new(stdout), stdin))
-            .expect("Failed to set daemon");
-
-        ret.refresh();
-        ret
+        ret.imp()
+            .conn
+            .set(zbus::blocking::Connection::system()?)
+            .unwrap();
+        ret.refresh_filesystems();
+        ret.refresh_subvolumes()?;
+        ret.refresh_rules()?;
+        Ok(ret)
     }
 
     pub fn model(&self) -> &SubvolList {
         &self.imp().model
     }
 
-    pub fn refresh(&self) {
-        self.refresh_filesystems();
-        self.refresh_subvolumes();
-    }
-
     fn butterd(&self) -> anyhow::Result<Butter1ProxyBlocking> {
-        let conn = zbus::blocking::Connection::system()?;
-        let butterd = Butter1ProxyBlocking::new(&conn)?;
+        let butterd = Butter1ProxyBlocking::new(&self.imp().conn.get().unwrap())?;
         Ok(butterd)
     }
 
@@ -107,9 +101,7 @@ impl SubvolumeManager {
     }
 
     pub fn refresh_filesystems(&self) {
-        let conn = zbus::blocking::Connection::system().unwrap();
-        let butterd = Butter1ProxyBlocking::new(&conn).unwrap();
-        let filesystems = butterd.list_filesystems().unwrap();
+        let filesystems = self.butterd().unwrap().list_filesystems().unwrap();
         if self.filesystem().is_none() {
             self.set_filesystem(filesystems[0].clone()).unwrap();
         }
@@ -117,7 +109,7 @@ impl SubvolumeManager {
         let model = &self.imp().filesystems;
         model.remove_all();
         for fs in filesystems {
-            model.append(&GBtrfsFilesystem::new(fs));
+            model.append(&GFilesystem::new(fs));
         }
     }
 
@@ -126,30 +118,34 @@ impl SubvolumeManager {
     }
 
     pub fn filesystem(&self) -> Option<Uuid> {
-        self.imp().cur_fs.borrow().as_ref().and_then(|x| Some(x.uuid()))
+        self.imp()
+            .cur_fs
+            .borrow()
+            .as_ref()
+            .and_then(|x| Some(x.uuid()))
     }
 
-    pub fn set_filesystem(&self, fs: BtrfsFilesystem) -> anyhow::Result<()> {
+    pub fn set_filesystem(&self, fs: Filesystem) -> anyhow::Result<()> {
         if let Some(cur_fs) = self.imp().cur_fs.borrow().as_ref() {
             if cur_fs.uuid() == fs.uuid {
                 return Ok(());
             }
         }
-        self.imp().cur_fs.replace(Some(GBtrfsFilesystem::new(fs)));
-        self.refresh_subvolumes();
+        self.imp().cur_fs.replace(Some(GFilesystem::new(fs)));
+        self.refresh_subvolumes()?;
 
         Ok(())
     }
 
     pub fn delete_snapshot(&self, path: &Path) -> anyhow::Result<()> {
         self.butterd()?.delete_subvolume(path)?;
-        self.refresh_subvolumes();
+        self.refresh_subvolumes()?;
         Ok(())
     }
 
     pub fn rename_snapshot(&self, before_path: &Path, after_path: &Path) -> anyhow::Result<()> {
         self.butterd()?.move_subvolume(before_path, after_path)?;
-        self.refresh_subvolumes();
+        self.refresh_subvolumes()?;
         Ok(())
     }
 
@@ -165,27 +161,52 @@ impl SubvolumeManager {
             0
         };
         self.butterd()?.create_snapshot(&src, &dest, flags)?;
-        self.refresh_subvolumes();
+        self.refresh_subvolumes()?;
         Ok(())
     }
 
     pub fn is_schedule_enabled(&self) -> bool {
-        let conn = zbus::blocking::Connection::system().unwrap();
-        let butterd = Butter1ProxyBlocking::new(&conn).unwrap();
-        butterd.schedule_state().unwrap() == "active"
+        self.butterd().unwrap().schedule_state().unwrap() == "active"
     }
 
     pub fn set_is_schedule_enabled(&self, is_enabled: bool) -> anyhow::Result<()> {
-        let conn = zbus::blocking::Connection::system()?;
-        let butterd = Butter1ProxyBlocking::new(&conn)?;
         if is_enabled {
-            Ok(butterd.enable_schedule()?)
+            Ok(self.butterd()?.enable_schedule()?)
         } else {
-            Ok(butterd.disable_schedule()?)
+            Ok(self.butterd()?.disable_schedule()?)
         }
     }
 
-    pub fn schedule_repo(&self) -> ScheduleRepo {
-        ScheduleRepo::new(self.imp().daemon.get().unwrap().clone())
+    pub fn rule_model(&self) -> &gio::ListStore {
+        &self.imp().rules
+    }
+
+    pub fn refresh_rules(&self) -> anyhow::Result<()> {
+        let mut rules = self.butterd()?.list_rules()?;
+        rules.sort_by(|a, b| a.path.cmp(&b.path));
+        let model = self.rule_model();
+        model.remove_all();
+        for rule in rules {
+            model.append(&GRule::new(rule));
+        }
+        Ok(())
+    }
+
+    pub fn delete_rule(&self, rule: &Rule) -> anyhow::Result<()> {
+        self.butterd()?.delete_rule(rule)?;
+        self.refresh_rules()?;
+        Ok(())
+    }
+
+    pub fn create_rule(&self, rule: &Rule) -> anyhow::Result<()> {
+        self.butterd()?.create_rule(rule)?;
+        self.refresh_rules()?;
+        Ok(())
+    }
+
+    pub fn update_rule(&self, prev: &Rule, next: &Rule) -> anyhow::Result<()> {
+        self.butterd()?.update_rule(prev, next)?;
+        self.refresh_rules()?;
+        Ok(())
     }
 }

@@ -4,14 +4,14 @@ use gtk::subclass::prelude::*;
 use gtk::{glib, prelude::*, CompositeTemplate};
 
 use super::FileChooserEntry;
-use crate::subvolume::{GSubvolume, SubvolumeManager};
+use crate::subvolume::GSubvolume;
+use crate::ui::store::Store;
 mod imp {
     use glib::object::WeakRef;
     use glib::once_cell::sync::OnceCell;
     use gtk::glib::{once_cell::sync::Lazy, ParamFlags, ParamSpec, ParamSpecObject, Value};
 
-    use crate::subvolume::SubvolumeManager;
-    use crate::ui::show_error_dialog;
+    use crate::ui::{show_error_dialog, store::Store};
 
     use super::*;
 
@@ -29,7 +29,7 @@ mod imp {
         #[template_child]
         pub readonly_switch: TemplateChild<gtk::Switch>,
 
-        pub subvolume_manager: OnceCell<WeakRef<SubvolumeManager>>,
+        pub store: OnceCell<WeakRef<Store>>,
     }
 
     #[glib::object_subclass]
@@ -61,7 +61,7 @@ mod imp {
             self.create_button.connect_clicked(glib::clone!(@weak obj => move |_| {
                 let imp = obj.imp();
                 let item = imp.subvol_dropdown.selected_item().unwrap().downcast::<GSubvolume>().unwrap();
-                let res = obj.subvolume_manager().create_snapshot(
+                let res = obj.store().create_snapshot(
                     item.mount_path().unwrap(),
                     obj.target_path().as_path(),
                     imp.readonly_switch.is_active(),
@@ -79,10 +79,10 @@ mod imp {
         fn properties() -> &'static [ParamSpec] {
             static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
                 vec![ParamSpecObject::new(
-                    "subvolume-manager",
-                    "subvolume-manager",
-                    "subvolume-manager",
-                    SubvolumeManager::static_type(),
+                    "store",
+                    None,
+                    None,
+                    Store::static_type(),
                     ParamFlags::READWRITE | glib::ParamFlags::CONSTRUCT_ONLY,
                 )]
             });
@@ -91,9 +91,9 @@ mod imp {
 
         fn set_property(&self, _id: usize, value: &Value, pspec: &ParamSpec) {
             match pspec.name() {
-                "subvolume-manager" => self
-                    .subvolume_manager
-                    .set(value.get::<SubvolumeManager>().unwrap().downgrade())
+                "store" => self
+                    .store
+                    .set(value.get::<Store>().unwrap().downgrade())
                     .unwrap(),
 
                 _ => unimplemented!(),
@@ -112,8 +112,8 @@ glib::wrapper! {
 }
 
 impl SnapshotCreationWindow {
-    pub fn new(subvolume_manager: &SubvolumeManager) -> Self {
-        glib::Object::new(&[("subvolume-manager", subvolume_manager)])
+    pub fn new(store: &Store) -> Self {
+        glib::Object::new(&[("store", store)])
     }
 
     fn setup_dropdown(&self) {
@@ -122,8 +122,7 @@ impl SnapshotCreationWindow {
             let subvol = obj.downcast_ref::<GSubvolume>().unwrap();
             !subvol.is_snapshot()
         });
-        let model =
-            gtk::FilterListModel::new(Some(self.subvolume_manager().model()), Some(&filter));
+        let model = gtk::FilterListModel::new(Some(self.store().model()), Some(&filter));
 
         let exp = gtk::ClosureExpression::new::<String>(
             &[] as &[gtk::Expression],
@@ -148,13 +147,8 @@ impl SnapshotCreationWindow {
         ret
     }
 
-    fn subvolume_manager(&self) -> SubvolumeManager {
-        self.imp()
-            .subvolume_manager
-            .get()
-            .unwrap()
-            .upgrade()
-            .unwrap()
+    fn store(&self) -> Store {
+        self.imp().store.get().unwrap().upgrade().unwrap()
     }
 
     fn create_button(&self) -> gtk::Button {

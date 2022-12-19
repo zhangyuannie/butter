@@ -11,11 +11,12 @@ use std::{
     ptr::addr_of_mut,
 };
 
-use butterd::BtrfsFilesystem;
 use nix::errno::Errno;
 use uuid::Uuid;
 
-use crate::{
+use crate::filesystem::Filesystem;
+
+use super::{
     ioctl::{self, BtrfsDevInfoArgs, BtrfsFsInfoArgs, BTRFS_LABEL_SIZE},
     mnt_entry::MntEntries,
 };
@@ -80,11 +81,11 @@ fn subvol_id_from_mnt_options(options: &str) -> Option<u64> {
 
 /// Get all mounted Btrfs filesystems.
 /// This probably has a lot of edge case such as seed devices and what's not
-pub fn read_all_mounted_btrfs_fs() -> io::Result<Vec<BtrfsFilesystem>> {
+pub fn read_all_mounted_btrfs_fs() -> io::Result<Vec<Filesystem>> {
     let f = fs::File::open("/proc/self/mounts")?;
     let entries = MntEntries::new(io::BufReader::new(f));
 
-    let mut ret = HashMap::<Uuid, BtrfsFilesystem>::new();
+    let mut ret = HashMap::<Uuid, Filesystem>::new();
 
     for entry in entries {
         if let Ok(entry) = entry {
@@ -113,7 +114,7 @@ pub fn read_all_mounted_btrfs_fs() -> io::Result<Vec<BtrfsFilesystem>> {
 
             ret.insert(
                 fs_uuid,
-                BtrfsFilesystem {
+                Filesystem {
                     label: fs_label_from_mounted(&file)?,
                     uuid: fs_uuid,
                     devices: dev_infos

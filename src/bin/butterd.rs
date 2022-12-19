@@ -1,16 +1,9 @@
-mod btrfs;
-mod interface;
-mod ioctl;
-mod mnt_entry;
-mod subvol;
-
 use std::future;
 
 use anyhow::Result;
+use butter::daemon::Service;
 use log::info;
 use zbus_polkit::policykit1;
-
-use crate::interface::Service;
 
 #[tokio::main]
 async fn main() -> Result<()> {

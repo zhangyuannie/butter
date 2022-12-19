@@ -1,37 +1,31 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use gettext::gettext;
+use gtk::glib;
 use gtk::glib::Object;
-use gtk::{glib, CompositeTemplate};
 use std::path::PathBuf;
 
 use crate::config;
-use crate::schedule::ScheduleSubvolume;
-use crate::schedule_repo::{ScheduleObject, ScheduleRepo};
+use crate::rule::{GRule, RuleSubvolume};
+use crate::ui::show_error_dialog;
+use crate::ui::store::Store;
 
 mod imp {
-    use std::cell::{Ref, RefCell};
+    use std::cell::RefCell;
+
+    use gettext::gettext;
+    use gtk::{
+        glib,
+        glib::{ParamSpec, Value},
+        prelude::*,
+        subclass::prelude::*,
+        CompositeTemplate,
+    };
+    use once_cell::sync::{Lazy, OnceCell};
 
     use crate::{
-        json_file::JsonFile,
-        schedule::{Schedule, ScheduleSubvolume},
+        rule::{GRule, Rule},
+        ui::{store::Store, widgets::FileChooserEntry},
     };
-    use glib::once_cell::sync::{Lazy, OnceCell};
-    use gtk::{
-        gio::ListStore,
-        glib::{ParamSpec, Value},
-    };
-
-    use crate::ui::widgets::FileChooserEntry;
-
-    use super::*;
-
-    pub struct ScheduleTargetModel(ListStore);
-    impl Default for ScheduleTargetModel {
-        fn default() -> Self {
-            Self(ListStore::new(glib::BoxedAnyObject::static_type()))
-        }
-    }
 
     #[derive(Default, CompositeTemplate)]
     #[template(resource = "/org/zhangyuannie/butter/ui/schedule_rule_edit_dialog.ui")]
@@ -64,14 +58,14 @@ mod imp {
         pub subvol_path_entry: TemplateChild<FileChooserEntry>,
         #[template_child]
         pub target_dir_entry: TemplateChild<FileChooserEntry>,
-        pub repo: OnceCell<ScheduleRepo>,
-        pub schedule: OnceCell<ScheduleObject>,
-        pub subvolumes: RefCell<Vec<ScheduleSubvolume>>,
+        pub store: OnceCell<Store>,
+        pub original: OnceCell<GRule>,
+        pub rule: RefCell<Rule>,
     }
 
     impl ScheduleRuleEditDialog {
         pub fn is_new(&self) -> bool {
-            self.schedule.get().is_none()
+            self.original.get().is_none()
         }
     }
 
@@ -96,17 +90,17 @@ mod imp {
             static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
                 vec![
                     glib::ParamSpecObject::new(
-                        "repo",
-                        "repo",
-                        "repo",
-                        ScheduleRepo::static_type(),
+                        "store",
+                        None,
+                        None,
+                        Store::static_type(),
                         glib::ParamFlags::READWRITE | glib::ParamFlags::CONSTRUCT_ONLY,
                     ),
                     glib::ParamSpecObject::new(
-                        "rule",
-                        "rule",
-                        "rule",
-                        ScheduleObject::static_type(),
+                        "original",
+                        None,
+                        None,
+                        GRule::static_type(),
                         glib::ParamFlags::READWRITE | glib::ParamFlags::CONSTRUCT_ONLY,
                     ),
                 ]
@@ -116,22 +110,21 @@ mod imp {
 
         fn set_property(&self, _id: usize, value: &Value, pspec: &ParamSpec) {
             match pspec.name() {
-                "repo" => self.repo.set(value.get().unwrap()).unwrap(),
+                "store" => self.store.set(value.get().unwrap()).unwrap(),
 
-                "rule" => {
-                    let maybe_schedule: Option<&ScheduleObject> = value.get().unwrap();
-                    if let Some(schedule) = maybe_schedule {
-                        self.schedule.set(schedule.clone()).unwrap();
-                        let rule: Ref<JsonFile<Schedule>> = schedule.borrow();
-                        self.name_entry.set_text(rule.name().unwrap());
-                        self.hourly_cell.set_value(rule.data.keep_hourly as f64);
-                        self.daily_cell.set_value(rule.data.keep_daily as f64);
-                        self.weekly_cell.set_value(rule.data.keep_weekly as f64);
-                        self.monthly_cell.set_value(rule.data.keep_monthly as f64);
-                        self.yearly_cell.set_value(rule.data.keep_yearly as f64);
-                        self.subvolumes
-                            .borrow_mut()
-                            .extend_from_slice(&rule.data.subvolumes);
+                "original" => {
+                    let maybe_rule: Option<GRule> = value.get().unwrap();
+                    if let Some(rule) = maybe_rule {
+                        self.rule.replace(rule.inner().clone());
+                        self.original.set(rule).unwrap();
+                        let rule = self.rule.borrow();
+                        self.name_entry
+                            .set_text(rule.path.file_stem().unwrap().to_string_lossy().as_ref());
+                        self.hourly_cell.set_value(rule.keep_hourly as f64);
+                        self.daily_cell.set_value(rule.keep_daily as f64);
+                        self.weekly_cell.set_value(rule.keep_weekly as f64);
+                        self.monthly_cell.set_value(rule.keep_monthly as f64);
+                        self.yearly_cell.set_value(rule.keep_yearly as f64);
                     } else {
                         self.hourly_cell.set_value(24.0);
                         self.daily_cell.set_value(30.0);
@@ -169,8 +162,8 @@ glib::wrapper! {
 
 #[gtk::template_callbacks]
 impl ScheduleRuleEditDialog {
-    pub fn new(repo: &ScheduleRepo, rule: Option<&ScheduleObject>) -> Self {
-        Object::new(&[("repo", repo), ("rule", &rule)])
+    pub fn new(store: &Store, rule: Option<&GRule>) -> Self {
+        Object::new(&[("store", store), ("original", &rule)])
     }
 
     fn reload_subvolume_list(&self) {
@@ -181,14 +174,14 @@ impl ScheduleRuleEditDialog {
                 child = sibling;
             }
         }
-        for (idx, subvol) in imp.subvolumes.borrow().iter().enumerate() {
+        for (idx, subvol) in imp.rule.borrow().subvolumes.iter().enumerate() {
             let remove_btn = gtk::Button::builder()
                 .icon_name("list-remove-symbolic")
                 .valign(gtk::Align::Center)
                 .css_classes(vec!["flat".to_string(), "circular".to_string()])
                 .build();
             remove_btn.connect_clicked(glib::clone!(@weak self as dialog => move |_| {
-                dialog.imp().subvolumes.borrow_mut().remove(idx);
+                dialog.imp().rule.borrow_mut().subvolumes.remove(idx);
                 dialog.reload_subvolume_list();
             }));
             let row = adw::ActionRow::builder()
@@ -203,7 +196,7 @@ impl ScheduleRuleEditDialog {
     #[template_callback]
     fn on_save_button_clicked(&self) {
         let imp = self.imp();
-        let repo = imp.repo.get().unwrap();
+        let store = imp.store.get().unwrap();
         assert!(imp.name_entry.text().len() > 0);
         let new_path = PathBuf::from(format!(
             "{}/schedules/{}.json",
@@ -211,37 +204,33 @@ impl ScheduleRuleEditDialog {
             imp.name_entry.text()
         ));
 
-        let obj = match imp.schedule.get() {
-            Some(obj) => obj.clone(),
-            None => ScheduleObject::default(),
+        let mut new_rule = imp.rule.borrow_mut();
+        new_rule.path = new_path;
+        new_rule.keep_hourly = imp.hourly_cell.value() as u32;
+        new_rule.keep_daily = imp.daily_cell.value() as u32;
+        new_rule.keep_weekly = imp.weekly_cell.value() as u32;
+        new_rule.keep_monthly = imp.monthly_cell.value() as u32;
+        new_rule.keep_yearly = imp.yearly_cell.value() as u32;
+
+        let res = if let Some(original) = imp.original.get() {
+            store.update_rule(original.inner(), &new_rule)
+        } else {
+            store.create_rule(&new_rule)
         };
-        obj.set_path(new_path);
-        {
-            let mut obj = obj.borrow_mut();
-            obj.data.keep_hourly = imp.hourly_cell.value() as u32;
-            obj.data.keep_daily = imp.daily_cell.value() as u32;
-            obj.data.keep_weekly = imp.weekly_cell.value() as u32;
-            obj.data.keep_monthly = imp.monthly_cell.value() as u32;
-            obj.data.keep_yearly = imp.yearly_cell.value() as u32;
-            obj.data.subvolumes.clear();
-            obj.data
-                .subvolumes
-                .extend_from_slice(&imp.subvolumes.borrow());
+        if let Err(e) = res {
+            let win = self.root().and_then(|w| w.downcast::<gtk::Window>().ok());
+            show_error_dialog(win.as_ref(), &e.to_string());
         }
-        repo.persist(&obj).unwrap();
-        repo.sync().unwrap();
         self.close();
     }
 
     #[template_callback]
     fn on_remove_button_clicked(&self) {
         let imp = self.imp();
-        if let Some(schedule) = imp.schedule.get() {
-            let repo = imp.repo.get().unwrap();
-            repo.delete(schedule).unwrap();
-            repo.sync().unwrap();
-            self.close();
+        if let Some(grule) = imp.original.get() {
+            imp.store.get().unwrap().delete_rule(grule.inner()).unwrap();
         }
+        self.close();
     }
 
     #[template_callback]
@@ -264,7 +253,7 @@ impl ScheduleRuleEditDialog {
     fn on_add_subvolume_clicked(&self) {
         let imp = self.imp();
         if imp.subvol_path_entry.text().len() > 0 && imp.target_dir_entry.text().len() > 0 {
-            imp.subvolumes.borrow_mut().push(ScheduleSubvolume {
+            imp.rule.borrow_mut().subvolumes.push(RuleSubvolume {
                 path: imp.subvol_path_entry.text().to_string().into(),
                 target_dir: imp.target_dir_entry.text().to_string().into(),
             });

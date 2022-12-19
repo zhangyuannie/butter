@@ -5,9 +5,10 @@ use gtk::{
 };
 
 use crate::{
-    subvolume::{Attribute, GSubvolume, SubvolumeManager},
+    subvolume::{Attribute, GSubvolume},
     ui::{
         show_error_dialog,
+        store::Store,
         widgets::{AppWindow, SnapshotCreationWindow, SubvolumeLabelCell},
     },
 };
@@ -27,8 +28,8 @@ mod imp {
     use std::cell::RefCell;
 
     use crate::{
-        subvolume::{Attribute, GSubvolume, SubvolumeManager},
-        ui::widgets::SnapshotRenamePopover,
+        subvolume::{Attribute, GSubvolume},
+        ui::{store::Store, widgets::SnapshotRenamePopover},
     };
 
     #[derive(CompositeTemplate, Default)]
@@ -42,7 +43,7 @@ mod imp {
         pub selection_menu: TemplateChild<gtk::PopoverMenu>,
         pub rename_popover: SnapshotRenamePopover,
         pub single_select_actions: RefCell<Vec<SimpleAction>>,
-        pub subvolume_manager: OnceCell<WeakRef<SubvolumeManager>>,
+        pub store: OnceCell<WeakRef<Store>>,
         pub actions: gio::SimpleActionGroup,
     }
 
@@ -111,10 +112,10 @@ mod imp {
         fn properties() -> &'static [ParamSpec] {
             static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
                 vec![ParamSpecObject::new(
-                    "subvolume-manager",
-                    "subvolume-manager",
-                    "subvolume-manager",
-                    SubvolumeManager::static_type(),
+                    "store",
+                    None,
+                    None,
+                    Store::static_type(),
                     ParamFlags::READWRITE | glib::ParamFlags::CONSTRUCT_ONLY,
                 )]
             });
@@ -123,9 +124,9 @@ mod imp {
 
         fn set_property(&self, _id: usize, value: &Value, pspec: &ParamSpec) {
             match pspec.name() {
-                "subvolume-manager" => self
-                    .subvolume_manager
-                    .set(value.get::<SubvolumeManager>().unwrap().downgrade())
+                "store" => self
+                    .store
+                    .set(value.get::<Store>().unwrap().downgrade())
                     .unwrap(),
 
                 _ => unimplemented!(),
@@ -140,8 +141,7 @@ mod imp {
             let filter = gtk::CustomFilter::new(|obj| {
                 obj.downcast_ref::<GSubvolume>().unwrap().is_snapshot()
             });
-            let model =
-                gtk::FilterListModel::new(Some(self.subvolume_manager().model()), Some(&filter));
+            let model = gtk::FilterListModel::new(Some(self.store().model()), Some(&filter));
 
             let model = gtk::SortListModel::new(Some(&model), self.column_view.sorter().as_ref());
             let model = gtk::MultiSelection::new(Some(&model));
@@ -154,8 +154,8 @@ mod imp {
             self.rename_popover.popup();
         }
 
-        pub fn subvolume_manager(&self) -> SubvolumeManager {
-            self.subvolume_manager.get().unwrap().upgrade().unwrap()
+        pub fn store(&self) -> Store {
+            self.store.get().unwrap().upgrade().unwrap()
         }
     }
 }
@@ -167,8 +167,8 @@ glib::wrapper! {
 }
 
 impl SnapshotView {
-    pub fn new(subvolume_manager: &SubvolumeManager) -> Self {
-        glib::Object::new(&[("subvolume-manager", subvolume_manager)])
+    pub fn new(store: &Store) -> Self {
+        glib::Object::new(&[("store", store)])
     }
 
     fn model(&self) -> gtk::SelectionModel {
@@ -277,7 +277,7 @@ impl SnapshotView {
                         .expect("Item must exist")
                         .downcast()
                         .unwrap();
-                    view.subvolume_manager().delete_snapshot(obj.mount_path().unwrap()).unwrap();
+                    view.store().delete_snapshot(obj.mount_path().unwrap()).unwrap();
                     println!("delete: {}", obj.mount_path().unwrap().display());
                 }
             }),
@@ -318,7 +318,7 @@ impl SnapshotView {
             popover.popdown();
 
             let res = view
-                .subvolume_manager()
+                .store()
                 .rename_snapshot(obj.mount_path().unwrap(), new_path.as_path());
 
             if let Err(error) = res {
@@ -377,12 +377,12 @@ impl SnapshotView {
     }
 
     pub fn present_creation_window(&self) {
-        let win = SnapshotCreationWindow::new(&self.subvolume_manager());
+        let win = SnapshotCreationWindow::new(&self.store());
         win.present();
     }
 
-    fn subvolume_manager(&self) -> SubvolumeManager {
-        self.imp().subvolume_manager()
+    fn store(&self) -> Store {
+        self.imp().store()
     }
 }
 

@@ -1,10 +1,7 @@
-use std::process::{Command, Stdio};
-
 use butter::{
     config,
-    schedule::{cmd_prune, cmd_snapshot},
-    subvolume::SubvolumeManager,
-    ui::Application,
+    rule::ReadRuleDir,
+    ui::{store::Store, Application},
 };
 use clap::{Parser, Subcommand};
 use gtk::{gio, prelude::*};
@@ -41,16 +38,7 @@ fn main() {
 }
 
 fn gui() {
-    let daemon_process = Command::new("pkexec")
-        .arg(config::DAEMON_EXEC_PATH)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .spawn()
-        .unwrap();
-    let subvol_manager = SubvolumeManager::new(
-        daemon_process.stdin.unwrap(),
-        daemon_process.stdout.unwrap(),
-    );
+    let store = Store::new().expect("Failed to connect to system dbus");
 
     gettext::setlocale(gettext::LocaleCategory::LcAll, "");
     gettext::bindtextdomain(config::GETTEXT_PACKAGE, config::LOCALEDIR)
@@ -62,6 +50,22 @@ fn gui() {
     let res = gio::Resource::load(config::GRESOURCE_FILE).expect("Unable to load gresource file");
     gio::resources_register(&res);
 
-    let app = Application::new(subvol_manager);
+    let app = Application::new(&store);
     app.run();
+}
+
+pub fn cmd_snapshot() {
+    for schedule in ReadRuleDir::new().expect("Failed to read config directory") {
+        if let Ok(schedule) = schedule {
+            schedule.snapshot();
+        }
+    }
+}
+
+pub fn cmd_prune() {
+    for schedule in ReadRuleDir::new().expect("Failed to read config directory") {
+        if let Ok(schedule) = schedule {
+            schedule.prune();
+        }
+    }
 }

@@ -33,7 +33,7 @@ custom_target(
   'cargo_build_butter',
   build_by_default: true,
   build_always_stale: true,
-  output: ['butter', 'butterd0'],
+  output: ['butter', 'butterd'],
   console: true,
   install: true,
   install_dir: [bindir, libexecdir],

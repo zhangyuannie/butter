@@ -50,6 +50,19 @@ install_data(
   install_dir: systemd_unit_dir
 )
 
+install_data(
+  'org.zhangyuannie.Butter1.conf',
+  install_dir: datadir / 'dbus-1' / 'system.d',
+)
+
+configure_file(
+  input: 'org.zhangyuannie.Butter1.service.in',
+  output: 'org.zhangyuannie.Butter1.service',
+  configuration: data_conf,
+  install: true,
+  install_dir: datadir / 'dbus-1' / 'system-services',
+)
+
 meson.add_install_script(script_restorecon,
   systemd_unit_dir / 'butter-schedule-snapshot.service',
   systemd_unit_dir / 'butter-schedule-prune.service',

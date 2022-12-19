@@ -1,4 +1,3 @@
-use crate::subvolume::SubvolumeManager;
 use crate::ui::application::Application;
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
@@ -142,14 +141,6 @@ impl AppWindow {
 
     pub fn header_bar(&self) -> AppHeaderBar {
         self.imp().header_bar.get()
-    }
-
-    pub fn subvolume_manager(&self) -> SubvolumeManager {
-        self.application()
-            .unwrap()
-            .downcast_ref::<Application>()
-            .unwrap()
-            .subvolume_manager()
     }
 
     fn save_window_state(&self) -> Result<(), glib::BoolError> {

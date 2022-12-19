@@ -1,32 +1,30 @@
-use butterd::BtrfsFilesystem;
-use glib::Object;
-use gtk::{glib, prelude::*, subclass::prelude::*};
+use super::Filesystem as DataFilesystem;
+use gtk::{glib, subclass::prelude::*};
 use uuid::Uuid;
 
 mod imp {
-    use super::*;
-    use glib::once_cell::sync::OnceCell;
-
-    use gtk::glib::{self, once_cell::sync::Lazy, ParamFlags, ParamSpec, Value};
+    use glib::{ParamFlags, ParamSpec, Value};
+    use gtk::{glib, prelude::*, subclass::prelude::*};
+    use once_cell::sync::{Lazy, OnceCell};
 
     #[derive(Default)]
-    pub struct GBtrfsFilesystem {
-        pub data: OnceCell<BtrfsFilesystem>,
+    pub struct GFilesystem {
+        pub data: OnceCell<super::DataFilesystem>,
     }
 
     #[glib::object_subclass]
-    impl ObjectSubclass for GBtrfsFilesystem {
-        const NAME: &'static str = "BtrfsFilesystem";
-        type Type = super::GBtrfsFilesystem;
+    impl ObjectSubclass for GFilesystem {
+        const NAME: &'static str = "BtrFilesystem";
+        type Type = super::GFilesystem;
     }
 
-    impl ObjectImpl for GBtrfsFilesystem {
+    impl ObjectImpl for GFilesystem {
         fn properties() -> &'static [ParamSpec] {
             static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
                 vec![glib::ParamSpecString::new(
                     "label",
-                    "Label",
-                    "Label of a Btrfs filesystem",
+                    None,
+                    None,
                     None,
                     ParamFlags::READABLE,
                 )]
@@ -44,17 +42,17 @@ mod imp {
 }
 
 glib::wrapper! {
-    pub struct GBtrfsFilesystem(ObjectSubclass<imp::GBtrfsFilesystem>);
+    pub struct GFilesystem(ObjectSubclass<imp::GFilesystem>);
 }
 
-impl GBtrfsFilesystem {
-    pub fn new(fs: BtrfsFilesystem) -> Self {
-        let obj: Self = Object::new(&[]);
-        obj.imp().data.set(fs).unwrap();
-        obj
+impl GFilesystem {
+    pub fn new(inner: DataFilesystem) -> Self {
+        let ret: Self = glib::Object::new(&[]);
+        ret.imp().data.set(inner).unwrap();
+        ret
     }
 
-    pub fn data(&self) -> &BtrfsFilesystem {
+    pub fn data(&self) -> &DataFilesystem {
         self.imp().data.get().unwrap()
     }
 
@@ -72,11 +70,5 @@ impl GBtrfsFilesystem {
         } else {
             self.label().to_string()
         }
-    }
-}
-
-impl From<GBtrfsFilesystem> for BtrfsFilesystem {
-    fn from(fs: GBtrfsFilesystem) -> Self {
-        fs.data().clone()
     }
 }

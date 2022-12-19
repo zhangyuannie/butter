@@ -5,10 +5,13 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use butterd::{BtrfsFilesystem, Subvolume};
 use libbtrfsutil::{SubvolumeInfo, SubvolumeInfoIterator};
 use once_cell::sync::OnceCell;
 use zbus::zvariant::Optional;
+
+use crate::subvolume::Subvolume;
+
+use super::Filesystem;
 
 pub trait SubvolumeExt {
     fn subvolumes(&self) -> Result<Vec<Subvolume>>;
@@ -34,7 +37,7 @@ impl IncompleteSubvolume {
     }
 }
 
-impl SubvolumeExt for BtrfsFilesystem {
+impl SubvolumeExt for Filesystem {
     fn subvolumes(&self) -> Result<Vec<Subvolume>> {
         // get an arbitary mount path of the filesystem
         let mnt_path = &self.mounts.values().next().unwrap()[0];

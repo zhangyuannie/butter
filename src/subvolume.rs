@@ -1,113 +1,36 @@
 mod list;
-pub mod proxy;
 pub use list::SubvolList;
+mod object;
+pub use object::{Attribute, GSubvolume};
 
-mod g_btrfs_filesystem;
-mod subvolume_manager;
-pub use g_btrfs_filesystem::GBtrfsFilesystem;
+use std::path::PathBuf;
 
-pub use subvolume_manager::SubvolumeManager;
-use uuid::Uuid;
-
-use std::{
-    path::Path,
-    time::{Duration, SystemTime}, borrow::Cow,
-};
-
-use glib::Object;
 use gtk::{glib, prelude::*, subclass::prelude::*};
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+use zbus::zvariant::{Optional, Type};
 
-mod imp {
-    use super::*;
-    use glib::once_cell::sync::OnceCell;
-
-    use gtk::glib::{self, once_cell::sync::Lazy, ParamFlags, ParamSpec, Value, WeakRef};
-
-    #[derive(Default)]
-    pub struct GSubvolume {
-        pub data: OnceCell<butterd::Subvolume>,
-        pub parent: WeakRef<super::GSubvolume>,
-    }
-
-    #[glib::object_subclass]
-    impl ObjectSubclass for GSubvolume {
-        const NAME: &'static str = "SubvolumeObject";
-        type Type = super::GSubvolume;
-    }
-
-    impl ObjectImpl for GSubvolume {
-        fn properties() -> &'static [ParamSpec] {
-            static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
-                vec![
-                    glib::ParamSpecString::new(
-                        Attribute::NAME,
-                        Attribute::NAME,
-                        Attribute::NAME,
-                        None,
-                        ParamFlags::READABLE,
-                    ),
-                    glib::ParamSpecString::new(
-                        Attribute::PATH,
-                        Attribute::PATH,
-                        Attribute::PATH,
-                        None,
-                        ParamFlags::READABLE,
-                    ),
-                    glib::ParamSpecString::new(
-                        Attribute::PARENT_PATH,
-                        Attribute::PARENT_PATH,
-                        Attribute::PARENT_PATH,
-                        None,
-                        ParamFlags::READABLE,
-                    ),
-                    glib::ParamSpecBoxed::new(
-                        Attribute::CREATED,
-                        Attribute::CREATED,
-                        Attribute::CREATED,
-                        glib::DateTime::static_type(),
-                        ParamFlags::READABLE,
-                    ),
-                    glib::ParamSpecString::new(
-                        Attribute::UUID,
-                        Attribute::UUID,
-                        Attribute::UUID,
-                        None,
-                        ParamFlags::READABLE,
-                    ),
-                ]
-            });
-            PROPERTIES.as_ref()
-        }
-
-        fn property(&self, _id: usize, pspec: &ParamSpec) -> Value {
-            let obj = self.instance();
-            match pspec.name() {
-                Attribute::NAME => obj.name().to_value(),
-                Attribute::PATH => obj.attribute_str(Attribute::Path).to_value(),
-                Attribute::PARENT_PATH => obj.attribute_str(Attribute::ParentPath).to_value(),
-                Attribute::CREATED => obj.g_created().to_value(),
-                Attribute::UUID => obj.attribute_str(Attribute::Uuid).to_value(),
-                _ => unimplemented!(),
-            }
-        }
-    }
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Type)]
+pub struct Subvolume {
+    pub subvol_path: PathBuf,
+    pub mount_path: Optional<PathBuf>,
+    pub uuid: Uuid,
+    pub id: u64,
+    pub created_unix_secs: i64,
+    pub snapshot_source_uuid: Optional<Uuid>,
 }
 
-glib::wrapper! {
-    pub struct GSubvolume(ObjectSubclass<imp::GSubvolume>);
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum Attribute {
-    /// Filename
-    Name,
-    /// Absolute path
-    Path,
-    /// Path of the subvolume this is a snapshot of
-    ParentPath,
-    /// Creation time
-    Created,
-    Uuid,
+impl Default for Subvolume {
+    fn default() -> Self {
+        Self {
+            subvol_path: Default::default(),
+            mount_path: Optional::from(None),
+            uuid: Default::default(),
+            id: Default::default(),
+            created_unix_secs: Default::default(),
+            snapshot_source_uuid: Optional::from(None),
+        }
+    }
 }
 
 impl Attribute {
@@ -136,73 +59,6 @@ impl Attribute {
                 self.as_str(),
             )))
             .upcast(),
-        }
-    }
-}
-
-impl GSubvolume {
-    pub fn new(subvol: butterd::Subvolume) -> Self {
-        let obj: Self = Object::new(&[]);
-        obj.imp().data.set(subvol).unwrap();
-        obj
-    }
-
-    fn data(&self) -> &butterd::Subvolume {
-        self.imp().data.get().unwrap()
-    }
-
-    pub fn uuid(&self) -> Uuid {
-        self.data().uuid
-    }
-
-    pub fn name(&self) -> Cow<str> {
-        self.subvol_path().file_name().unwrap().to_string_lossy()
-    }
-
-    pub fn subvol_path(&self) -> &Path {
-        &self.data().subvol_path
-    }
-
-    pub fn mount_path(&self) -> Option<&Path> {
-        self.data()
-            .mount_path
-            .as_ref()
-            .and_then(|p| Some(p.as_path()))
-    }
-
-    pub fn is_snapshot(&self) -> bool {
-        self.data().snapshot_source_uuid.is_some()
-    }
-
-    pub fn created(&self) -> SystemTime {
-        SystemTime::UNIX_EPOCH + Duration::from_secs(self.data().created_unix_secs as u64)
-    }
-
-    pub fn g_created(&self) -> glib::DateTime {
-        glib::DateTime::from_unix_local(self.data().created_unix_secs).unwrap()
-    }
-
-    pub fn parent_uuid(&self) -> Option<Uuid> {
-        *self.data().snapshot_source_uuid
-    }
-
-    pub fn parent(&self) -> Option<GSubvolume> {
-        self.imp().parent.upgrade()
-    }
-
-    pub fn set_parent(&self, subvol: Option<&GSubvolume>) {
-        self.imp().parent.set(subvol)
-    }
-
-    pub fn attribute_str(&self, attribute: Attribute) -> String {
-        match attribute {
-            Attribute::Name => self.name().to_string(),
-            Attribute::Path => self.subvol_path().to_string_lossy().to_string(),
-            Attribute::ParentPath => self.parent().map_or("".to_string(), |parent| {
-                parent.subvol_path().to_string_lossy().to_string()
-            }),
-            Attribute::Created => self.g_created().format("%c").unwrap().into(),
-            Attribute::Uuid => self.uuid().to_string(),
         }
     }
 }

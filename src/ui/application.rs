@@ -3,25 +3,28 @@ use gtk::prelude::*;
 use gtk::subclass::prelude::*;
 use gtk::{gio, glib};
 
-use crate::subvolume::{GBtrfsFilesystem, SubvolumeManager};
+use crate::filesystem::GFilesystem;
 use crate::{config, ui::show_error_dialog};
 
+use super::store::Store;
 use super::widgets::{AppWindow, ScheduleView, SnapshotView};
 
 mod imp {
-    use super::*;
     use adw::subclass::prelude::*;
-    use gtk::glib::{once_cell::sync::Lazy, ParamFlags, ParamSpec, ParamSpecObject, Value};
-    use std::cell::RefCell;
+    use glib::{ParamFlags, ParamSpec, ParamSpecObject, Value};
+    use gtk::{glib, prelude::*};
+    use once_cell::sync::{Lazy, OnceCell};
+
+    use crate::ui::store::Store;
 
     #[derive(Default)]
     pub struct Application {
-        pub subvolume_manager: RefCell<Option<SubvolumeManager>>,
+        pub store: OnceCell<Store>,
     }
 
     #[glib::object_subclass]
     impl ObjectSubclass for Application {
-        const NAME: &'static str = "ButterApplication";
+        const NAME: &'static str = "BtrApplication";
         type Type = super::Application;
         type ParentType = adw::Application;
     }
@@ -30,11 +33,11 @@ mod imp {
         fn properties() -> &'static [ParamSpec] {
             static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
                 vec![ParamSpecObject::new(
-                    "subvolume-manager",
-                    "subvolume-manager",
-                    "subvolume-manager",
-                    SubvolumeManager::static_type(),
-                    ParamFlags::READWRITE,
+                    "store",
+                    None,
+                    None,
+                    Store::static_type(),
+                    ParamFlags::READWRITE | glib::ParamFlags::CONSTRUCT_ONLY,
                 )]
             });
             PROPERTIES.as_ref()
@@ -42,9 +45,8 @@ mod imp {
 
         fn set_property(&self, _id: usize, value: &Value, pspec: &ParamSpec) {
             match pspec.name() {
-                "subvolume-manager" => {
-                    let input_subvolume_manager = value.get().unwrap();
-                    self.subvolume_manager.replace(input_subvolume_manager);
+                "store" => {
+                    self.store.set(value.get().unwrap()).unwrap();
                 }
                 _ => unimplemented!(),
             }
@@ -52,7 +54,7 @@ mod imp {
 
         fn property(&self, _id: usize, pspec: &ParamSpec) -> Value {
             match pspec.name() {
-                "subvolume-manager" => self.subvolume_manager.borrow().to_value(),
+                "store" => self.store.get().to_value(),
                 _ => unimplemented!(),
             }
         }
@@ -75,16 +77,16 @@ glib::wrapper! {
 }
 
 impl Application {
-    pub fn new(manager: SubvolumeManager) -> Self {
+    pub fn new(store: &Store) -> Self {
         glib::Object::new(&[
             ("application-id", &Some(config::APP_ID)),
             ("flags", &gio::ApplicationFlags::empty()),
-            ("subvolume-manager", &Some(manager)),
+            ("store", &Some(store)),
         ])
     }
 
-    pub fn subvolume_manager(&self) -> SubvolumeManager {
-        self.property("subvolume-manager")
+    pub fn store(&self) -> &Store {
+        self.imp().store.get().unwrap()
     }
 
     pub fn build_ui(&self) {
@@ -92,14 +94,12 @@ impl Application {
         let view_stack = window.view_stack();
         let header_bar = window.header_bar();
 
-        let snapshot_page = view_stack.add(&SnapshotView::new(&self.subvolume_manager()));
+        let snapshot_page = view_stack.add(&SnapshotView::new(self.store()));
         snapshot_page.set_name(Some("snapshot"));
         snapshot_page.set_title(Some(gettext("Snapshot").as_str()));
         snapshot_page.set_icon_name(Some("edit-copy-symbolic"));
 
-        let schedule_page = view_stack.add(&ScheduleView::new(
-            &self.subvolume_manager().schedule_repo(),
-        ));
+        let schedule_page = view_stack.add(&ScheduleView::new(self.store()));
         schedule_page.set_name(Some("schedule"));
         schedule_page.set_title(Some(gettext("Schedule").as_str()));
         schedule_page.set_icon_name(Some("alarm-symbolic"));
@@ -114,33 +114,32 @@ impl Application {
         {
             let exp = gtk::ClosureExpression::new::<String>(
                 &[] as &[gtk::Expression],
-                glib::closure!(|sv: GBtrfsFilesystem| sv.display()),
+                glib::closure!(|sv: GFilesystem| sv.display()),
             );
 
             let fs_dropdown = header_bar.fs_dropdown();
             fs_dropdown.set_expression(Some(&exp));
-            fs_dropdown.set_model(Some(self.subvolume_manager().filesystems()));
+            fs_dropdown.set_model(Some(self.store().filesystems()));
 
             let app = self.clone();
             fs_dropdown.connect_selected_notify(move |dd| {
                 if let Some(fs) = dd.selected_item() {
-                    let fs: GBtrfsFilesystem =
-                        fs.downcast().expect("Object must be GBtrfsFilesystem");
+                    let fs: GFilesystem = fs.downcast().expect("Object must be GBtrfsFilesystem");
                     let fs = fs.data().clone();
-                    app.subvolume_manager().set_filesystem(fs).unwrap();
+                    app.store().set_filesystem(fs).unwrap();
                 }
             });
         }
         {
-            let subvol_mgr = self.subvolume_manager();
+            let store = self.store();
 
             let switch = header_bar.switch();
-            switch.set_state(self.subvolume_manager().is_schedule_enabled());
-            switch.connect_state_set(glib::clone!(@weak subvol_mgr => @default-return glib::signal::Inhibit(true), move |switch, state| {
-                if let Err(error) = subvol_mgr.set_is_schedule_enabled(state) {
+            switch.set_state(self.store().is_schedule_enabled());
+            switch.connect_state_set(glib::clone!(@weak store => @default-return glib::signal::Inhibit(true), move |switch, state| {
+                if let Err(error) = store.set_is_schedule_enabled(state) {
                     show_error_dialog(None::<&gtk::Window>,&error.to_string());
                 }
-                switch.set_state(subvol_mgr.is_schedule_enabled());
+                switch.set_state(store.is_schedule_enabled());
                 glib::signal::Inhibit(true)
             }));
         }
