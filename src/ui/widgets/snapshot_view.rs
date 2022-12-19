@@ -191,17 +191,20 @@ impl SnapshotView {
         let column_view = self.imp().column_view.get();
 
         let factory = SignalListItemFactory::new();
-        factory.connect_setup(move |_, list_item| {
+        factory.connect_setup(move |_, item| {
+            let item = item.downcast_ref::<gtk::ListItem>().unwrap();
             let cell = SubvolumeLabelCell::new();
-            list_item.set_child(Some(&cell));
+            item.set_child(Some(&cell));
         });
-        factory.connect_bind(move |_, list_item| {
-            let obj: GSubvolume = list_item.item().unwrap().downcast().unwrap();
-            let cell: SubvolumeLabelCell = list_item.child().unwrap().downcast().unwrap();
+        factory.connect_bind(move |_, item| {
+            let item = item.downcast_ref::<gtk::ListItem>().unwrap();
+            let obj: GSubvolume = item.item().unwrap().downcast().unwrap();
+            let cell: SubvolumeLabelCell = item.child().unwrap().downcast().unwrap();
             cell.label().set_label(&obj.attribute_str(attribute));
         });
-        factory.connect_unbind(move |_, list_item| {
-            let cell = list_item
+        factory.connect_unbind(move |_, item| {
+            let item = item.downcast_ref::<gtk::ListItem>().unwrap();
+            let cell = item
                 .child()
                 .unwrap()
                 .downcast::<SubvolumeLabelCell>()

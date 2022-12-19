@@ -31,7 +31,7 @@ You can find us on [#org.zhangyuannie.Butter:matrix.org](https://matrix.to/#/#or
 
 ## Translations
 
-1. Join us on [Matrix](#Asking-Questions) to coordinate and get updated.
+1. Join us on [Matrix](https://matrix.to/#/#org.zhangyuannie.Butter:matrix.org) to coordinate and get updated.
 
 2. See [BUILDING.md](BUILDING.md) to set up the project.
 

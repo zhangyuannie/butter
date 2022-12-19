@@ -6,8 +6,8 @@ authors = ["Zhangyuan Nie"]
 license = "GPL-3.0-only"
 
 [dependencies]
-gtk = { version = "0.5", package = "gtk4" }
-adw = { version = "0.2", package = "libadwaita" }
+gtk = { version = "0.5.4", package = "gtk4", features = ["gnome_43"] }
+adw = { version = "0.2.1", package = "libadwaita", features = ["v1_2", "gtk_v4_6"] }
 regex = "1.5"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
