@@ -6,6 +6,7 @@ data/resources/ui/snapshot_creation_window.ui
 data/resources/ui/snapshot_rename_popover.ui
 data/resources/ui/snapshot_view.ui
 
+src/ui/widgets/schedule_rule_edit_dialog.rs
+src/ui/widgets/snapshot_view.rs
+src/ui/application.rs
 src/ui.rs
-src/widgets/schedule_rule_edit_dialog.rs
-src/widgets/snapshot_view.rs

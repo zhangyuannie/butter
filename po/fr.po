@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: butter\n"
 "Report-Msgid-Bugs-To: https://github.com/zhangyuannie/butter/issues\n"
-"POT-Creation-Date: 2022-08-18 02:25-0700\n"
+"POT-Creation-Date: 2022-12-18 20:46-0800\n"
 "PO-Revision-Date: 2022-03-11 14:40-0500\n"
 "Last-Translator: Zhangyuan Nie\n"
 "Language-Team: French\n"
@@ -35,7 +35,7 @@ msgid "Cancel"
 msgstr "Annuler"
 
 #: data/resources/ui/schedule_rule_edit_dialog.ui:61
-#: src/widgets/snapshot_view.rs:86
+#: src/ui/widgets/snapshot_view.rs:77
 msgid "Name"
 msgstr "Nom"
 
@@ -113,7 +113,7 @@ msgid "New Snapshot"
 msgstr "Nouvel instantané"
 
 #: data/resources/ui/snapshot_creation_window.ui:18
-#: src/widgets/schedule_rule_edit_dialog.rs:149
+#: src/ui/widgets/schedule_rule_edit_dialog.rs:142
 msgid "Create"
 msgstr "Créer"
 
@@ -145,34 +145,38 @@ msgstr "Renommer…"
 msgid "Delete"
 msgstr "Supprimer"
 
-#: data/resources/ui/snapshot_view.ui:34 src/widgets/snapshot_view.rs:105
+#: data/resources/ui/snapshot_view.ui:34 src/ui/widgets/snapshot_view.rs:83
 msgid "Path"
 msgstr "Chemin d'accès"
 
-#: data/resources/ui/snapshot_view.ui:38 src/widgets/snapshot_view.rs:121
+#: data/resources/ui/snapshot_view.ui:38 src/ui/widgets/snapshot_view.rs:89
 msgid "Created"
 msgstr "Date de création"
 
-#: data/resources/ui/snapshot_view.ui:42 src/widgets/snapshot_view.rs:140
+#: data/resources/ui/snapshot_view.ui:42 src/ui/widgets/snapshot_view.rs:95
 msgid "Source"
 msgstr "Parent"
 
-#: src/ui.rs:17
-msgid "Snapshot"
-msgstr "Instantané"
-
-#: src/ui.rs:23
-msgid "Schedule"
-msgstr "Planification"
-
-#: src/widgets/schedule_rule_edit_dialog.rs:150
+#: src/ui/widgets/schedule_rule_edit_dialog.rs:143
 msgid "New Rule"
 msgstr "Nouvelle règle"
 
-#: src/widgets/schedule_rule_edit_dialog.rs:153
+#: src/ui/widgets/schedule_rule_edit_dialog.rs:146
 msgid "Apply"
 msgstr "Appliquer"
 
-#: src/widgets/schedule_rule_edit_dialog.rs:154
+#: src/ui/widgets/schedule_rule_edit_dialog.rs:147
 msgid "Edit Rule"
 msgstr "Modifier la règle"
+
+#: src/ui/application.rs:99
+msgid "Snapshot"
+msgstr "Instantané"
+
+#: src/ui/application.rs:104
+msgid "Schedule"
+msgstr "Planification"
+
+#: src/ui/application.rs:161
+msgid "translator-credits"
+msgstr "Zhangyuan Nie"

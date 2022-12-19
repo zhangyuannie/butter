@@ -37,4 +37,4 @@ You can find us on [#org.zhangyuannie.Butter:matrix.org](https://matrix.to/#/#or
 
 3. Add your language to [LINGUAS](po/LINGUAS) if it is not already there.
 
-4. Run `meson -C build butter-update-po` to generate the pot file for your language.
+4. Run `ninja -C build butter-update-po` to generate the pot file for your language.
