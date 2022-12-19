@@ -148,18 +148,20 @@ impl Application {
 
         let about_action = gio::SimpleAction::new("about", None);
         about_action.connect_activate(move |_, _| {
-            let dialog = gtk::AboutDialog::builder()
-                .logo_icon_name(config::APP_ID)
+            let about_window = adw::AboutWindow::builder()
+                .application_name(config::APP_NAME)
+                .application_icon(config::APP_ID)
+                .version(config::APP_VERSION)
+                .website("https://github.com/zhangyuannie/butter")
                 .copyright("© 2022 Zhangyuan Nie")
                 .license_type(gtk::License::Gpl30Only)
-                .program_name(config::APP_NAME)
-                .authors(vec!["Zhangyuan Nie".into()])
+                .developers(vec!["Zhangyuan Nie".into()])
                 .transient_for(&window)
                 .modal(true)
-                .version(config::APP_VERSION)
+                .translator_credits(&gettext("translator-credits"))
                 .build();
 
-            dialog.show();
+            about_window.show();
         });
         self.add_action(&about_action);
     }
