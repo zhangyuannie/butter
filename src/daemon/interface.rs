@@ -219,14 +219,20 @@ impl Service<'static> {
         }
     }
 
-    fn list_rules(&self) -> Result<Vec<Rule>, Error> {
+    async fn list_rules(&self) -> Result<Vec<Rule>, Error> {
         Ok(ReadRuleDir::new()
             .context("Failed to read config directory")?
             .map_while(|e| e.ok())
             .collect())
     }
 
-    fn update_rule(&self, prev: Rule, next: Rule) -> Result<(), Error> {
+    async fn update_rule(
+        &self,
+        #[zbus(header)] hdr: MessageHeader<'_>,
+        prev: Rule,
+        next: Rule,
+    ) -> Result<(), Error> {
+        self.check_authorization(&hdr, SCHEDULE_AID).await?;
         let next = RuleJson::from(next);
         let data = serde_json::to_vec_pretty(&next).context("failed to serialize")?;
         fs::write(&prev.path, data).context("failed to write")?;
@@ -236,11 +242,21 @@ impl Service<'static> {
         Ok(())
     }
 
-    fn delete_rule(&self, rule: Rule) -> Result<(), Error> {
+    async fn delete_rule(
+        &self,
+        #[zbus(header)] hdr: MessageHeader<'_>,
+        rule: Rule,
+    ) -> Result<(), Error> {
+        self.check_authorization(&hdr, SCHEDULE_AID).await?;
         Ok(fs::remove_file(&rule.path).context("failed to remove")?)
     }
 
-    fn create_rule(&self, rule: Rule) -> Result<(), Error> {
+    async fn create_rule(
+        &self,
+        #[zbus(header)] hdr: MessageHeader<'_>,
+        rule: Rule,
+    ) -> Result<(), Error> {
+        self.check_authorization(&hdr, SCHEDULE_AID).await?;
         let rule = RuleJson::from(rule);
         let data = serde_json::to_vec_pretty(&rule).context("failed to serialize")?;
         fs::write(&rule.path, data).context("failed to write")?;
