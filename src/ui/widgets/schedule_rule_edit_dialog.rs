@@ -1,12 +1,10 @@
-use adw::prelude::*;
-use adw::subclass::prelude::*;
 use gtk::glib;
 use gtk::glib::Object;
 use std::path::PathBuf;
 
 use crate::config;
 use crate::rule::{GRule, RuleSubvolume};
-use crate::ui::show_error_dialog;
+use crate::ui::prelude::*;
 use crate::ui::store::Store;
 
 mod imp {
@@ -218,8 +216,7 @@ impl ScheduleRuleEditDialog {
             store.create_rule(&new_rule)
         };
         if let Err(e) = res {
-            let win = self.root().and_then(|w| w.downcast::<gtk::Window>().ok());
-            show_error_dialog(win.as_ref(), &e.to_string());
+            self.alert(&e.to_string());
         }
         self.close();
     }

@@ -1,13 +1,12 @@
 use adw::subclass::prelude::*;
 use gtk::{
-    gdk, gio, glib, prelude::*, BitsetIter, ColumnView, ColumnViewColumn, SignalListItemFactory,
-    Widget,
+    gdk, gio, glib, BitsetIter, ColumnView, ColumnViewColumn, SignalListItemFactory, Widget,
 };
 
 use crate::{
     subvolume::{Attribute, GSubvolume},
     ui::{
-        show_error_dialog,
+        prelude::*,
         store::Store,
         widgets::{AppWindow, SnapshotCreationWindow, SubvolumeLabelCell},
     },
@@ -326,7 +325,7 @@ impl SnapshotView {
 
             if let Err(error) = res {
                 let win = view.root().unwrap().downcast::<AppWindow>().unwrap();
-                show_error_dialog(Some(&win), &error.to_string());
+                win.alert(&error.to_string());
             }
         }));
     }

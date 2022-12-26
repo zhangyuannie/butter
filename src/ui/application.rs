@@ -1,21 +1,19 @@
 use gettext::gettext;
-use gtk::prelude::*;
-use gtk::subclass::prelude::*;
+
 use gtk::{gio, glib};
 
 use crate::filesystem::GFilesystem;
-use crate::{config, ui::show_error_dialog};
+use crate::{config, ui::prelude::*};
 
 use super::store::Store;
 use super::widgets::{AppWindow, ScheduleView, SnapshotView};
 
 mod imp {
-    use adw::subclass::prelude::*;
     use glib::{ParamFlags, ParamSpec, ParamSpecObject, Value};
-    use gtk::{glib, prelude::*};
+    use gtk::glib;
     use once_cell::sync::{Lazy, OnceCell};
 
-    use crate::ui::store::Store;
+    use crate::ui::{prelude::*, store::Store};
 
     #[derive(Default)]
     pub struct Application {
@@ -135,9 +133,9 @@ impl Application {
 
             let switch = header_bar.switch();
             switch.set_state(self.store().is_schedule_enabled());
-            switch.connect_state_set(glib::clone!(@weak store => @default-return glib::signal::Inhibit(true), move |switch, state| {
+            switch.connect_state_set(glib::clone!(@weak window, @weak store => @default-return glib::signal::Inhibit(true), move |switch, state| {
                 if let Err(error) = store.set_is_schedule_enabled(state) {
-                    show_error_dialog(None::<&gtk::Window>,&error.to_string());
+                    window.alert(&error.to_string());
                 }
                 switch.set_state(store.is_schedule_enabled());
                 glib::signal::Inhibit(true)

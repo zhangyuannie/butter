@@ -13,7 +13,7 @@ mod imp {
     use glib::once_cell::sync::{Lazy, OnceCell};
     use gtk::glib::{ParamSpec, Value};
 
-    use crate::{rule::GRule, ui::show_error_dialog};
+    use crate::{rule::GRule, ui::prelude::*};
 
     use super::*;
 
@@ -79,8 +79,7 @@ mod imp {
                         let mut new_rule = rule.inner().clone();
                         new_rule.is_enabled = state;
                         if let Err(error) = store.update_rule(rule.inner(), &new_rule) {
-                            let win = obj.root().and_then(|w| w.downcast::<gtk::Window>().ok());
-                            show_error_dialog(win.as_ref(), &error.to_string());
+                            obj.alert(&error.to_string());
                         } else {
                             switch.set_state(state);
                         }

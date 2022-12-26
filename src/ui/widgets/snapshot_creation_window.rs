@@ -11,7 +11,7 @@ mod imp {
     use glib::once_cell::sync::OnceCell;
     use gtk::glib::{once_cell::sync::Lazy, ParamFlags, ParamSpec, ParamSpecObject, Value};
 
-    use crate::ui::{show_error_dialog, store::Store};
+    use crate::ui::{prelude::*, store::Store};
 
     use super::*;
 
@@ -69,9 +69,7 @@ mod imp {
 
                 match res {
                     Ok(_) => obj.close(),
-                    Err(error) => {
-                        show_error_dialog(Some(&obj), &error.to_string());
-                    }
+                    Err(error) => obj.alert(&error.to_string()),
                 }
             }));
         }
