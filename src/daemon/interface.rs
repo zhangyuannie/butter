@@ -206,9 +206,18 @@ impl Service<'static> {
 
     async fn schedule_state(&self) -> Result<&str, Error> {
         let systemd = systemd1::ManagerProxy::new(&self.conn).await?;
-        let p = systemd
+
+        let p = match systemd
             .get_unit("butter-schedule-snapshot.timer".to_string())
-            .await?;
+            .await
+        {
+            Ok(p) => p,
+            Err(_) => {
+                systemd
+                    .load_unit("butter-schedule-snapshot.timer".to_string())
+                    .await?
+            }
+        };
 
         let unit = systemd1::UnitProxy::new(&self.conn, p).await?;
         let state = unit.active_state().await?;
