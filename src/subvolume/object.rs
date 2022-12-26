@@ -1,4 +1,5 @@
 mod attribute;
+mod sorter;
 pub use attribute::Attribute;
 
 use std::{borrow::Cow, path::Path};
