@@ -272,15 +272,23 @@ impl SnapshotView {
         delete_action.connect_activate(
             glib::clone!(@weak col_view, @weak self as view => move |_, _| {
                 let selection_model = col_view.model().unwrap();
-                let selection = selection_model.selection();
-                for (_, idx) in BitsetIter::init_first(&selection) {
-                    let obj: GSubvolume = selection_model
+                let selection = selection_model.selection().copy();
+                if let Some((mut it, mut idx)) =  BitsetIter::init_first(&selection) {
+                    loop {
+                        println!("{}", idx);
+                        let obj: GSubvolume = selection_model
                         .item(idx)
                         .expect("Item must exist")
                         .downcast()
                         .unwrap();
-                    view.store().delete_snapshot(obj.mount_path().unwrap()).unwrap();
-                    println!("delete: {}", obj.mount_path().unwrap().display());
+                        view.store().delete_snapshot(obj.mount_path().unwrap()).unwrap();
+                        println!("delete: {}", obj.mount_path().unwrap().display());
+                        if let Some(next) = it.next() {
+                            idx = next;
+                        } else {
+                            break;
+                        }
+                    }
                 }
             }),
         );
