@@ -381,6 +381,9 @@ impl SnapshotView {
 
     pub fn present_creation_window(&self) {
         let win = SnapshotCreationWindow::new(&self.store());
+        let app_win = self.root().and_then(|w| w.downcast::<gtk::Window>().ok());
+        win.set_transient_for(app_win.as_ref());
+        win.set_modal(true);
         win.present();
     }
 
