@@ -155,12 +155,7 @@ impl Store {
         dest: &Path,
         readonly: bool,
     ) -> anyhow::Result<()> {
-        let flags = if readonly {
-            libbtrfsutil::CreateSnapshotFlags::READ_ONLY.bits()
-        } else {
-            0
-        };
-        self.butterd()?.create_snapshot(&src, &dest, flags)?;
+        self.butterd()?.create_snapshot(&src, &dest, readonly)?;
         self.refresh_subvolumes()?;
         Ok(())
     }

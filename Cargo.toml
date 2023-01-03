@@ -19,7 +19,7 @@ env_logger = "0.9"
 tempfile = "3.3.0"
 libc = "0.2.126"
 anyhow = "1.0.57"
-libbtrfsutil = "0.5.1"
+libbtrfsutil = "0.5.2"
 indexmap = "1.8.2"
 chrono = "0.4.20"
 clap = { version = "3.2.8", features = ["derive"] }

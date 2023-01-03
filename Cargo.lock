@@ -1117,9 +1117,9 @@ dependencies = [
 
 [[package]]
 name = "libbtrfsutil"
-version = "0.5.1"
+version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a9a2daa47355b264a21f275208541c4814eca3108927663887a126a70a98aad"
+checksum = "b50bcb3efa8314e57abb2f93eb6dcdd0431f8d9cfa12ec18db3e22e94f81b17d"
 dependencies = [
  "bitflags",
  "libbtrfsutil-sys",

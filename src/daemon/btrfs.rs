@@ -7,18 +7,19 @@ use std::{
         raw::c_char,
         unix::prelude::{AsFd, AsRawFd, OsStrExt},
     },
-    path::PathBuf,
+    path::{Path, PathBuf},
     ptr::addr_of_mut,
 };
 
 use nix::errno::Errno;
 use uuid::Uuid;
 
-use crate::filesystem::Filesystem;
+use crate::{filesystem::Filesystem, write_as_json};
 
 use super::{
     ioctl::{self, BtrfsDevInfoArgs, BtrfsFsInfoArgs, BTRFS_LABEL_SIZE},
     mnt_entry::MntEntries,
+    snapshot_metadata::SnapshotMetadata,
 };
 
 fn fs_info<T: AsFd>(fd: T) -> io::Result<(BtrfsFsInfoArgs, Vec<BtrfsDevInfoArgs>)> {
@@ -131,4 +132,32 @@ pub fn read_all_mounted_btrfs_fs() -> io::Result<Vec<Filesystem>> {
         }
     }
     Ok(ret.into_values().collect())
+}
+
+/// Create a regular snapshot, save butter specific metadata, conditionally make it read-only
+pub fn create_butter_snapshot(
+    src_mnt: &Path,
+    dst_mnt: &Path,
+    readonly: bool,
+) -> anyhow::Result<()> {
+    let src_subvol_path = libbtrfsutil::subvolume_path(src_mnt)?;
+    if let Some(dst_parent) = dst_mnt.parent() {
+        fs::create_dir_all(dst_parent)?;
+    }
+    libbtrfsutil::create_snapshot(
+        src_mnt,
+        dst_mnt,
+        libbtrfsutil::CreateSnapshotFlags::empty(),
+        None,
+    )?;
+    let metadata_dir = dst_mnt.join(".butter");
+    fs::create_dir_all(&metadata_dir)?;
+
+    let metadata = SnapshotMetadata {
+        created_from: src_subvol_path,
+    };
+    write_as_json(&metadata_dir.join("info.json"), &metadata)?;
+
+    libbtrfsutil::set_subvolume_read_only(&dst_mnt, readonly)?;
+    Ok(())
 }

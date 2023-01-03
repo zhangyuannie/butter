@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs, os::raw::c_int, path::PathBuf};
+use std::{collections::HashMap, fs, path::PathBuf};
 
 use anyhow::Context;
 use tokio::try_join;
@@ -10,6 +10,7 @@ use crate::{
     filesystem::{Filesystem, SubvolumeExt},
     rule::{ReadRuleDir, Rule, RuleJson},
     subvolume::Subvolume,
+    write_as_json,
 };
 
 use super::btrfs;
@@ -114,7 +115,7 @@ impl Service<'static> {
         #[zbus(header)] hdr: MessageHeader<'_>,
         src_mnt: PathBuf,
         dst_mnt: PathBuf,
-        flags: i32,
+        readonly: bool,
     ) -> Result<Subvolume, Error> {
         self.check_authorization(&hdr, SUBVOLUME_AID).await?;
         if src_mnt.is_relative() || dst_mnt.is_relative() {
@@ -124,13 +125,8 @@ impl Service<'static> {
             fs::create_dir_all(dest_parent).context("failed to create target parent")?;
         }
 
-        libbtrfsutil::create_snapshot(
-            &src_mnt,
-            &dst_mnt,
-            libbtrfsutil::CreateSnapshotFlags::from_bits_truncate(flags as c_int),
-            None,
-        )
-        .context("failed to create snapshot")?;
+        btrfs::create_butter_snapshot(&src_mnt, &dst_mnt, readonly)
+            .context("failed to create snapshot")?;
 
         let info = libbtrfsutil::subvolume_info(&dst_mnt).context("failed to get snapshot info")?;
 
@@ -243,8 +239,7 @@ impl Service<'static> {
     ) -> Result<(), Error> {
         self.check_authorization(&hdr, SCHEDULE_AID).await?;
         let next = RuleJson::from(next);
-        let data = serde_json::to_vec_pretty(&next).context("failed to serialize")?;
-        fs::write(&prev.path, data).context("failed to write")?;
+        write_as_json(&prev.path, &next).context("failed to write")?;
         if prev.path != next.path {
             fs::rename(prev.path, next.path).context("failed to rename")?;
         }
@@ -267,8 +262,7 @@ impl Service<'static> {
     ) -> Result<(), Error> {
         self.check_authorization(&hdr, SCHEDULE_AID).await?;
         let rule = RuleJson::from(rule);
-        let data = serde_json::to_vec_pretty(&rule).context("failed to serialize")?;
-        fs::write(&rule.path, data).context("failed to write")?;
+        write_as_json(&rule.path, &rule).context("failed to write")?;
         Ok(())
     }
 }

@@ -16,8 +16,12 @@ trait Butter1 {
     fn schedule_state(&self) -> zbus::Result<String>;
     fn move_subvolume(&self, src_mnt: &Path, dst_mnt: &Path) -> zbus::Result<()>;
     fn delete_subvolume(&self, mnt: &Path) -> zbus::Result<()>;
-    fn create_snapshot(self, src_mnt: &Path, dst_mnt: &Path, flags: i32)
-        -> zbus::Result<Subvolume>;
+    fn create_snapshot(
+        self,
+        src_mnt: &Path,
+        dst_mnt: &Path,
+        readonly: bool,
+    ) -> zbus::Result<Subvolume>;
     fn list_rules(&self) -> zbus::Result<Vec<Rule>>;
     fn update_rule(&self, prev: &Rule, next: &Rule) -> zbus::Result<()>;
     fn delete_rule(&self, rule: &Rule) -> zbus::Result<()>;
