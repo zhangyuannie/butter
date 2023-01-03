@@ -232,10 +232,20 @@ impl SnapshotView {
     }
 
     fn open_snapshot(&self, idx: u32) {
-        let obj = self.model().item(idx).expect("Item must exist");
-        let uri = format!("file://{}", obj.property::<String>("path"));
-        println!("open_snapshot: show_uri: {}", uri);
-        gtk::show_uri(None::<&gtk::Window>, uri.as_str(), gdk::CURRENT_TIME);
+        let obj = self
+            .model()
+            .item(idx)
+            .expect("Item must exist")
+            .downcast::<GSubvolume>()
+            .unwrap();
+        if let Some(path) = obj.mount_path() {
+            let uri = format!(
+                "file://{}",
+                path.to_str().expect("Subvolume path must be proper UTF-8")
+            );
+            println!("open_snapshot: show_uri: {}", uri);
+            gtk::show_uri(None::<&gtk::Window>, uri.as_str(), gdk::CURRENT_TIME);
+        }
     }
 
     fn setup_menu(&self) {
