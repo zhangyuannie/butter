@@ -1,4 +1,4 @@
-mod btrfs;
+pub mod btrfs;
 mod interface;
 pub use interface::Service;
 mod ioctl;

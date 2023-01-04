@@ -135,12 +135,8 @@ pub fn read_all_mounted_btrfs_fs() -> io::Result<Vec<Filesystem>> {
 }
 
 /// Create a regular snapshot, save butter specific metadata, conditionally make it read-only
-pub fn create_butter_snapshot(
-    src_mnt: &Path,
-    dst_mnt: &Path,
-    readonly: bool,
-) -> anyhow::Result<()> {
-    let src_subvol_path = libbtrfsutil::subvolume_path(src_mnt)?;
+pub fn create_butter_snapshot(src_mnt: &Path, dst_mnt: &Path, readonly: bool) -> io::Result<()> {
+    let src_subvol_path = libbtrfsutil::subvolume_path(src_mnt).or_else(|e| Err(e.os_error()))?;
     if let Some(dst_parent) = dst_mnt.parent() {
         fs::create_dir_all(dst_parent)?;
     }
@@ -149,7 +145,8 @@ pub fn create_butter_snapshot(
         dst_mnt,
         libbtrfsutil::CreateSnapshotFlags::empty(),
         None,
-    )?;
+    )
+    .or_else(|e| Err(e.os_error()))?;
     let metadata_dir = dst_mnt.join(".butter");
     fs::create_dir_all(&metadata_dir)?;
 
@@ -158,6 +155,6 @@ pub fn create_butter_snapshot(
     };
     write_as_json(&metadata_dir.join("info.json"), &metadata)?;
 
-    libbtrfsutil::set_subvolume_read_only(&dst_mnt, readonly)?;
+    libbtrfsutil::set_subvolume_read_only(&dst_mnt, readonly).or_else(|e| Err(e.os_error()))?;
     Ok(())
 }

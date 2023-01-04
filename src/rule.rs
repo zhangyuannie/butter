@@ -9,7 +9,7 @@ use chrono::{DateTime, Datelike, NaiveDateTime, Timelike, Utc};
 use log;
 use serde::{Deserialize, Serialize};
 
-use crate::config;
+use crate::{config, daemon::btrfs::create_butter_snapshot};
 
 use self::name::RandomName;
 
@@ -137,15 +137,10 @@ impl RuleSubvolume {
         let mut name = RandomName::new();
         for _ in 0..16 {
             let target_path = self.target_dir.join(name.as_str());
-            match libbtrfsutil::create_snapshot(
-                &self.path,
-                &target_path,
-                libbtrfsutil::CreateSnapshotFlags::READ_ONLY,
-                None,
-            ) {
+            match create_butter_snapshot(&self.path, &target_path, true) {
                 Ok(_) => return Ok(()),
                 Err(e) => {
-                    if e.os_error().kind() == io::ErrorKind::AlreadyExists {
+                    if e.kind() == io::ErrorKind::AlreadyExists {
                         name.inc_len();
                         continue;
                     } else {
