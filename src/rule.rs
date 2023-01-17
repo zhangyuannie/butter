@@ -9,7 +9,10 @@ use chrono::{DateTime, Datelike, NaiveDateTime, Timelike, Utc};
 use log;
 use serde::{Deserialize, Serialize};
 
-use crate::{config, daemon::btrfs::create_butter_snapshot};
+use crate::{
+    config,
+    daemon::{btrfs::create_butter_snapshot, SnapshotMetadata},
+};
 
 use self::name::RandomName;
 
@@ -164,6 +167,8 @@ impl RuleSubvolume {
             algo: fn(&NaiveDateTime) -> i32,
         }
 
+        let source_subvol_path = libbtrfsutil::subvolume_path(&self.path)?;
+
         let mut snapshots: Vec<Snapshot> = fs::read_dir(&self.target_dir)?
             .filter_map(|entry| {
                 let entry = entry.ok()?;
@@ -172,11 +177,15 @@ impl RuleSubvolume {
                 }
                 let path = entry.path();
                 let info = libbtrfsutil::subvolume_info(&path).ok()?;
-
-                Some(Snapshot {
-                    path,
-                    created: DateTime::<Utc>::from(info.created()).naive_local(),
-                })
+                if let Some(metadata) = SnapshotMetadata::read(&path) {
+                    if metadata.created_from == source_subvol_path {
+                        return Some(Snapshot {
+                            path,
+                            created: DateTime::<Utc>::from(info.created()).naive_local(),
+                        });
+                    }
+                }
+                return None;
             })
             .collect();
         snapshots.sort_by_key(|e| cmp::Reverse(e.created));
