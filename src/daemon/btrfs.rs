@@ -152,6 +152,9 @@ pub fn create_butter_snapshot(src_mnt: &Path, dst_mnt: &Path, readonly: bool) ->
 
     let metadata = SnapshotMetadata {
         created_from: src_subvol_path,
+        uuid: libbtrfsutil::subvolume_info(dst_mnt)
+            .or_else(|e| Err(e.os_error()))?
+            .uuid(),
     };
     write_as_json(&metadata_dir.join("info.json"), &metadata)?;
 
