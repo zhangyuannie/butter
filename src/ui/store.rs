@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use gtk::{gio, glib, subclass::prelude::*};
 use uuid::Uuid;
@@ -137,8 +137,8 @@ impl Store {
         Ok(())
     }
 
-    pub fn delete_snapshot(&self, path: &Path) -> anyhow::Result<()> {
-        self.butterd()?.delete_subvolume(path)?;
+    pub fn delete_snapshots(&self, paths: &[PathBuf]) -> anyhow::Result<()> {
+        self.butterd()?.delete_subvolumes(paths)?;
         self.refresh_subvolumes()?;
         Ok(())
     }

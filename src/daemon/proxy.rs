@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use zbus::dbus_proxy;
 
@@ -15,7 +15,7 @@ trait Butter1 {
     fn disable_schedule(&self) -> zbus::Result<()>;
     fn schedule_state(&self) -> zbus::Result<String>;
     fn move_subvolume(&self, src_mnt: &Path, dst_mnt: &Path) -> zbus::Result<()>;
-    fn delete_subvolume(&self, mnt: &Path) -> zbus::Result<()>;
+    fn delete_subvolumes(&self, mnts: &[PathBuf]) -> zbus::Result<()>;
     fn create_snapshot(
         self,
         src_mnt: &Path,

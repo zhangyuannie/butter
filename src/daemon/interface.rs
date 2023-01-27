@@ -96,17 +96,19 @@ impl Service<'static> {
         Ok(())
     }
 
-    async fn delete_subvolume(
+    async fn delete_subvolumes(
         &mut self,
         #[zbus(header)] hdr: MessageHeader<'_>,
-        mnt: PathBuf,
+        mnts: Vec<PathBuf>,
     ) -> Result<(), Error> {
         self.check_authorization(&hdr, SUBVOLUME_AID).await?;
-        if mnt.is_relative() {
-            return Err(Error::ClientError("path must be absolute".to_string()));
+        for mnt in mnts {
+            if mnt.is_relative() {
+                return Err(Error::ClientError("path must be absolute".to_string()));
+            }
+            libbtrfsutil::delete_subvolume(mnt, libbtrfsutil::DeleteSubvolumeFlags::RECURSIVE)
+                .context("failed to delete subvolume")?;
         }
-        libbtrfsutil::delete_subvolume(mnt, libbtrfsutil::DeleteSubvolumeFlags::RECURSIVE)
-            .context("failed to delete subvolume")?;
         Ok(())
     }
 

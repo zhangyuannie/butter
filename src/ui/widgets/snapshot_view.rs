@@ -283,6 +283,7 @@ impl SnapshotView {
             glib::clone!(@weak col_view, @weak self as view => move |_, _| {
                 let selection_model = col_view.model().unwrap();
                 let selection = selection_model.selection().copy();
+                let mut to_delete = Vec::new();
                 if let Some((mut it, mut idx)) =  BitsetIter::init_first(&selection) {
                     loop {
                         println!("{}", idx);
@@ -291,14 +292,17 @@ impl SnapshotView {
                         .expect("Item must exist")
                         .downcast()
                         .unwrap();
-                        view.store().delete_snapshot(obj.mount_path().unwrap()).unwrap();
-                        println!("delete: {}", obj.mount_path().unwrap().display());
+                        to_delete.push(obj.mount_path().map(|x| x.to_path_buf()).unwrap());
                         if let Some(next) = it.next() {
                             idx = next;
                         } else {
                             break;
                         }
                     }
+                }
+                if !to_delete.is_empty() {
+                    println!("delete: {:?}", to_delete);
+                    view.store().delete_snapshots(&to_delete).unwrap();
                 }
             }),
         );
