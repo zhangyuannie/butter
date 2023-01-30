@@ -24,7 +24,7 @@ indexmap = "1.8.2"
 chrono = "0.4.20"
 clap = { version = "3.2.8", features = ["derive"] }
 rand = "0.8.5"
-zbus = { version = "3.6", default-features = false, features = ["tokio", "uuid", "gvariant"] }
+zbus = { version = "3.8", default-features = false, features = ["tokio", "uuid", "gvariant"] }
 nix = "0.25"
 once_cell = "1.16.0"
 zbus_systemd = { version = "0.0.8", features = ["systemd1"] }
