@@ -138,7 +138,7 @@ mod imp {
     impl SnapshotView {
         fn setup_model(&self) {
             let filter = gtk::CustomFilter::new(|obj| {
-                obj.downcast_ref::<GSubvolume>().unwrap().is_snapshot()
+                !obj.downcast_ref::<GSubvolume>().unwrap().is_protected()
             });
             let model = gtk::FilterListModel::new(Some(self.store().model()), Some(&filter));
 

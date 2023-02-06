@@ -138,6 +138,7 @@ impl Service<'static> {
         Ok(Subvolume {
             subvol_path,
             mount_path: Optional::from(Some(dst_mnt)),
+            is_mountpoint: false,
             uuid: info.uuid(),
             id: info.id(),
             created_unix_secs: info.otime(),

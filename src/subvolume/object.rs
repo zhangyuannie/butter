@@ -1,8 +1,13 @@
 mod attribute;
 mod sorter;
 pub use attribute::Attribute;
+use once_cell::sync::Lazy;
 
-use std::{borrow::Cow, path::Path};
+use std::{
+    borrow::Cow,
+    collections::HashSet,
+    path::{Path, PathBuf},
+};
 
 use gtk::{glib, subclass::prelude::*};
 use uuid::Uuid;
@@ -120,8 +125,29 @@ impl GSubvolume {
             .and_then(|p| Some(p.as_path()))
     }
 
-    pub fn is_snapshot(&self) -> bool {
-        self.data().snapshot_source_uuid.is_some()
+    /// Subvolume that are generally stable and should not be deleted
+    pub fn is_protected(&self) -> bool {
+        // some hardcoded paths that are extremly often to be their own subvolume
+        // and important for the system. This is not meant to be exhaustive
+        static IMPORTANT_PATHS: Lazy<HashSet<PathBuf>> = Lazy::new(|| {
+            HashSet::from([
+                PathBuf::from("/"),
+                PathBuf::from("/boot"),
+                PathBuf::from("/home"),
+                PathBuf::from("/var"),
+            ])
+        });
+
+        let ret = self.data().is_mountpoint
+            || self.data().snapshot_source_uuid.is_none()
+            || self.data().subvol_path == Path::new("/");
+        if ret {
+            return ret;
+        }
+        if let Some(mnt) = &*self.data().mount_path {
+            return IMPORTANT_PATHS.contains(mnt);
+        }
+        false
     }
 
     pub fn created(&self) -> glib::DateTime {

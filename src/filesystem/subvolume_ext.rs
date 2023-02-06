@@ -21,6 +21,7 @@ struct IncompleteSubvolume {
     info: SubvolumeInfo,
     subvol_path: PathBuf,
     mnt_path_lazy: OnceCell<Option<PathBuf>>,
+    is_mountpoint: bool,
 }
 
 impl IncompleteSubvolume {
@@ -56,6 +57,7 @@ impl SubvolumeExt for Filesystem {
             subvol_by_id.insert(
                 info.id(),
                 IncompleteSubvolume {
+                    is_mountpoint: self.mounts.contains_key(&libbtrfsutil::FS_TREE_OBJECTID),
                     info,
                     subvol_path: "/".into(),
                     mnt_path_lazy: OnceCell::from(mnt_path),
@@ -79,6 +81,7 @@ impl SubvolumeExt for Filesystem {
                 subvol_by_id.insert(
                     id,
                     IncompleteSubvolume {
+                        is_mountpoint: self.mounts.contains_key(&id),
                         info,
                         subvol_path: root.join(path),
                         mnt_path_lazy: if let Some(paths) = self.mounts.get(&id) {
@@ -94,6 +97,7 @@ impl SubvolumeExt for Filesystem {
         let ret = subvol_by_id
             .values()
             .map(|subvol| Subvolume {
+                is_mountpoint: subvol.is_mountpoint,
                 subvol_path: subvol.subvol_path.to_owned(),
                 mount_path: Optional::from(
                     subvol

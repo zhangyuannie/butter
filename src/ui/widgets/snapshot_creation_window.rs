@@ -118,7 +118,7 @@ impl SnapshotCreationWindow {
         let imp = self.imp();
         let filter = gtk::CustomFilter::new(|obj| {
             let subvol = obj.downcast_ref::<GSubvolume>().unwrap();
-            !subvol.is_snapshot()
+            subvol.is_protected()
         });
         let model = gtk::FilterListModel::new(Some(self.store().model()), Some(&filter));
 

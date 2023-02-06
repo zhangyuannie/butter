@@ -13,6 +13,7 @@ use zbus::zvariant::{Optional, Type};
 pub struct Subvolume {
     pub subvol_path: PathBuf,
     pub mount_path: Optional<PathBuf>,
+    pub is_mountpoint: bool,
     pub uuid: Uuid,
     pub id: u64,
     pub created_unix_secs: i64,
