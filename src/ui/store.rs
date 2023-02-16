@@ -53,7 +53,7 @@ glib::wrapper! {
 
 impl Store {
     pub fn new() -> anyhow::Result<Self> {
-        let ret: Self = glib::Object::new(&[]);
+        let ret: Self = glib::Object::new();
         ret.imp()
             .conn
             .set(zbus::blocking::Connection::system()?)
@@ -64,8 +64,8 @@ impl Store {
         Ok(ret)
     }
 
-    pub fn model(&self) -> &SubvolList {
-        &self.imp().model
+    pub fn model(&self) -> SubvolList {
+        self.imp().model.clone()
     }
 
     fn butterd(&self) -> anyhow::Result<Butter1ProxyBlocking> {

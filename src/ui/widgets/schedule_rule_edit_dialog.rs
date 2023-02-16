@@ -1,5 +1,4 @@
 use gtk::glib;
-use gtk::glib::Object;
 use std::path::PathBuf;
 
 use crate::config;
@@ -135,7 +134,7 @@ mod imp {
 
         fn constructed(&self) {
             self.parent_constructed();
-            let obj = self.instance();
+            let obj = self.obj();
             if self.is_new() {
                 self.save_button.set_label(&gettext("Create"));
                 obj.set_title(Some(&gettext("New Rule")));
@@ -161,7 +160,10 @@ glib::wrapper! {
 #[gtk::template_callbacks]
 impl ScheduleRuleEditDialog {
     pub fn new(store: &Store, rule: Option<&GRule>) -> Self {
-        Object::new(&[("store", store), ("original", &rule)])
+        glib::Object::builder()
+            .property("store", store)
+            .property("original", rule)
+            .build()
     }
 
     fn reload_subvolume_list(&self) {
@@ -183,8 +185,8 @@ impl ScheduleRuleEditDialog {
                 dialog.reload_subvolume_list();
             }));
             let row = adw::ActionRow::builder()
-                .title(&subvol.path.to_string_lossy())
-                .subtitle(&subvol.target_dir.to_string_lossy())
+                .title(subvol.path.to_string_lossy())
+                .subtitle(subvol.target_dir.to_string_lossy())
                 .build();
             row.add_prefix(&remove_btn);
             imp.subvolume_list.insert(&row, idx as i32);

@@ -47,7 +47,7 @@ glib::wrapper! {
 
 impl SubvolList {
     pub fn new() -> Self {
-        glib::Object::new(&[])
+        glib::Object::new()
     }
 
     pub fn by_id(&self, id: &Uuid) -> Option<GSubvolume> {

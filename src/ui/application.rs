@@ -61,7 +61,7 @@ mod imp {
     impl ApplicationImpl for Application {
         fn activate(&self) {
             self.parent_activate();
-            self.instance().build_ui();
+            self.obj().build_ui();
         }
     }
     impl GtkApplicationImpl for Application {}
@@ -76,11 +76,11 @@ glib::wrapper! {
 
 impl Application {
     pub fn new(store: &Store) -> Self {
-        glib::Object::new(&[
-            ("application-id", &Some(config::APP_ID)),
-            ("flags", &gio::ApplicationFlags::empty()),
-            ("store", &Some(store)),
-        ])
+        glib::Object::builder()
+            .property("application-id", &Some(config::APP_ID))
+            .property("flags", &gio::ApplicationFlags::empty())
+            .property("store", &Some(store))
+            .build()
     }
 
     pub fn store(&self) -> &Store {
@@ -153,7 +153,7 @@ impl Application {
                 .website("https://github.com/zhangyuannie/butter")
                 .copyright("© 2022 Zhangyuan Nie")
                 .license_type(gtk::License::Gpl30Only)
-                .developers(vec!["Zhangyuan Nie".into()])
+                .developers(vec!["Zhangyuan Nie"])
                 .transient_for(&window)
                 .modal(true)
                 .translator_credits(&gettext("translator-credits"))

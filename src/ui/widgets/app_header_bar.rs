@@ -103,7 +103,7 @@ impl Default for AppHeaderBar {
 
 impl AppHeaderBar {
     pub fn new() -> Self {
-        glib::Object::new(&[])
+        glib::Object::new()
     }
 
     pub fn view_switcher_title(&self) -> &adw::ViewSwitcherTitle {

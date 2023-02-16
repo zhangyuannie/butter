@@ -50,7 +50,7 @@ mod imp {
     impl ObjectImpl for SnapshotCreationWindow {
         fn constructed(&self) {
             self.parent_constructed();
-            let obj = self.instance();
+            let obj = self.obj();
             self.create_button.set_sensitive(false);
             self.name_entry
                 .connect_text_notify(glib::clone!(@weak obj => move |entry| {
@@ -111,7 +111,7 @@ glib::wrapper! {
 
 impl SnapshotCreationWindow {
     pub fn new(store: &Store) -> Self {
-        glib::Object::new(&[("store", store)])
+        glib::Object::builder().property("store", store).build()
     }
 
     fn setup_dropdown(&self) {
@@ -120,7 +120,7 @@ impl SnapshotCreationWindow {
             let subvol = obj.downcast_ref::<GSubvolume>().unwrap();
             subvol.is_protected()
         });
-        let model = gtk::FilterListModel::new(Some(self.store().model()), Some(&filter));
+        let model = gtk::FilterListModel::new(Some(self.store().model()), Some(filter));
 
         let exp = gtk::ClosureExpression::new::<String>(
             &[] as &[gtk::Expression],

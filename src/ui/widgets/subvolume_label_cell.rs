@@ -1,6 +1,4 @@
 use adw::subclass::prelude::*;
-use gtk::glib::Object;
-use gtk::prelude::*;
 use gtk::{glib, CompositeTemplate, Label};
 
 mod imp {
@@ -47,7 +45,7 @@ impl Default for SubvolumeLabelCell {
 
 impl SubvolumeLabelCell {
     pub fn new() -> Self {
-        Object::new(&[])
+        glib::Object::new()
     }
 
     pub fn label(&self) -> &gtk::Label {

@@ -30,7 +30,7 @@ glib::wrapper! {
 
 impl GRule {
     pub fn new(inner: Rule) -> Self {
-        let ret: Self = glib::Object::new(&[]);
+        let ret: Self = glib::Object::new();
         ret.imp().inner.set(inner).unwrap();
         ret
     }

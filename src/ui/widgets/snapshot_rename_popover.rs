@@ -60,7 +60,7 @@ glib::wrapper! {
 #[gtk::template_callbacks]
 impl SnapshotRenamePopover {
     pub fn new() -> Self {
-        Object::new(&[])
+        Object::new()
     }
 
     #[template_callback]

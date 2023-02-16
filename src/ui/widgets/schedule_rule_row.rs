@@ -1,5 +1,4 @@
 use gtk::glib;
-use gtk::glib::Object;
 use gtk::subclass::prelude::*;
 
 use crate::rule::GRule;
@@ -69,7 +68,7 @@ mod imp {
 
         fn constructed(&self) {
             self.parent_constructed();
-            self.instance().set_title(self.rule().name().as_ref());
+            self.obj().set_title(self.rule().name().as_ref());
 
             self.switch.set_active(self.rule().is_enabled());
         }
@@ -88,7 +87,7 @@ glib::wrapper! {
 
 impl ScheduleRuleRow {
     pub fn new(rule: &GRule) -> Self {
-        Object::new(&[("rule", rule)])
+        glib::Object::builder().property("rule", rule).build()
     }
 
     pub fn switch(&self) -> &gtk::Switch {

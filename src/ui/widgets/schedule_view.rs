@@ -1,9 +1,6 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use gtk::{
-    glib::{self, Object},
-    CompositeTemplate,
-};
+use gtk::{glib, CompositeTemplate};
 
 use crate::{rule::GRule, ui::store::Store};
 
@@ -64,7 +61,7 @@ mod imp {
 
         fn constructed(&self) {
             self.parent_constructed();
-            let obj = self.instance();
+            let obj = self.obj();
             self.rule_list.bind_model(
                 Some(self.store.get().unwrap().rule_model()),
                 glib::clone!(@weak obj => @default-panic, move |schedule| {
@@ -104,7 +101,7 @@ glib::wrapper! {
 #[gtk::template_callbacks]
 impl ScheduleView {
     pub fn new(store: &Store) -> Self {
-        Object::new(&[("store", store)])
+        glib::Object::builder().property("store", store).build()
     }
 
     pub fn show_edit_dialog(&self, schedule: Option<&GRule>) {

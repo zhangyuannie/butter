@@ -35,7 +35,7 @@ mod imp {
     impl ObjectImpl for FileChooserEntry {
         fn constructed(&self) {
             self.parent_constructed();
-            let obj = self.instance();
+            let obj = self.obj();
             self.browse_button
                 .connect_clicked(glib::clone!(@weak obj => move |_| {
                     let window = obj.root().unwrap().downcast::<gtk::Window>().unwrap();
@@ -79,7 +79,7 @@ glib::wrapper! {
 
 impl FileChooserEntry {
     pub fn new() -> Self {
-        glib::Object::new(&[])
+        glib::Object::new()
     }
 }
 

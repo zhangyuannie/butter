@@ -65,7 +65,7 @@ mod imp {
         fn constructed(&self) {
             self.parent_constructed();
             self.setup_model();
-            let obj = self.instance();
+            let obj = self.obj();
 
             let header_menu = self.header_menu_model.get();
 
@@ -104,7 +104,7 @@ mod imp {
         }
 
         fn dispose(&self) {
-            self.instance().teardown_rename_popover();
+            self.obj().teardown_rename_popover();
             self.selection_menu.unparent();
         }
 
@@ -140,10 +140,10 @@ mod imp {
             let filter = gtk::CustomFilter::new(|obj| {
                 !obj.downcast_ref::<GSubvolume>().unwrap().is_protected()
             });
-            let model = gtk::FilterListModel::new(Some(self.store().model()), Some(&filter));
+            let model = gtk::FilterListModel::new(Some(self.store().model()), Some(filter));
 
-            let model = gtk::SortListModel::new(Some(&model), self.column_view.sorter().as_ref());
-            let model = gtk::MultiSelection::new(Some(&model));
+            let model = gtk::SortListModel::new(Some(model), self.column_view.sorter());
+            let model = gtk::MultiSelection::new(Some(model));
             self.column_view.set_model(Some(&model));
         }
 
@@ -167,7 +167,7 @@ glib::wrapper! {
 
 impl SnapshotView {
     pub fn new(store: &Store) -> Self {
-        glib::Object::new(&[("store", store)])
+        glib::Object::builder().property("store", store).build()
     }
 
     fn model(&self) -> gtk::SelectionModel {
@@ -397,7 +397,7 @@ impl SnapshotView {
             }),
         );
         selection_menu.set_parent(&col_view);
-        col_view.add_controller(&gesture);
+        col_view.add_controller(gesture);
     }
 
     pub fn present_creation_window(&self) {

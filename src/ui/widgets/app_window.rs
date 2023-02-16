@@ -56,7 +56,7 @@ mod imp {
     impl ObjectImpl for AppWindow {
         fn constructed(&self) {
             self.parent_constructed();
-            let obj = self.instance();
+            let obj = self.obj();
             obj.load_window_state();
 
             let new_action = gio::SimpleAction::new("new", None);
@@ -96,7 +96,7 @@ mod imp {
     impl WidgetImpl for AppWindow {}
     impl WindowImpl for AppWindow {
         fn close_request(&self) -> gtk::Inhibit {
-            let window = self.instance();
+            let window = self.obj();
             if let Err(err) = window.save_window_state() {
                 println!("Failed to save window state, {}", &err);
             }
@@ -116,7 +116,7 @@ glib::wrapper! {
 
 impl AppWindow {
     pub fn new(app: &Application) -> Self {
-        glib::Object::new(&[("application", app)])
+        glib::Object::builder().property("application", app).build()
     }
 
     pub fn content_box(&self) -> gtk::Box {

@@ -3,12 +3,14 @@ use gtk::{glib, subclass::prelude::*};
 use uuid::Uuid;
 
 mod imp {
-    use glib::{ParamFlags, ParamSpec, Value};
+    use glib::{ParamSpec, Value};
     use gtk::{glib, prelude::*, subclass::prelude::*};
-    use once_cell::sync::{Lazy, OnceCell};
+    use once_cell::sync::OnceCell;
 
-    #[derive(Default)]
+    #[derive(Default, glib::Properties)]
+    #[properties(wrapper_type = super::GFilesystem)]
     pub struct GFilesystem {
+        #[property(name = "label", get, type = String, member = label)]
         pub data: OnceCell<super::DataFilesystem>,
     }
 
@@ -20,23 +22,14 @@ mod imp {
 
     impl ObjectImpl for GFilesystem {
         fn properties() -> &'static [ParamSpec] {
-            static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
-                vec![glib::ParamSpecString::new(
-                    "label",
-                    None,
-                    None,
-                    None,
-                    ParamFlags::READABLE,
-                )]
-            });
-            PROPERTIES.as_ref()
+            Self::derived_properties()
         }
 
-        fn property(&self, _id: usize, pspec: &ParamSpec) -> Value {
-            match pspec.name() {
-                "label" => self.instance().label().to_value(),
-                _ => unimplemented!(),
-            }
+        fn set_property(&self, id: usize, value: &Value, pspec: &ParamSpec) {
+            Self::derived_set_property(self, id, value, pspec)
+        }
+        fn property(&self, id: usize, pspec: &ParamSpec) -> Value {
+            Self::derived_property(self, id, pspec)
         }
     }
 }
@@ -47,17 +40,13 @@ glib::wrapper! {
 
 impl GFilesystem {
     pub fn new(inner: DataFilesystem) -> Self {
-        let ret: Self = glib::Object::new(&[]);
+        let ret: Self = glib::Object::new();
         ret.imp().data.set(inner).unwrap();
         ret
     }
 
     pub fn data(&self) -> &DataFilesystem {
         self.imp().data.get().unwrap()
-    }
-
-    pub fn label(&self) -> &str {
-        self.data().label.as_str()
     }
 
     pub fn uuid(&self) -> Uuid {

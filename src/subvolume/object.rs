@@ -78,7 +78,7 @@ mod imp {
         }
 
         fn property(&self, _id: usize, pspec: &ParamSpec) -> Value {
-            let obj = self.instance();
+            let obj = self.obj();
             match pspec.name() {
                 Attribute::NAME => obj.name().to_value(),
                 Attribute::PATH => obj.attribute_str(Attribute::Path).to_value(),
@@ -97,7 +97,7 @@ glib::wrapper! {
 
 impl GSubvolume {
     pub fn new(subvol: Subvolume) -> Self {
-        let obj: Self = glib::Object::new(&[]);
+        let obj: Self = glib::Object::new();
         obj.imp().data.set(subvol).unwrap();
         obj
     }
