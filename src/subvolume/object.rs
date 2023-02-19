@@ -15,7 +15,7 @@ use uuid::Uuid;
 use crate::subvolume::Subvolume;
 
 mod imp {
-    use glib::{ParamFlags, ParamSpec, Value, WeakRef};
+    use glib::{ParamSpec, Value, WeakRef};
     use gtk::{glib, prelude::*, subclass::prelude::*};
     use once_cell::sync::{Lazy, OnceCell};
 
@@ -37,41 +37,21 @@ mod imp {
         fn properties() -> &'static [ParamSpec] {
             static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
                 vec![
-                    glib::ParamSpecString::new(
-                        Attribute::NAME,
-                        None,
-                        None,
-                        None,
-                        ParamFlags::READABLE,
-                    ),
-                    glib::ParamSpecString::new(
-                        Attribute::PATH,
-                        None,
-                        None,
-                        None,
-                        ParamFlags::READABLE,
-                    ),
-                    glib::ParamSpecString::new(
-                        Attribute::PARENT_PATH,
-                        None,
-                        None,
-                        None,
-                        ParamFlags::READABLE,
-                    ),
-                    glib::ParamSpecBoxed::new(
-                        Attribute::CREATED,
-                        None,
-                        None,
-                        glib::DateTime::static_type(),
-                        ParamFlags::READABLE,
-                    ),
-                    glib::ParamSpecString::new(
-                        Attribute::UUID,
-                        None,
-                        None,
-                        None,
-                        ParamFlags::READABLE,
-                    ),
+                    glib::ParamSpecString::builder(Attribute::NAME)
+                        .read_only()
+                        .build(),
+                    glib::ParamSpecString::builder(Attribute::PATH)
+                        .read_only()
+                        .build(),
+                    glib::ParamSpecString::builder(Attribute::PARENT_PATH)
+                        .read_only()
+                        .build(),
+                    glib::ParamSpecBoxed::builder::<glib::DateTime>(Attribute::CREATED)
+                        .read_only()
+                        .build(),
+                    glib::ParamSpecString::builder(Attribute::UUID)
+                        .read_only()
+                        .build(),
                 ]
             });
             PROPERTIES.as_ref()

@@ -86,20 +86,12 @@ mod imp {
         fn properties() -> &'static [glib::ParamSpec] {
             static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
                 vec![
-                    glib::ParamSpecObject::new(
-                        "store",
-                        None,
-                        None,
-                        Store::static_type(),
-                        glib::ParamFlags::READWRITE | glib::ParamFlags::CONSTRUCT_ONLY,
-                    ),
-                    glib::ParamSpecObject::new(
-                        "original",
-                        None,
-                        None,
-                        GRule::static_type(),
-                        glib::ParamFlags::READWRITE | glib::ParamFlags::CONSTRUCT_ONLY,
-                    ),
+                    glib::ParamSpecObject::builder::<Store>("store")
+                        .construct_only()
+                        .build(),
+                    glib::ParamSpecObject::builder::<GRule>("original")
+                        .construct_only()
+                        .build(),
                 ]
             });
             PROPERTIES.as_ref()

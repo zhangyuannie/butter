@@ -12,22 +12,18 @@ mod imp {
         prelude::*,
         CompositeTemplate, TemplateChild,
     };
-    use once_cell::sync::{Lazy, OnceCell};
+    use once_cell::sync::OnceCell;
 
     use crate::rule::GRule;
 
-    #[derive(Default, CompositeTemplate)]
+    #[derive(Default, CompositeTemplate, glib::Properties)]
     #[template(resource = "/org/zhangyuannie/butter/ui/schedule_rule_row.ui")]
+    #[properties(wrapper_type = super::ScheduleRuleRow)]
     pub struct ScheduleRuleRow {
         #[template_child]
         pub switch: TemplateChild<gtk::Switch>,
+        #[property(get, set, construct_only)]
         pub rule: OnceCell<GRule>,
-    }
-
-    impl ScheduleRuleRow {
-        pub fn rule(&self) -> &GRule {
-            self.rule.get().unwrap()
-        }
     }
 
     #[glib::object_subclass]
@@ -47,30 +43,22 @@ mod imp {
 
     impl ObjectImpl for ScheduleRuleRow {
         fn properties() -> &'static [glib::ParamSpec] {
-            static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
-                vec![glib::ParamSpecObject::new(
-                    "rule",
-                    None,
-                    None,
-                    GRule::static_type(),
-                    glib::ParamFlags::READWRITE | glib::ParamFlags::CONSTRUCT_ONLY,
-                )]
-            });
-            PROPERTIES.as_ref()
+            Self::derived_properties()
         }
 
-        fn set_property(&self, _id: usize, value: &Value, pspec: &ParamSpec) {
-            match pspec.name() {
-                "rule" => self.rule.set(value.get().unwrap()).unwrap(),
-                _ => unimplemented!(),
-            }
+        fn set_property(&self, id: usize, value: &Value, pspec: &ParamSpec) {
+            Self::derived_set_property(self, id, value, pspec)
+        }
+
+        fn property(&self, id: usize, pspec: &ParamSpec) -> Value {
+            Self::derived_property(self, id, pspec)
         }
 
         fn constructed(&self) {
             self.parent_constructed();
-            self.obj().set_title(self.rule().name().as_ref());
-
-            self.switch.set_active(self.rule().is_enabled());
+            let obj = self.obj();
+            obj.set_title(obj.rule().name().as_ref());
+            self.switch.set_active(obj.rule().is_enabled());
         }
     }
     impl WidgetImpl for ScheduleRuleRow {}

@@ -9,7 +9,7 @@ use crate::ui::store::Store;
 mod imp {
     use glib::object::WeakRef;
     use glib::once_cell::sync::OnceCell;
-    use gtk::glib::{once_cell::sync::Lazy, ParamFlags, ParamSpec, ParamSpecObject, Value};
+    use gtk::glib::{once_cell::sync::Lazy, ParamSpec, ParamSpecObject, Value};
 
     use crate::ui::{prelude::*, store::Store};
 
@@ -76,13 +76,9 @@ mod imp {
 
         fn properties() -> &'static [ParamSpec] {
             static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
-                vec![ParamSpecObject::new(
-                    "store",
-                    None,
-                    None,
-                    Store::static_type(),
-                    ParamFlags::READWRITE | glib::ParamFlags::CONSTRUCT_ONLY,
-                )]
+                vec![ParamSpecObject::builder::<Store>("store")
+                    .construct_only()
+                    .build()]
             });
             PROPERTIES.as_ref()
         }

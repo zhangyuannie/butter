@@ -45,20 +45,8 @@ mod imp {
         fn properties() -> &'static [glib::ParamSpec] {
             static PROPERTIES: Lazy<Vec<glib::ParamSpec>> = Lazy::new(|| {
                 let ret = vec![
-                    glib::ParamSpecString::new(
-                        "title-start",
-                        "title-start",
-                        "title-start",
-                        None,
-                        glib::ParamFlags::READWRITE,
-                    ),
-                    glib::ParamSpecString::new(
-                        "title-end",
-                        "title-end",
-                        "title-end",
-                        None,
-                        glib::ParamFlags::READWRITE,
-                    ),
+                    glib::ParamSpecString::builder("title-start").build(),
+                    glib::ParamSpecString::builder("title-end").build(),
                 ];
                 assert_eq!(ret[Property::TitleStart - 1].name(), "title-start");
                 assert_eq!(ret[Property::TitleEnd - 1].name(), "title-end");

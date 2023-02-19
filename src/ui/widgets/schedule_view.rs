@@ -41,13 +41,9 @@ mod imp {
     impl ObjectImpl for ScheduleView {
         fn properties() -> &'static [glib::ParamSpec] {
             static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
-                vec![glib::ParamSpecObject::new(
-                    "store",
-                    None,
-                    None,
-                    Store::static_type(),
-                    glib::ParamFlags::READWRITE | glib::ParamFlags::CONSTRUCT_ONLY,
-                )]
+                vec![glib::ParamSpecObject::builder::<Store>("store")
+                    .construct_only()
+                    .build()]
             });
             PROPERTIES.as_ref()
         }
