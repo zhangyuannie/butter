@@ -2,6 +2,8 @@ mod list;
 pub use list::SubvolList;
 mod object;
 pub use object::{Attribute, GSubvolume};
+mod snapshot_metadata;
+pub use snapshot_metadata::SnapshotMetadata;
 
 use std::path::PathBuf;
 
@@ -13,6 +15,7 @@ use zbus::zvariant::{Optional, Type};
 pub struct Subvolume {
     pub subvol_path: PathBuf,
     pub mount_path: Optional<PathBuf>,
+    /// `true` if found in /proc/self/mounts
     pub is_mountpoint: bool,
     pub uuid: Uuid,
     pub id: u64,

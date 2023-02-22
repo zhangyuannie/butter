@@ -14,12 +14,11 @@ use std::{
 use nix::errno::Errno;
 use uuid::Uuid;
 
-use crate::{filesystem::Filesystem, write_as_json};
+use crate::{filesystem::Filesystem, subvolume::SnapshotMetadata, write_as_json};
 
 use super::{
     ioctl::{self, BtrfsDevInfoArgs, BtrfsFsInfoArgs, BTRFS_LABEL_SIZE},
     mnt_entry::MntEntries,
-    snapshot_metadata::SnapshotMetadata,
 };
 
 fn fs_info<T: AsFd>(fd: T) -> io::Result<(BtrfsFsInfoArgs, Vec<BtrfsDevInfoArgs>)> {

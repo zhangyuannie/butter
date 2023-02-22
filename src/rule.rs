@@ -9,10 +9,7 @@ use chrono::{DateTime, Datelike, NaiveDateTime, Timelike, Utc};
 use log;
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    config,
-    daemon::{btrfs::create_butter_snapshot, SnapshotMetadata},
-};
+use crate::{config, daemon::btrfs::create_butter_snapshot, subvolume::SnapshotMetadata};
 
 use self::name::RandomName;
 
