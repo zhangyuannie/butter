@@ -35,6 +35,7 @@ You can find us on [#org.zhangyuannie.Butter:matrix.org](https://matrix.to/#/#or
 
 2. See [BUILDING.md](BUILDING.md) to set up the project.
 
-3. Add your language to [LINGUAS](po/LINGUAS) if it is not already there.
+3. Use Translation editors like [Poedit](https://poedit.net) to generate the PO file for your language based on the POT file. 
+(Note: before submitting the PR, remove the generated .mo files)
 
-4. Run `ninja -C build butter-update-po` to generate the pot file for your language.
+4. Add your language to [LINGUAS](po/LINGUAS) if it is not already there.

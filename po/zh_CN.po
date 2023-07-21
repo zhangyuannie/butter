@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: butter\n"
 "Report-Msgid-Bugs-To: https://github.com/zhangyuannie/butter/issues\n"
-"POT-Creation-Date: 2022-12-18 20:46-0800\n"
+"POT-Creation-Date: 2023-07-21 07:45+0530\n"
 "PO-Revision-Date: 2022-03-11 14:40-0500\n"
 "Last-Translator: Zhangyuan Nie\n"
 "Language-Team: Simplified Chinese\n"
@@ -34,7 +34,7 @@ msgid "Cancel"
 msgstr "取消"
 
 #: data/resources/ui/schedule_rule_edit_dialog.ui:61
-#: src/ui/widgets/snapshot_view.rs:77
+#: src/ui/widgets/snapshot_view.rs:76
 msgid "Name"
 msgstr "名称"
 
@@ -112,7 +112,7 @@ msgid "New Snapshot"
 msgstr "新建快照"
 
 #: data/resources/ui/snapshot_creation_window.ui:18
-#: src/ui/widgets/schedule_rule_edit_dialog.rs:142
+#: src/ui/widgets/schedule_rule_edit_dialog.rs:131
 msgid "Create"
 msgstr "创建"
 
@@ -144,38 +144,38 @@ msgstr "重命名…"
 msgid "Delete"
 msgstr "删除"
 
-#: data/resources/ui/snapshot_view.ui:34 src/ui/widgets/snapshot_view.rs:83
+#: data/resources/ui/snapshot_view.ui:34 src/ui/widgets/snapshot_view.rs:82
 msgid "Path"
 msgstr "路径"
 
-#: data/resources/ui/snapshot_view.ui:38 src/ui/widgets/snapshot_view.rs:89
+#: data/resources/ui/snapshot_view.ui:38 src/ui/widgets/snapshot_view.rs:88
 msgid "Created"
 msgstr "创建时间"
 
-#: data/resources/ui/snapshot_view.ui:42 src/ui/widgets/snapshot_view.rs:95
+#: data/resources/ui/snapshot_view.ui:42 src/ui/widgets/snapshot_view.rs:94
 msgid "Source"
 msgstr "源子卷"
 
-#: src/ui/widgets/schedule_rule_edit_dialog.rs:143
+#: src/ui/widgets/schedule_rule_edit_dialog.rs:132
 msgid "New Rule"
 msgstr "新建规则"
 
-#: src/ui/widgets/schedule_rule_edit_dialog.rs:146
+#: src/ui/widgets/schedule_rule_edit_dialog.rs:135
 msgid "Apply"
 msgstr "应用"
 
-#: src/ui/widgets/schedule_rule_edit_dialog.rs:147
+#: src/ui/widgets/schedule_rule_edit_dialog.rs:136
 msgid "Edit Rule"
 msgstr "编辑规则"
 
-#: src/ui/application.rs:99
+#: src/ui/application.rs:93
 msgid "Snapshot"
 msgstr "快照"
 
-#: src/ui/application.rs:104
+#: src/ui/application.rs:98
 msgid "Schedule"
 msgstr "计划"
 
-#: src/ui/application.rs:161
+#: src/ui/application.rs:155
 msgid "translator-credits"
 msgstr "Zhangyuan Nie"
