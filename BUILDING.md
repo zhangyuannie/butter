@@ -17,25 +17,25 @@ You can install these dependencies with:
 
 - Arch
 
-  ```
+  ```sh
   # pacman -S meson rust gtk4 libadwaita btrfs-progs clang
   ```
 
 - Fedora
 
-  ```
+  ```sh
   # dnf install meson cargo gtk4-devel libadwaita-devel btrfs-progs-devel clang
   ```
 
 - openSUSE Tumbleweed
 
-  ```
+  ```sh
   # zypper install meson cargo gtk4-devel libadwaita-devel libbtrfsutil-devel llvm-clang
   ```
 
 ## Get the Source Code
 
-```
+```sh
 $ git clone https://github.com/zhangyuannie/butter.git
 $ cd butter
 ```
@@ -52,7 +52,7 @@ $ ninja -C build
 
 To uninstall:
 
-```
+```sh
 # ninja -C build uninstall
 ```
 
