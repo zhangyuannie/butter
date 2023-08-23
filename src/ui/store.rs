@@ -31,9 +31,9 @@ mod imp {
             Self {
                 conn: Default::default(),
                 model: Default::default(),
-                filesystems: gio::ListStore::new(GFilesystem::static_type()),
+                filesystems: gio::ListStore::new::<GFilesystem>(),
                 cur_fs: Default::default(),
-                rules: gio::ListStore::new(GRule::static_type()),
+                rules: gio::ListStore::new::<GRule>(),
             }
         }
     }

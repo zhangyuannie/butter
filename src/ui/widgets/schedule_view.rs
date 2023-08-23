@@ -66,7 +66,7 @@ mod imp {
                     row.connect_activated(glib::clone!(@weak obj => move |row| {
                         obj.show_edit_dialog(row.imp().rule.get());
                     }));
-                    row.switch().connect_state_set(glib::clone!(@weak obj, @weak row => @default-return glib::signal::Inhibit(true), move |switch, state| {
+                    row.switch().connect_state_set(glib::clone!(@weak obj, @weak row => @default-return glib::Propagation::Stop, move |switch, state| {
                         let store = obj.imp().store.get().unwrap();
                         let rule = row.imp().rule.get().unwrap();
                         let mut new_rule = rule.inner().clone();
@@ -76,7 +76,7 @@ mod imp {
                         } else {
                             switch.set_state(state);
                         }
-                        glib::signal::Inhibit(true)
+                        glib::Propagation::Stop
                     }));
 
                     row.upcast()

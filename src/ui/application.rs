@@ -129,12 +129,12 @@ impl Application {
 
             let switch = header_bar.switch();
             switch.set_state(self.store().is_schedule_enabled());
-            switch.connect_state_set(glib::clone!(@weak window, @weak store => @default-return glib::signal::Inhibit(true), move |switch, state| {
+            switch.connect_state_set(glib::clone!(@weak window, @weak store => @default-return glib::Propagation::Proceed, move |switch, state| {
                 if let Err(error) = store.set_is_schedule_enabled(state) {
                     window.alert(&error.to_string());
                 }
                 switch.set_state(store.is_schedule_enabled());
-                glib::signal::Inhibit(true)
+                glib::Propagation::Stop
             }));
         }
 

@@ -95,7 +95,7 @@ mod imp {
     }
     impl WidgetImpl for AppWindow {}
     impl WindowImpl for AppWindow {
-        fn close_request(&self) -> gtk::Inhibit {
+        fn close_request(&self) -> glib::Propagation {
             let window = self.obj();
             if let Err(err) = window.save_window_state() {
                 println!("Failed to save window state, {}", &err);
