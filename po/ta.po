@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: butter\n"
 "Report-Msgid-Bugs-To: https://github.com/zhangyuannie/butter/issues\n"
-"POT-Creation-Date: 2022-09-02 20:24+0530\n"
-"PO-Revision-Date: 2022-09-02 20:45+0530\n"
+"POT-Creation-Date: 2023-07-21 07:45+0530\n"
+"PO-Revision-Date: 2023-07-21 07:46+0530\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "Language: ta\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.1.1\n"
+"X-Generator: Poedit 3.3.2\n"
 
 #: data/resources/ui/app_header_bar.ui:76
 msgid "Preferences"
@@ -35,7 +35,7 @@ msgid "Cancel"
 msgstr "ரத்துசெய்"
 
 #: data/resources/ui/schedule_rule_edit_dialog.ui:61
-#: src/widgets/snapshot_view.rs:86
+#: src/ui/widgets/snapshot_view.rs:76
 msgid "Name"
 msgstr "பெயர்"
 
@@ -113,7 +113,7 @@ msgid "New Snapshot"
 msgstr "புதிய ஸ்னாப்ஷாட்"
 
 #: data/resources/ui/snapshot_creation_window.ui:18
-#: src/widgets/schedule_rule_edit_dialog.rs:149
+#: src/ui/widgets/schedule_rule_edit_dialog.rs:131
 msgid "Create"
 msgstr "உருவாக்குங்கள்"
 
@@ -145,34 +145,38 @@ msgstr "மறுபெயரிடுங்கள்…"
 msgid "Delete"
 msgstr "நீக்கவும்"
 
-#: data/resources/ui/snapshot_view.ui:34 src/widgets/snapshot_view.rs:105
+#: data/resources/ui/snapshot_view.ui:34 src/ui/widgets/snapshot_view.rs:82
 msgid "Path"
 msgstr "பாதை"
 
-#: data/resources/ui/snapshot_view.ui:38 src/widgets/snapshot_view.rs:121
+#: data/resources/ui/snapshot_view.ui:38 src/ui/widgets/snapshot_view.rs:88
 msgid "Created"
 msgstr "உருவாக்கப்பட்டது"
 
-#: data/resources/ui/snapshot_view.ui:42 src/widgets/snapshot_view.rs:140
+#: data/resources/ui/snapshot_view.ui:42 src/ui/widgets/snapshot_view.rs:94
 msgid "Source"
 msgstr "மூல"
 
-#: src/ui.rs:17
-msgid "Snapshot"
-msgstr "ஸ்னாப்ஷாட்"
-
-#: src/ui.rs:23
-msgid "Schedule"
-msgstr "அட்டவணை"
-
-#: src/widgets/schedule_rule_edit_dialog.rs:150
+#: src/ui/widgets/schedule_rule_edit_dialog.rs:132
 msgid "New Rule"
 msgstr "புதிய விதிமுறை"
 
-#: src/widgets/schedule_rule_edit_dialog.rs:153
+#: src/ui/widgets/schedule_rule_edit_dialog.rs:135
 msgid "Apply"
 msgstr "விண்ணப்பிக்கவும்"
 
-#: src/widgets/schedule_rule_edit_dialog.rs:154
+#: src/ui/widgets/schedule_rule_edit_dialog.rs:136
 msgid "Edit Rule"
 msgstr "விதியைத் திருத்து"
+
+#: src/ui/application.rs:93
+msgid "Snapshot"
+msgstr "ஸ்னாப்ஷாட்"
+
+#: src/ui/application.rs:98
+msgid "Schedule"
+msgstr "அட்டவணை"
+
+#: src/ui/application.rs:155
+msgid "translator-credits"
+msgstr "K.B.Dharun Krishna <kbdharunkrishna@gmail.com>"
