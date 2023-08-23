@@ -58,11 +58,8 @@ To uninstall:
 
 ## Updating Translations
 
-- The below steps are recommended to be done maintainers to avoid conflicts with any open PRs.
-
 
 ```sh
 $ meson setup /tmp/translation-build
 $ meson compile -C /tmp/translation-build butter-pot
-$ meson compile -C /tmp/translation-build butter-update-po
 ```

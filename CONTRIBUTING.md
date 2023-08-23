@@ -35,7 +35,6 @@ You can find us on [#org.zhangyuannie.Butter:matrix.org](https://matrix.to/#/#or
 
 2. See [BUILDING.md](BUILDING.md) to set up the project.
 
-3. Use Translation editors like [Poedit](https://poedit.net) to generate the PO file for your language based on the POT file. 
-(Note: before submitting the PR, remove the generated .mo files)
+3. Add your language to [LINGUAS](po/LINGUAS) if it is not already there.
+4. Use translation editors such as [Poedit](https://poedit.net) to generate and edit the translation files located in `/po` directory. (Note: before submitting the PR, remove the generated .mo files if any)
 
-4. Add your language to [LINGUAS](po/LINGUAS) if it is not already there.
