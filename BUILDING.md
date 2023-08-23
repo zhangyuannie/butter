@@ -17,25 +17,25 @@ You can install these dependencies with:
 
 - Arch
 
-  ```sh
+  ```
   # pacman -S meson rust gtk4 libadwaita btrfs-progs clang
   ```
 
 - Fedora
 
-  ```sh
+  ```
   # dnf install meson cargo gtk4-devel libadwaita-devel btrfs-progs-devel clang
   ```
 
 - openSUSE Tumbleweed
 
-  ```sh
+  ```
   # zypper install meson cargo gtk4-devel libadwaita-devel libbtrfsutil-devel llvm-clang
   ```
 
 ## Get the Source Code
 
-```sh
+```
 $ git clone https://github.com/zhangyuannie/butter.git
 $ cd butter
 ```
@@ -44,22 +44,14 @@ $ cd butter
 
 To install Butter into `/usr`:
 
-```sh
-$ meson setup --prefix=/usr build
+```
+$ meson --prefix=/usr build
 $ ninja -C build
 # ninja -C build install
 ```
 
 To uninstall:
 
-```sh
-# ninja -C build uninstall
 ```
-
-## Updating Translations
-
-
-```sh
-$ meson setup /tmp/translation-build
-$ meson compile -C /tmp/translation-build butter-pot
+# ninja -C build uninstall
 ```
