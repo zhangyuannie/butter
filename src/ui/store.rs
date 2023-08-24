@@ -12,7 +12,7 @@ use crate::subvolume::{GSubvolume, SubvolList};
 mod imp {
     use std::cell::RefCell;
 
-    use gtk::{gio, glib, prelude::*, subclass::prelude::*};
+    use gtk::{gio, glib, subclass::prelude::*};
     use once_cell::sync::OnceCell;
     use zbus::blocking::Connection;
 

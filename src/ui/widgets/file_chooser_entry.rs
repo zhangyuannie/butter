@@ -1,10 +1,10 @@
-use gtk::{glib, prelude::*};
+use gtk::glib;
 
 mod imp {
+    use crate::ui::prelude::*;
+
     use super::*;
-    use adw::subclass::prelude::*;
-    use gtk::CompositeTemplate;
-    use std::cell::RefCell;
+    use gtk::{gio, CompositeTemplate};
 
     #[derive(CompositeTemplate, Default)]
     #[template(resource = "/org/zhangyuannie/butter/ui/file_chooser_entry.ui")]
@@ -13,7 +13,6 @@ mod imp {
         pub entry: TemplateChild<gtk::Entry>,
         #[template_child]
         pub browse_button: TemplateChild<gtk::Button>,
-        pub file_chooser: RefCell<Option<gtk::FileChooserNative>>,
     }
 
     #[glib::object_subclass]
@@ -39,25 +38,26 @@ mod imp {
             self.browse_button
                 .connect_clicked(glib::clone!(@weak obj => move |_| {
                     let window = obj.root().unwrap().downcast::<gtk::Window>().unwrap();
-                    let file_chooser = gtk::FileChooserNative::builder()
-                        .transient_for(&window)
-                        .action(gtk::FileChooserAction::SelectFolder)
-                        .build();
+                    let file_chooser = gtk::FileDialog::builder().modal(true).build();
 
-                    obj.imp().file_chooser.replace(Some(file_chooser));
-                    let file_chooser = obj.imp().file_chooser.borrow().clone().unwrap();
-
-                    file_chooser.connect_response(glib::clone!(@weak obj => move |chooser, resp_type| {
-                        if resp_type == gtk::ResponseType::Accept {
-                            if let Some(file) = chooser.file() {
-                                let path = file.path().unwrap();
-                                obj.set_text(path.to_str().unwrap());
+                    file_chooser.select_folder(
+                        Some(&window),
+                        gio::Cancellable::NONE,
+                        glib::clone!(@weak obj => move |response| {
+                            match response {
+                                Ok(file) => {
+                                    let path = file.path().unwrap();
+                                    obj.set_text(path.to_str().unwrap());
+                                }
+                                Err(err) => {
+                                    if err.matches(gtk::DialogError::Dismissed) || err.matches(gtk::DialogError::Cancelled) {
+                                        return;
+                                    }
+                                    obj.alert(err.message());
+                                }
                             }
-                        };
-                        obj.imp().file_chooser.take();
-                    }));
-
-                    file_chooser.show();
+                        }),
+                    );
                 }));
         }
     }

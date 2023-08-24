@@ -235,12 +235,12 @@ impl SnapshotView {
             .downcast::<GSubvolume>()
             .unwrap();
         if let Some(path) = obj.mount_path() {
-            let uri = format!(
-                "file://{}",
-                path.to_str().expect("Subvolume path must be proper UTF-8")
+            println!("gtk_file_launcher_new: {}", path.display());
+            gtk::FileLauncher::new(Some(&gio::File::for_path(path))).launch(
+                None::<&gtk::Window>,
+                gio::Cancellable::NONE,
+                |_| {},
             );
-            println!("open_snapshot: show_uri: {}", uri);
-            gtk::show_uri(None::<&gtk::Window>, uri.as_str(), gdk::CURRENT_TIME);
         }
     }
 

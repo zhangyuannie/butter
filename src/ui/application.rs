@@ -155,7 +155,7 @@ impl Application {
                 .translator_credits(&gettext("translator-credits"))
                 .build();
 
-            about_window.show();
+            about_window.set_visible(true);
         });
         self.add_action(&about_action);
     }
