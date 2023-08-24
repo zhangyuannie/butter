@@ -185,11 +185,27 @@ impl ScheduleRuleEditDialog {
         }
     }
 
+    /// Return human readable error hint for invalid form.
+    fn validate_form(&self) -> Option<&str> {
+        let imp = self.imp();
+        let name = imp.name_entry.text();
+        if name.is_empty() {
+            return Some("Name cannot be empty.");
+        }
+        if name.contains('/') {
+            return Some("Name cannot contain '/'.");
+        }
+        return None;
+    }
+
     #[template_callback]
     fn on_save_button_clicked(&self) {
+        if let Some(err) = self.validate_form() {
+            self.alert(err);
+            return;
+        }
         let imp = self.imp();
         let store = imp.store.get().unwrap();
-        assert!(imp.name_entry.text().len() > 0);
         let new_path = PathBuf::from(format!(
             "{}/schedules/{}.json",
             config::PKGSYSCONFDIR,
