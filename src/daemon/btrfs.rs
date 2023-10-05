@@ -61,11 +61,10 @@ fn device_info<T: AsFd>(fd: T, device_id: u64) -> nix::Result<BtrfsDevInfoArgs> 
 }
 
 fn fs_label_from_mounted<T: AsFd>(fd: T) -> nix::Result<String> {
-    let mut out = MaybeUninit::<[c_char; BTRFS_LABEL_SIZE]>::uninit();
+    let mut out: [c_char; BTRFS_LABEL_SIZE] = [0; BTRFS_LABEL_SIZE];
     unsafe {
-        ioctl::btrfs_get_fslabel(fd.as_fd().as_raw_fd(), out.as_mut_ptr())?;
+        ioctl::btrfs_get_fslabel(fd.as_fd().as_raw_fd(), &mut out)?;
     }
-    let out = unsafe { out.assume_init() };
     let ret = unsafe { CStr::from_ptr(out.as_ptr()) };
     Ok(ret.to_string_lossy().to_string())
 }
