@@ -106,7 +106,9 @@ impl Service<'static> {
             if mnt.is_relative() {
                 return Err(Error::ClientError("path must be absolute".to_string()));
             }
-            libbtrfsutil::delete_subvolume(mnt, libbtrfsutil::DeleteSubvolumeFlags::RECURSIVE)
+            libbtrfsutil::DeleteSubvolumeOptions::new()
+                .recursive(true)
+                .delete(mnt)
                 .context("failed to delete subvolume")?;
         }
         Ok(())

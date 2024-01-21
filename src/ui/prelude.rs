@@ -1,5 +1,4 @@
 pub use adw::{prelude::*, subclass::prelude::*};
-pub use gtk::{prelude::*, subclass::prelude::*};
 
 pub trait BtrWidgetExt {
     fn alert(&self, message: &str);

@@ -233,10 +233,9 @@ impl RuleSubvolume {
 
             if should_remove {
                 println!("deleting '{}'", snapshot.path.display());
-                let res = libbtrfsutil::delete_subvolume(
-                    &snapshot.path,
-                    libbtrfsutil::DeleteSubvolumeFlags::RECURSIVE,
-                );
+                let res = libbtrfsutil::DeleteSubvolumeOptions::new()
+                    .recursive(true)
+                    .delete(&snapshot.path);
                 if let Err(err) = res {
                     eprintln!("failed to delete '{}': {}", snapshot.path.display(), err);
                 }

@@ -138,13 +138,9 @@ pub fn create_butter_snapshot(src_mnt: &Path, dst_mnt: &Path, readonly: bool) ->
     if let Some(dst_parent) = dst_mnt.parent() {
         fs::create_dir_all(dst_parent)?;
     }
-    libbtrfsutil::create_snapshot(
-        src_mnt,
-        dst_mnt,
-        libbtrfsutil::CreateSnapshotFlags::empty(),
-        None,
-    )
-    .or_else(|e| Err(e.os_error()))?;
+    libbtrfsutil::CreateSnapshotOptions::new()
+        .create(src_mnt, dst_mnt)
+        .or_else(|e| Err(e.os_error()))?;
     let metadata_dir = dst_mnt.join(".butter");
     fs::create_dir_all(&metadata_dir)?;
 

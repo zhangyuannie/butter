@@ -1,11 +1,10 @@
 use std::{
     collections::HashMap,
-    num::NonZeroU64,
     path::{Path, PathBuf},
 };
 
 use anyhow::{Context, Result};
-use libbtrfsutil::{SubvolumeInfo, SubvolumeInfoIterator};
+use libbtrfsutil::{IterateSubvolume, SubvolumeInfo};
 use once_cell::sync::OnceCell;
 use zbus::zvariant::Optional;
 
@@ -68,12 +67,10 @@ impl SubvolumeExt for Filesystem {
         // insert all other subvolumes
         {
             let root = Path::new("/");
-            let iter = SubvolumeInfoIterator::new(
-                mnt_path,
-                NonZeroU64::new(libbtrfsutil::FS_TREE_OBJECTID),
-                libbtrfsutil::SubvolumeIteratorFlags::empty(),
-            )
-            .context("failed to enumerate subvolumes")?;
+            let iter = IterateSubvolume::new(mnt_path)
+                .all()
+                .iter_with_info()
+                .context("failed to enumerate subvolumes")?;
             for e in iter {
                 let (path, info) = e.unwrap();
 
