@@ -411,14 +411,36 @@ impl SnapshotView {
 
 // TODO: hope there is a better way
 fn extract_header(col_view: &ColumnView) -> Widget {
-    let ret = col_view.first_child().unwrap();
-    assert_eq!(ret.widget_name(), "GtkListItemWidget");
-    ret
+    let mut child = col_view.first_child();
+    loop {
+        match child {
+            None => panic!("Failed to find header widget"),
+            Some(widget) => {
+                if widget.widget_name() == "GtkListItemWidget"
+                    || widget.widget_name() == "GtkColumnViewRowWidget"
+                {
+                    return widget;
+                } else {
+                    child = widget.next_sibling();
+                }
+            }
+        }
+    }
 }
 fn extract_column_list_view(col_view: &ColumnView) -> Widget {
-    let ret = col_view.first_child().unwrap().next_sibling().unwrap();
-    assert_eq!(ret.widget_name(), "GtkColumnListView");
-    ret
+    let mut child = col_view.first_child();
+    loop {
+        match child {
+            None => panic!("Failed to find GtkColumnListView"),
+            Some(widget) => {
+                if widget.widget_name() == "GtkColumnListView" {
+                    return widget;
+                } else {
+                    child = widget.next_sibling();
+                }
+            }
+        }
+    }
 }
 fn extract_ith_list_item(col_view: &ColumnView, idx: u32) -> Option<Widget> {
     let list_view = extract_column_list_view(col_view);
@@ -435,7 +457,8 @@ fn extract_row_from_column_list_view(column_list_view: &Widget, y: f64) -> Optio
     let mut idx = 0;
 
     loop {
-        if cur.widget_name() == "GtkListItemWidget" {
+        if cur.widget_name() == "GtkListItemWidget" || cur.widget_name() == "GtkColumnViewRowWidget"
+        {
             let rect = cur.allocation();
             if rect.y() as f64 <= y && y < (rect.y() + rect.height()) as f64 {
                 return Some(idx);
@@ -443,5 +466,6 @@ fn extract_row_from_column_list_view(column_list_view: &Widget, y: f64) -> Optio
         }
         idx += 1;
         cur = cur.next_sibling()?;
+        println!("{:?}", cur);
     }
 }
