@@ -3,7 +3,7 @@ mod object;
 pub use object::GRule;
 use zbus::zvariant;
 
-use std::{cmp, fs, io, os::unix::prelude::OsStrExt, path::PathBuf, ffi::OsStr};
+use std::{cmp, fs, io, os::unix::prelude::OsStrExt, path::PathBuf};
 
 use chrono::{DateTime, Datelike, NaiveDateTime, Timelike, Utc};
 use log;
