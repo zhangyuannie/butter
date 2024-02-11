@@ -3,7 +3,7 @@ mod object;
 pub use object::GRule;
 use zbus::zvariant;
 
-use std::{cmp, fs, io, os::unix::prelude::OsStrExt, path::PathBuf};
+use std::{cmp, fs, io::{Result, ErrorKind, Read}, os::unix::prelude::OsStrExt, path::PathBuf};
 
 use chrono::{DateTime, Datelike, NaiveDateTime, Timelike, Utc};
 use log;
@@ -23,6 +23,8 @@ pub struct Rule {
     pub keep_monthly: u32,
     pub keep_yearly: u32,
     pub subvolumes: Vec<RuleSubvolume>,
+    pub snapshot_on_battery: bool,
+    pub prune_on_battery: bool,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -42,6 +44,10 @@ pub struct RuleJson {
     pub keep_yearly: u32,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub subvolumes: Vec<RuleSubvolume>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub snapshot_on_battery: bool,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub prune_on_battery: bool,
 }
 
 impl From<Rule> for RuleJson {
@@ -55,6 +61,8 @@ impl From<Rule> for RuleJson {
             keep_monthly: e.keep_monthly,
             keep_yearly: e.keep_yearly,
             subvolumes: e.subvolumes,
+            snapshot_on_battery: e.snapshot_on_battery,
+            prune_on_battery: e.prune_on_battery,
         }
     }
 }
@@ -70,6 +78,8 @@ impl From<RuleJson> for Rule {
             keep_monthly: e.keep_monthly,
             keep_yearly: e.keep_yearly,
             subvolumes: e.subvolumes,
+            snapshot_on_battery: e.snapshot_on_battery,
+            prune_on_battery: e.prune_on_battery,
         }
     }
 }
@@ -78,8 +88,46 @@ fn is_default<T: Default + PartialEq>(t: &T) -> bool {
     t == &T::default()
 }
 
+fn is_power_available() -> bool {
+    let mut found_mains_online = false;
+    let mut found_battery_not_discharging = false;
+    for entry in fs::read_dir("/sys/class/power_supply").unwrap() {
+        let entry = entry.unwrap();
+        let path = entry.path();
+        if path.is_dir() {
+            let type_path = path.join("type");
+            let online_path = path.join("online");
+            let status_path = path.join("status");
+            if type_path.exists() {
+                let mut type_file = fs::File::open(type_path).unwrap();
+                let mut type_contents = String::new();
+                type_file.read_to_string(&mut type_contents).unwrap();
+                if type_contents.trim() == "Mains" {
+                    let mut online_file = fs::File::open(online_path).unwrap();
+                    let mut online_contents = String::new();
+                    online_file.read_to_string(&mut online_contents).unwrap();
+                    if online_contents.trim() == "1" {
+                        found_mains_online = true;
+                        break;
+                    }
+                } else if type_contents.trim() == "Battery" {
+                    let mut status_file = fs::File::open(status_path).unwrap();
+                    let mut status_contents = String::new();
+                    status_file.read_to_string(&mut status_contents).unwrap();
+                    if status_contents.trim() != "Discharging" {
+                        found_battery_not_discharging = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    return found_mains_online || found_battery_not_discharging
+}
+
 impl Rule {
-    pub fn open(path: PathBuf) -> io::Result<Self> {
+    pub fn open(path: PathBuf) -> Result<Self> {
         let bytes = fs::read(&path)?;
         let mut data: RuleJson = serde_json::from_slice(&bytes)?;
         data.path = path;
@@ -101,7 +149,7 @@ impl Rule {
                 subvol.path.display(),
                 subvol.target_dir.display()
             );
-            let ret = subvol.snapshot();
+            let ret = subvol.snapshot(self);
             if let Err(e) = ret {
                 log::error!(
                     "failed to create a snapshot from '{}': {}",
@@ -133,14 +181,18 @@ pub struct RuleSubvolume {
 }
 
 impl RuleSubvolume {
-    fn snapshot(&self) -> anyhow::Result<()> {
+    fn snapshot(&self, rule: &Rule) -> anyhow::Result<()> {
+        if !rule.snapshot_on_battery && !is_power_available() {
+            log::info!("snapshot skipped because power is not available");
+            return Ok(());
+        }
         let mut name = RandomName::new();
         for _ in 0..16 {
             let target_path = self.target_dir.join(name.as_str());
             match create_butter_snapshot(&self.path, &target_path, true) {
                 Ok(_) => return Ok(()),
                 Err(e) => {
-                    if e.kind() == io::ErrorKind::AlreadyExists {
+                    if e.kind() == ErrorKind::AlreadyExists {
                         name.inc_len();
                         continue;
                     } else {
@@ -162,6 +214,11 @@ impl RuleSubvolume {
             keep: u32,
             last: i32,
             algo: fn(&NaiveDateTime) -> i32,
+        }
+
+        if !rule.prune_on_battery && !is_power_available() {
+            log::info!("prune skipped because power is not available");
+            return Ok(());
         }
 
         let source_subvol_path = libbtrfsutil::subvolume_path(&self.path)?;
@@ -249,14 +306,14 @@ impl RuleSubvolume {
 pub struct ReadRuleDir(fs::ReadDir);
 
 impl ReadRuleDir {
-    pub fn new() -> io::Result<Self> {
+    pub fn new() -> Result<Self> {
         let conf_dir: PathBuf = PathBuf::from(config::PKGSYSCONFDIR).join("schedules");
         Ok(Self(fs::read_dir(conf_dir)?))
     }
 }
 
 impl Iterator for ReadRuleDir {
-    type Item = io::Result<Rule>;
+    type Item = Result<Rule>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let inner = self.0.next()?;
