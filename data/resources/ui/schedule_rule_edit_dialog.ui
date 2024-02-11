@@ -193,6 +193,74 @@
                 </child>
 
                 <child>
+                  <object class="AdwPreferencesGroup">
+                    <property name="title" translatable="yes">Pre and Post Snapshot scripts</property>
+                    <property name="description" translatable="yes">Scripts to run before and after the snapshot,&#10;Scripts get the source and target paths passed as arguments,&#10;If the Pre Snapshot script is provided and it fails then the backup would not be performed,&#10;Please note that the scripts are run as root and you may cause damage to your system if you are not careful.</property>
+
+                    <child>
+                      <object class="AdwActionRow">
+                        <property name="title" translatable="yes">Pre Snapshot</property>
+                        <property name="title-lines">1</property>
+                        <child type="suffix">
+                          <object class="GtkEntry" id="pre_snapshot_entry">
+                            <property name="valign">center</property>
+                            <property name="hexpand">True</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+
+                    <child>
+                      <object class="AdwActionRow">
+                        <property name="title" translatable="yes">Post Snapshot</property>
+                        <property name="title-lines">1</property>
+                        <child type="suffix">
+                          <object class="GtkEntry" id="post_snapshot_entry">
+                            <property name="valign">center</property>
+                            <property name="hexpand">True</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+
+                  </object>
+                </child>
+
+                <child>
+                  <object class="AdwPreferencesGroup">
+                    <property name="title" translatable="yes">Pre and Post Prune scripts</property>
+                    <property name="description" translatable="yes">Scripts to run before and after pruning snapshots based on the retention policy,&#10;Scripts get the snapshot path passed as argument,&#10;If the Pre Prune script is provided and it fails then the backup would not be pruned,&#10;Please note that the scripts are run as root and you may cause damage to your system if you are not careful.</property>
+
+                    <child>
+                      <object class="AdwActionRow">
+                        <property name="title" translatable="yes">Pre Prune</property>
+                        <property name="title-lines">1</property>
+                        <child type="suffix">
+                          <object class="GtkEntry" id="pre_prune_entry">
+                            <property name="valign">center</property>
+                            <property name="hexpand">True</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+
+                    <child>
+                      <object class="AdwActionRow">
+                        <property name="title" translatable="yes">Post Prune</property>
+                        <property name="title-lines">1</property>
+                        <child type="suffix">
+                          <object class="GtkEntry" id="post_prune_entry">
+                            <property name="valign">center</property>
+                            <property name="hexpand">True</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+
+                  </object>
+                </child>
+
+                <child>
                   <object class="AdwPreferencesGroup" id="remove_group">
                     <child>
                       <object class="GtkButton">

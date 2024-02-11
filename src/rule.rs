@@ -3,7 +3,7 @@ mod object;
 pub use object::GRule;
 use zbus::zvariant;
 
-use std::{cmp, fs, io, os::unix::prelude::OsStrExt, path::PathBuf};
+use std::{cmp, fs, io, os::unix::prelude::OsStrExt, path::PathBuf, ffi::OsStr};
 
 use chrono::{DateTime, Datelike, NaiveDateTime, Timelike, Utc};
 use log;
@@ -23,6 +23,10 @@ pub struct Rule {
     pub keep_monthly: u32,
     pub keep_yearly: u32,
     pub subvolumes: Vec<RuleSubvolume>,
+    pub pre_snapshot: String,
+    pub post_snapshot: String,
+    pub pre_prune: String,
+    pub post_prune: String,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -42,6 +46,14 @@ pub struct RuleJson {
     pub keep_yearly: u32,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub subvolumes: Vec<RuleSubvolume>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub pre_snapshot: String,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub post_snapshot: String,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub pre_prune: String,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub post_prune: String,
 }
 
 impl From<Rule> for RuleJson {
@@ -55,6 +67,10 @@ impl From<Rule> for RuleJson {
             keep_monthly: e.keep_monthly,
             keep_yearly: e.keep_yearly,
             subvolumes: e.subvolumes,
+            pre_snapshot: e.pre_snapshot,
+            post_snapshot: e.post_snapshot,
+            pre_prune: e.pre_prune,
+            post_prune: e.post_prune,
         }
     }
 }
@@ -70,6 +86,10 @@ impl From<RuleJson> for Rule {
             keep_monthly: e.keep_monthly,
             keep_yearly: e.keep_yearly,
             subvolumes: e.subvolumes,
+            pre_snapshot: e.pre_snapshot,
+            post_snapshot: e.post_snapshot,
+            pre_prune: e.pre_prune,
+            post_prune: e.post_prune,
         }
     }
 }
@@ -101,7 +121,7 @@ impl Rule {
                 subvol.path.display(),
                 subvol.target_dir.display()
             );
-            let ret = subvol.snapshot();
+            let ret = subvol.snapshot(self);
             if let Err(e) = ret {
                 log::error!(
                     "failed to create a snapshot from '{}': {}",
@@ -133,12 +153,44 @@ pub struct RuleSubvolume {
 }
 
 impl RuleSubvolume {
-    fn snapshot(&self) -> anyhow::Result<()> {
+    fn snapshot(&self, rule: &Rule) -> anyhow::Result<()> {
         let mut name = RandomName::new();
         for _ in 0..16 {
             let target_path = self.target_dir.join(name.as_str());
+            if !rule.pre_snapshot.is_empty() {
+                let mut cmd = std::process::Command::new("sh");
+                cmd.arg("-c").arg(format!("{} {} {}", rule.pre_snapshot, self.path.display(), target_path.display()));
+                let res = cmd.output();
+                match res {
+                    Ok(output) => {
+                        if !output.status.success() {
+                            let error_code = output.status.code();
+                            if let Some(code) = error_code {
+                                eprintln!("Pre Snapshot script failed, aborting snapshot, exit code: {}, error: {}", code, String::from_utf8_lossy(&output.stderr));
+                            } else {
+                                eprintln!("Pre Snapshot script failed, aborting snapshot, error: {}", String::from_utf8_lossy(&output.stderr));
+                            }
+                            return Err(anyhow::anyhow!("Pre snapshot script failed"));
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("failed to run Pre Snapshot script: {}", e);
+                        return Err(e.into());
+                    }
+                }
+            }
             match create_butter_snapshot(&self.path, &target_path, true) {
-                Ok(_) => return Ok(()),
+                Ok(_) => {
+                    if !rule.post_snapshot.is_empty() {
+                        let mut cmd = std::process::Command::new("sh");
+                        cmd.arg("-c").arg(format!("{} {} {}", rule.post_snapshot, self.path.display(), target_path.display()));
+                        let res = cmd.output();
+                        if let Err(e) = res {
+                            eprintln!("failed to run Post Snapshot script: {}", e);
+                        }
+                    }
+                    return Ok(());
+                }
                 Err(e) => {
                     if e.kind() == io::ErrorKind::AlreadyExists {
                         name.inc_len();
@@ -232,12 +284,43 @@ impl RuleSubvolume {
             }
 
             if should_remove {
+                if !rule.pre_prune.is_empty() {
+                    let mut cmd = std::process::Command::new("sh");
+                    cmd.arg("-c").arg(format!("{} {}", rule.pre_prune, snapshot.path.display()));
+                    let res = cmd.output();
+                    match res {
+                        Ok(output) => {
+                            if !output.status.success() {
+                                let error_code = output.status.code();
+                                if let Some(code) = error_code {
+                                    eprintln!("Pre Prune script failed, aborting prune, exit code: {}, error: {}", code, String::from_utf8_lossy(&output.stderr));
+                                } else {
+                                    eprintln!("Pre Prune script failed, aborting prune, error: {}", String::from_utf8_lossy(&output.stderr));
+                                }
+                                return Err(anyhow::anyhow!("Pre Prune script failed"));
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!("failed to run Pre Prune script: {}", e);
+                            return Err(e.into());
+                        }
+                    }
+                }
                 println!("deleting '{}'", snapshot.path.display());
                 let res = libbtrfsutil::DeleteSubvolumeOptions::new()
                     .recursive(true)
                     .delete(&snapshot.path);
                 if let Err(err) = res {
                     eprintln!("failed to delete '{}': {}", snapshot.path.display(), err);
+                } else {
+                    if !rule.post_prune.is_empty() {
+                        let mut cmd = std::process::Command::new("sh");
+                        cmd.arg("-c").arg(format!("{} {}", rule.post_prune, snapshot.path.display()));
+                        let res = cmd.output();
+                        if let Err(e) = res {
+                            eprintln!("failed to run Post Prune script: {}", e);
+                        }
+                    }
                 }
             }
         }
