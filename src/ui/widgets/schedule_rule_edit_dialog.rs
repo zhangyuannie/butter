@@ -42,6 +42,14 @@ mod imp {
         #[template_child]
         pub yearly_cell: TemplateChild<gtk::Adjustment>,
         #[template_child]
+        pub pre_snapshot_entry: TemplateChild<gtk::Entry>,
+        #[template_child]
+        pub post_snapshot_entry: TemplateChild<gtk::Entry>,
+        #[template_child]
+        pub pre_prune_entry: TemplateChild<gtk::Entry>,
+        #[template_child]
+        pub post_prune_entry: TemplateChild<gtk::Entry>,
+        #[template_child]
         pub remove_group: TemplateChild<adw::PreferencesGroup>,
         #[template_child]
         pub stack: TemplateChild<gtk::Stack>,
@@ -114,10 +122,18 @@ mod imp {
                         self.weekly_cell.set_value(rule.keep_weekly as f64);
                         self.monthly_cell.set_value(rule.keep_monthly as f64);
                         self.yearly_cell.set_value(rule.keep_yearly as f64);
+                        self.pre_snapshot_entry.set_text(rule.pre_snapshot.as_str().as_ref());
+                        self.post_snapshot_entry.set_text(rule.post_snapshot.as_str().as_ref());
+                        self.pre_prune_entry.set_text(rule.pre_prune.as_str().as_ref());
+                        self.post_prune_entry.set_text(rule.post_prune.as_str().as_ref());
                     } else {
                         self.hourly_cell.set_value(24.0);
                         self.daily_cell.set_value(30.0);
                         self.monthly_cell.set_value(24.0);
+                        self.pre_snapshot_entry.set_text("");
+                        self.post_snapshot_entry.set_text("");
+                        self.pre_prune_entry.set_text("");
+                        self.post_prune_entry.set_text("");
                     }
                 }
                 _ => unimplemented!(),
@@ -219,6 +235,10 @@ impl ScheduleRuleEditDialog {
         new_rule.keep_weekly = imp.weekly_cell.value() as u32;
         new_rule.keep_monthly = imp.monthly_cell.value() as u32;
         new_rule.keep_yearly = imp.yearly_cell.value() as u32;
+        new_rule.pre_snapshot = imp.pre_snapshot_entry.text().into();
+        new_rule.post_snapshot = imp.post_snapshot_entry.text().into();
+        new_rule.pre_prune = imp.pre_prune_entry.text().into();
+        new_rule.post_prune = imp.post_prune_entry.text().into();
 
         let res = if let Some(original) = imp.original.get() {
             store.update_rule(original.inner(), &new_rule)
