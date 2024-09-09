@@ -1,0 +1,23 @@
+[package]
+name = "butterd"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.86"
+futures = "0.3.30"
+libblkid-rs = "0.3.2"
+libbtrfsutil = "0.7.1"
+serde = "1.0.209"
+serde_json = "1.0.127"
+tokio = { version = "1.40.0", features = ["full"] }
+tracing = "0.1.40"
+tracing-subscriber = "0.3.18"
+uuid = "1.10.0"
+zbus = { version = "4.4.0", default-features = false, features = [
+    "uuid",
+    "tokio",
+] }
+zbus_polkit = { version = "4.0.0", default-features = false, features = [
+    "tokio",
+] }

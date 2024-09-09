@@ -1,3 +1,6 @@
+[workspace]
+members = ["butterd"]
+
 [package]
 name = "butter"
 version = "0.1.0"

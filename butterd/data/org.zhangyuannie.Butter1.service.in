@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.zhangyuannie.Butter1
+Exec=@LIBEXECDIR@/butterd
+User=root

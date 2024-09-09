@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "https://specifications.freedesktop.org/PolicyKit/1.0/policyconfig.dtd">
+<policyconfig>
+
+  <vendor>Zhangyuan Nie</vendor>
+  <vendor_url>https://github.com/zhangyuannie/butter</vendor_url>
+
+  <action id="org.zhangyuannie.butter">
+    <description>Run Butter as root</description>
+    <message>Authentication is required to run Butter as root</message>
+    <icon_name>butter</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">@LIBEXECDIR@/butterd0</annotate>
+  </action>
+
+  <action id="org.zhangyuannie.butter.filesystem">
+    <description>Read Btrfs filesystem</description>
+    <message>Authentication is required to read Btrfs filesystem information.</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+
+  <action id="org.zhangyuannie.butter.manage-schedule">
+    <description>Manage Butter schedules</description>
+    <message>Authentication is required to manage Butter schedules.</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+  </action>
+
+  <action id="org.zhangyuannie.butter.manage-subvolume">
+    <description>Manage Btrfs subvolumes</description>
+    <message>Authentication is required to manage Btrfs subvolumes.</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+  </action>
+
+</policyconfig>
