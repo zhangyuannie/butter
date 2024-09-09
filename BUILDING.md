@@ -4,10 +4,10 @@
 
 - cargo (build-time only)
 - clang (build-time only)
-- meson >= 0.59 (build-time only)
+- meson >= 0.60 (build-time only)
 - python 3 (build-time only)
-- libadwaita >= 1.2.0
-- gtk >= 4.8.0
+- libadwaita >= 1.4.0
+- gtk >= 4.12.0
 - libbtrfsutil >= 1.2.0
 - kernel >= 4.18
 - polkit
