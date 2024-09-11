@@ -1,0 +1,14 @@
+#!/bin/sh
+# meson uses python shutil.copy to install files, which can have all sorts of
+# weird quirks. This script is a quick hack to patch some of them.
+
+for path in "$@"; do
+  cur="${DESTDIR}/${path}"
+  name=$(basename cur)
+  tmp="${MESON_BUILD_ROOT}/${name}.tmp"
+
+  # unlike `cp` and `install`, meson install doesn't trigger dbus/polkit reload
+  cp "$cur" "$tmp"
+  cp "$tmp" "$cur"
+  rm "$tmp"
+done

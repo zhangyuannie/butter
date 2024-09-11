@@ -63,12 +63,14 @@ configure_file(
   install_dir: datadir / 'dbus-1' / 'system-services',
 )
 
-meson.add_install_script(script_restorecon,
+meson.add_install_script(script_reseat_file,
   systemd_unit_dir / 'butter-schedule-snapshot.service',
   systemd_unit_dir / 'butter-schedule-prune.service',
   systemd_unit_dir / 'butter-schedule-snapshot.timer',
   systemd_unit_dir / 'butter-schedule-prune.timer',
   bindir / 'butter',
+  datadir / 'dbus-1/system-services/org.zhangyuannie.Butter1.service',
+  datadir / 'polkit-1/actions' / '@0@.policy'.format(id.to_lower()),
 )
 
 subdir('icons')

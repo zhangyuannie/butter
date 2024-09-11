@@ -2,7 +2,7 @@ project(
   'butter',
   'rust',
   version: '1.1',
-  meson_version: '>= 0.60',
+  meson_version: '>=1.0',
 )
 
 i18n = import('i18n')
@@ -12,7 +12,7 @@ id = 'org.zhangyuannie.Butter'
 
 cargo = find_program('cargo', required: true)
 
-script_restorecon = find_program('scripts/restorecon')
+script_reseat_file = find_program('scripts/reseat_file')
 script_cargo_build = find_program('scripts/cargo_build')
 
 prefix = get_option('prefix')

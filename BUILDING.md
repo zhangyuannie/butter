@@ -45,10 +45,9 @@ $ cd butter
 To install Butter into `/usr`:
 
 ```
-$ meson --prefix=/usr build
-$ ninja -C build
-# ninja -C build install
-# systemctl reload dbus
+$ meson setup --prefix=/usr build
+$ meson compile -C build
+# meson install -C build
 ```
 
 To uninstall:
