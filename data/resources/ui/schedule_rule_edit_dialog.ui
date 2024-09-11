@@ -193,6 +193,38 @@
                 </child>
 
                 <child>
+                  <object class="AdwPreferencesGroup">
+                    <property name="title" translatable="yes">On battery</property>
+                    <property name="description" translatable="yes">Whether to perform operations when on battery</property>
+
+                    <child>
+                      <object class="AdwActionRow">
+                        <property name="title" translatable="yes">Snapshot when on battery</property>
+                        <property name="title-lines">1</property>
+                        <child type="suffix">
+                          <object class="GtkSwitch" id="snapshot_on_battery_switch">
+                            <property name="valign">center</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+
+                    <child>
+                      <object class="AdwActionRow">
+                        <property name="title" translatable="yes">Prune when on battery</property>
+                        <property name="title-lines">1</property>
+                        <child type="suffix">
+                          <object class="GtkSwitch" id="prune_on_battery_switch">
+                            <property name="valign">center</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+
+                  </object>
+                </child>
+
+                <child>
                   <object class="AdwPreferencesGroup" id="remove_group">
                     <child>
                       <object class="GtkButton">

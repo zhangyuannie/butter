@@ -42,6 +42,10 @@ mod imp {
         #[template_child]
         pub yearly_cell: TemplateChild<gtk::Adjustment>,
         #[template_child]
+        pub snapshot_on_battery_switch: TemplateChild<gtk::Switch>,
+        #[template_child]
+        pub prune_on_battery_switch: TemplateChild<gtk::Switch>,
+        #[template_child]
         pub remove_group: TemplateChild<adw::PreferencesGroup>,
         #[template_child]
         pub stack: TemplateChild<gtk::Stack>,
@@ -114,10 +118,14 @@ mod imp {
                         self.weekly_cell.set_value(rule.keep_weekly as f64);
                         self.monthly_cell.set_value(rule.keep_monthly as f64);
                         self.yearly_cell.set_value(rule.keep_yearly as f64);
+                        self.snapshot_on_battery_switch.set_active(rule.snapshot_on_battery);
+                        self.prune_on_battery_switch.set_active(rule.prune_on_battery);
                     } else {
                         self.hourly_cell.set_value(24.0);
                         self.daily_cell.set_value(30.0);
                         self.monthly_cell.set_value(24.0);
+                        self.snapshot_on_battery_switch.set_active(true);
+                        self.prune_on_battery_switch.set_active(true);
                     }
                 }
                 _ => unimplemented!(),
@@ -219,6 +227,8 @@ impl ScheduleRuleEditDialog {
         new_rule.keep_weekly = imp.weekly_cell.value() as u32;
         new_rule.keep_monthly = imp.monthly_cell.value() as u32;
         new_rule.keep_yearly = imp.yearly_cell.value() as u32;
+        new_rule.snapshot_on_battery = imp.snapshot_on_battery_switch.is_active();
+        new_rule.prune_on_battery = imp.prune_on_battery_switch.is_active();
 
         let res = if let Some(original) = imp.original.get() {
             store.update_rule(original.inner(), &new_rule)
