@@ -4,14 +4,18 @@ use gtk::subclass::prelude::*;
 use gtk::{glib, prelude::*, CompositeTemplate};
 
 use super::FileChooserEntry;
-use crate::subvolume::GSubvolume;
+use crate::object::Subvolume;
 use crate::ui::store::Store;
 mod imp {
-    use glib::object::WeakRef;
-    use glib::once_cell::sync::OnceCell;
-    use gtk::glib::{once_cell::sync::Lazy, ParamSpec, ParamSpecObject, Value};
+    use std::{cell::OnceCell, sync::LazyLock};
 
-    use crate::ui::{prelude::*, store::Store};
+    use glib::object::WeakRef;
+    use gtk::glib::{ParamSpec, ParamSpecObject, Value};
+
+    use crate::{
+        object::Subvolume,
+        ui::{prelude::*, store::Store},
+    };
 
     use super::*;
 
@@ -60,10 +64,10 @@ mod imp {
             self.location_entry.set_text("/var/snapshots");
             self.create_button.connect_clicked(glib::clone!(@weak obj => move |_| {
                 let imp = obj.imp();
-                let item = imp.subvol_dropdown.selected_item().unwrap().downcast::<GSubvolume>().unwrap();
+                let item = imp.subvol_dropdown.selected_item().unwrap().downcast::<Subvolume>().unwrap();
                 let res = obj.store().create_snapshot(
-                    item.mount_path().unwrap(),
-                    obj.target_path().as_path(),
+                    item.mount_path().unwrap().to_owned().into(),
+                    obj.target_path().into(),
                     imp.readonly_switch.is_active(),
                 );
 
@@ -75,7 +79,7 @@ mod imp {
         }
 
         fn properties() -> &'static [ParamSpec] {
-            static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
+            static PROPERTIES: LazyLock<Vec<ParamSpec>> = LazyLock::new(|| {
                 vec![ParamSpecObject::builder::<Store>("store")
                     .construct_only()
                     .build()]
@@ -113,14 +117,14 @@ impl SnapshotCreationWindow {
     fn setup_dropdown(&self) {
         let imp = self.imp();
         let filter = gtk::CustomFilter::new(|obj| {
-            let subvol = obj.downcast_ref::<GSubvolume>().unwrap();
+            let subvol = obj.downcast_ref::<Subvolume>().unwrap();
             subvol.is_protected()
         });
         let model = gtk::FilterListModel::new(Some(self.store().model()), Some(filter));
 
         let exp = gtk::ClosureExpression::new::<String>(
             &[] as &[gtk::Expression],
-            glib::closure!(|sv: GSubvolume| {
+            glib::closure!(|sv: Subvolume| {
                 let path = String::from(sv.subvol_path().to_string_lossy());
                 if path == "/" {
                     "<FS_TREE>".to_string()

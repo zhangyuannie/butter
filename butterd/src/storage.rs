@@ -9,24 +9,33 @@ use zbus::{
     zvariant::{ObjectPath, OwnedObjectPath},
 };
 
-use crate::{Filesystem, MntEntries, Polkit, ToFdo, ZPathBuf};
+use crate::{create_snapshot, Filesystem, MntEntries, Polkit, ToFdo, ZPathBuf};
 
 pub struct Storage {
     filesystems: HashMap<Uuid, OwnedObjectPath>,
     polkit: Polkit,
 }
 
-static SUBVOLUME_AID: &str = "org.zhangyuannie.butter.manage-subvolume";
+static ACTION_ID: &str = "org.zhangyuannie.butter.manage-subvolume";
 
 impl Storage {
     pub const PATH: ObjectPath<'static> =
         ObjectPath::from_static_str_unchecked("/org/zhangyuannie/Butter1/Storage");
 
-    pub async fn new(conn: &zbus::Connection) -> zbus::Result<Self> {
+    pub async fn new(polkit: Polkit) -> zbus::Result<Self> {
         Ok(Self {
             filesystems: Default::default(),
-            polkit: Polkit::new(conn).await?,
+            polkit,
         })
+    }
+
+    fn subvol_id_from_mnt_options(options: &str) -> Option<u64> {
+        for seg in options.split(',') {
+            if let Some(id) = seg.strip_prefix("subvolid=") {
+                return id.parse::<u64>().ok();
+            }
+        }
+        None
     }
 
     fn probe_btrfs_devices() -> anyhow::Result<HashMap<Uuid, Filesystem>> {
@@ -47,7 +56,7 @@ impl Storage {
                     uuid: uuid.into(),
                     label,
                     devices: Vec::new(),
-                    mount_points: Vec::new(),
+                    mount_points_by_subvol_id: Default::default(),
                 });
 
                 uuid_by_devname.insert(devname.clone(), uuid);
@@ -65,17 +74,20 @@ impl Storage {
             let mnt_path = entry.target.context("failed to read target")?;
             let devname = evaluate_spec(&entry.spec, Some(&mut cache))?;
             if let Some(uuid) = uuid_by_devname.get(&devname) {
+                let subvol_id = Self::subvol_id_from_mnt_options(&entry.options)
+                    .ok_or(io::Error::from(io::ErrorKind::InvalidData))?;
                 // unwrap: if uuid in uuid_by_devname, then it must be in ret
                 ret.get_mut(uuid)
                     .unwrap()
-                    .mount_points
+                    .mount_points_by_subvol_id
+                    .entry(subvol_id)
+                    .or_default()
                     .push(mnt_path.into());
             }
         }
 
         for fs in ret.values_mut() {
             fs.devices.sort_unstable();
-            fs.mount_points.sort_unstable();
         }
 
         Ok(ret)
@@ -101,10 +113,11 @@ impl Storage {
 
         for (uuid, fs) in next_filesystems {
             if let Some(path) = self.filesystems.get(&uuid) {
-                fs.update(server, path.as_ref()).await?;
+                fs.update(server, path).await?;
             } else {
-                let path = ObjectPath::try_from(format!("{}/{}", Self::PATH, uuid.simple()))?;
-                fs.create(server, path).await?;
+                let path = OwnedObjectPath::try_from(format!("{}/{}", Self::PATH, uuid.simple()))?;
+                fs.create(server, &path).await?;
+                self.filesystems.insert(uuid, path);
             }
         }
 
@@ -115,7 +128,7 @@ impl Storage {
 #[interface(
     name = "org.zhangyuannie.Butter1.Storage",
     proxy(
-        gen_blocking = false,
+        gen_blocking = true,
         default_service = "org.zhangyuannie.Butter1",
         default_path = "/org/zhangyuannie/Butter1/Storage",
     )
@@ -133,7 +146,7 @@ impl Storage {
         #[zbus(header)] header: Header<'_>,
         paths: Vec<ZPathBuf>,
     ) -> fdo::Result<()> {
-        self.polkit.validate(&header, SUBVOLUME_AID).await?;
+        self.polkit.validate(&header, ACTION_ID).await?;
 
         for p in paths {
             if p.as_path().is_relative() {
@@ -152,16 +165,40 @@ impl Storage {
     pub async fn move_subvolume(
         &self,
         #[zbus(header)] header: Header<'_>,
-        from_path: ZPathBuf,
-        to_path: ZPathBuf,
+        src_path: ZPathBuf,
+        dst_path: ZPathBuf,
     ) -> fdo::Result<()> {
-        self.polkit.validate(&header, SUBVOLUME_AID).await?;
-
-        if from_path.as_path().is_relative() || to_path.as_path().is_relative() {
+        self.polkit.validate(&header, ACTION_ID).await?;
+        if src_path.as_path().is_relative() || dst_path.as_path().is_relative() {
             return Err(fdo::Error::InvalidArgs("Path must be absolute".to_owned()));
         }
-        fs::rename(from_path.as_path(), to_path.as_path())
+
+        if dst_path.as_path().exists() {
+            // best efforts
+            return Err(fdo::Error::InvalidArgs("Target already exists".to_owned()));
+        }
+
+        fs::rename(src_path.as_path(), dst_path.as_path())
             .context("Failed to move subvolume")
+            .to_fdo()?;
+
+        Ok(())
+    }
+
+    pub async fn create_snapshot(
+        &self,
+        #[zbus(header)] header: Header<'_>,
+        src_path: ZPathBuf,
+        dst_path: ZPathBuf,
+        readonly: bool,
+    ) -> fdo::Result<()> {
+        self.polkit.validate(&header, ACTION_ID).await?;
+        if src_path.as_path().is_relative() || dst_path.as_path().is_relative() {
+            return Err(fdo::Error::InvalidArgs("Path must be absolute".to_owned()));
+        }
+
+        create_snapshot(src_path.as_path(), dst_path.as_path(), readonly)
+            .context("Failed to create snapshot")
             .to_fdo()?;
 
         Ok(())

@@ -28,6 +28,7 @@ pkgsysconfdir = get_option('sysconfdir') / meson.project_name()
 
 subdir('data')
 subdir('po')
+subdir('butterd/src')
 subdir('src')
 
 install_emptydir(pkgsysconfdir / 'schedules')

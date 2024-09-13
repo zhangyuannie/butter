@@ -8,6 +8,18 @@ conf.set_quoted('PKGDATADIR', pkgdatadir)
 conf.set_quoted('PKGSHAREDSTATEDIR', pkgsharedstatedir)
 conf.set_quoted('PKGSYSCONFDIR', pkgsysconfdir)
 
+configure_file(
+  input: 'config.rs.in',
+  output: 'config.rs',
+  configuration: conf
+)
+
+run_command(
+  'cp',
+  meson.project_build_root() / 'butterd/src/config.rs',
+  meson.project_source_root() / 'butterd/src/config.rs',
+  check: true
+)
 
 custom_target(
   'cargo_build_butterd',

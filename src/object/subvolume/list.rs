@@ -3,7 +3,7 @@ use indexmap::IndexMap;
 use std::cell::RefCell;
 use uuid::Uuid;
 
-use crate::subvolume::GSubvolume;
+use super::Subvolume;
 
 mod imp {
 
@@ -11,7 +11,7 @@ mod imp {
 
     #[derive(Default)]
     pub struct SubvolList {
-        pub subvols: RefCell<IndexMap<Uuid, GSubvolume>>,
+        pub subvols: RefCell<IndexMap<Uuid, Subvolume>>,
     }
 
     #[glib::object_subclass]
@@ -25,7 +25,7 @@ mod imp {
 
     impl ListModelImpl for SubvolList {
         fn item_type(&self) -> glib::Type {
-            GSubvolume::static_type()
+            Subvolume::static_type()
         }
         fn n_items(&self) -> u32 {
             self.subvols.borrow().len() as u32
@@ -50,7 +50,7 @@ impl SubvolList {
         glib::Object::new()
     }
 
-    pub fn by_id(&self, id: &Uuid) -> Option<GSubvolume> {
+    pub fn by_id(&self, id: &Uuid) -> Option<Subvolume> {
         let subvols = self.imp().subvols.borrow();
         subvols.get(id).and_then(|subvol| Some(subvol.clone()))
     }
@@ -64,7 +64,7 @@ impl SubvolList {
         self.items_changed(0, removed as u32, 0);
     }
 
-    pub fn insert(&self, subvol: GSubvolume) -> Option<GSubvolume> {
+    pub fn insert(&self, subvol: Subvolume) -> Option<Subvolume> {
         let mut subvols = self.imp().subvols.borrow_mut();
         let (idx, ret) = subvols.insert_full(subvol.uuid(), subvol);
         drop(subvols);

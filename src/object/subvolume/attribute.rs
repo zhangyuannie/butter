@@ -1,6 +1,6 @@
 use gtk::prelude::*;
 
-use super::{sorter::GSubvolumeCreatedSorter, GSubvolume};
+use super::{sorter::GSubvolumeCreatedSorter, Subvolume};
 
 #[derive(Debug, Clone, Copy)]
 pub enum Attribute {
@@ -36,7 +36,7 @@ impl Attribute {
         match self {
             Attribute::Created => GSubvolumeCreatedSorter::new().upcast(),
             _ => gtk::StringSorter::new(Some(&gtk::PropertyExpression::new(
-                GSubvolume::static_type(),
+                Subvolume::static_type(),
                 None::<&gtk::Expression>,
                 self.as_str(),
             )))

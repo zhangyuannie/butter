@@ -2,21 +2,24 @@ use gettext::gettext;
 
 use gtk::{gio, glib};
 
-use crate::filesystem::GFilesystem;
+use crate::object::Filesystem;
 use crate::{config, ui::prelude::*};
 
 use super::store::Store;
 use super::widgets::{AppWindow, ScheduleView, SnapshotView};
 
 mod imp {
+    use std::cell::OnceCell;
+
     use glib::{ParamSpec, ParamSpecObject, Value};
     use gtk::glib;
-    use once_cell::sync::{Lazy, OnceCell};
 
     use crate::ui::{prelude::*, store::Store};
 
-    #[derive(Default)]
+    #[derive(Default, glib::Properties)]
+    #[properties(wrapper_type = super::Application)]
     pub struct Application {
+        #[property(get, construct_only)]
         pub store: OnceCell<Store>,
     }
 
@@ -27,32 +30,8 @@ mod imp {
         type ParentType = adw::Application;
     }
 
-    impl ObjectImpl for Application {
-        fn properties() -> &'static [ParamSpec] {
-            static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
-                vec![ParamSpecObject::builder::<Store>("store")
-                    .construct_only()
-                    .build()]
-            });
-            PROPERTIES.as_ref()
-        }
-
-        fn set_property(&self, _id: usize, value: &Value, pspec: &ParamSpec) {
-            match pspec.name() {
-                "store" => {
-                    self.store.set(value.get().unwrap()).unwrap();
-                }
-                _ => unimplemented!(),
-            }
-        }
-
-        fn property(&self, _id: usize, pspec: &ParamSpec) -> Value {
-            match pspec.name() {
-                "store" => self.store.get().to_value(),
-                _ => unimplemented!(),
-            }
-        }
-    }
+    #[glib::derived_properties]
+    impl ObjectImpl for Application {}
 
     impl ApplicationImpl for Application {
         fn activate(&self) {
@@ -79,21 +58,17 @@ impl Application {
             .build()
     }
 
-    pub fn store(&self) -> &Store {
-        self.imp().store.get().unwrap()
-    }
-
     pub fn build_ui(&self) {
         let window = AppWindow::new(self);
         let view_stack = window.view_stack();
         let header_bar = window.header_bar();
 
-        let snapshot_page = view_stack.add(&SnapshotView::new(self.store()));
+        let snapshot_page = view_stack.add(&SnapshotView::new(&self.store()));
         snapshot_page.set_name(Some("snapshot"));
         snapshot_page.set_title(Some(gettext("Snapshot").as_str()));
         snapshot_page.set_icon_name(Some("edit-copy-symbolic"));
 
-        let schedule_page = view_stack.add(&ScheduleView::new(self.store()));
+        let schedule_page = view_stack.add(&ScheduleView::new(&self.store()));
         schedule_page.set_name(Some("schedule"));
         schedule_page.set_title(Some(gettext("Schedule").as_str()));
         schedule_page.set_icon_name(Some("alarm-symbolic"));
@@ -108,7 +83,7 @@ impl Application {
         {
             let exp = gtk::ClosureExpression::new::<String>(
                 &[] as &[gtk::Expression],
-                glib::closure!(|sv: GFilesystem| sv.display()),
+                glib::closure!(|sv: Filesystem| sv.display()),
             );
 
             let fs_dropdown = header_bar.fs_dropdown();
@@ -118,9 +93,8 @@ impl Application {
             let app = self.clone();
             fs_dropdown.connect_selected_notify(move |dd| {
                 if let Some(fs) = dd.selected_item() {
-                    let fs: GFilesystem = fs.downcast().expect("Object must be GBtrfsFilesystem");
-                    let fs = fs.data().clone();
-                    app.store().set_filesystem(fs).unwrap();
+                    let fs: Filesystem = fs.downcast().expect("Object must be GBtrfsFilesystem");
+                    app.store().set_filesystem(&fs).unwrap();
                 }
             });
         }

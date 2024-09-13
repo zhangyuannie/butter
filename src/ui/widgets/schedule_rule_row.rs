@@ -1,20 +1,20 @@
 use gtk::glib;
 use gtk::subclass::prelude::*;
 
-use crate::rule::GRule;
+use crate::object::Rule;
 
 mod imp {
 
+    use std::cell::OnceCell;
+
+    use adw::prelude::*;
     use adw::subclass::prelude::*;
-    use adw::traits::PreferencesRowExt;
     use gtk::{
         glib::{self, ParamSpec, Value},
-        prelude::*,
         CompositeTemplate, TemplateChild,
     };
-    use once_cell::sync::OnceCell;
 
-    use crate::rule::GRule;
+    use crate::object::Rule;
 
     #[derive(Default, CompositeTemplate, glib::Properties)]
     #[template(resource = "/org/zhangyuannie/butter/ui/schedule_rule_row.ui")]
@@ -23,7 +23,7 @@ mod imp {
         #[template_child]
         pub switch: TemplateChild<gtk::Switch>,
         #[property(get, set, construct_only)]
-        pub rule: OnceCell<GRule>,
+        pub rule: OnceCell<Rule>,
     }
 
     #[glib::object_subclass]
@@ -74,7 +74,7 @@ glib::wrapper! {
 }
 
 impl ScheduleRuleRow {
-    pub fn new(rule: &GRule) -> Self {
+    pub fn new(rule: &Rule) -> Self {
         glib::Object::builder().property("rule", rule).build()
     }
 

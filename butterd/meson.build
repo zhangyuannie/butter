@@ -1,2 +1,0 @@
-subdir('data')
-subdir('src')

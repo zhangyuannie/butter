@@ -9,27 +9,31 @@ authors = ["Zhangyuan Nie"]
 license = "GPL-3.0-only"
 
 [dependencies]
-gtk = { version = "0.7.3", package = "gtk4", features = ["gnome_45"] }
-adw = { version = "0.5.3", package = "libadwaita", features = ["v1_4", "gtk_v4_10"] }
+gtk = { version = "0.9.1", package = "gtk4", features = ["gnome_46"] }
+adw = { version = "0.7.0", package = "libadwaita", features = [
+    "v1_5",
+    "gio_v2_80",
+    "gtk_v4_6",
+] }
 regex = "1.10"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-gettext = { version = "0.7", package = "gettext-rs", features = ["gettext-system"] }
+gettext = { version = "0.7", package = "gettext-rs", features = [
+    "gettext-system",
+] }
 uuid = { version = "1", features = ["serde", "v4"] }
 log = "0.4"
 env_logger = "0.11"
 
-tempfile = "3.3.0"
-libc = "0.2.126"
 anyhow = "1.0.57"
 libbtrfsutil = "0.7"
 indexmap = "2"
 chrono = "0.4.31"
 clap = { version = "4", features = ["derive"] }
 rand = "0.8.5"
-zbus = { version = "3.8", default-features = false, features = ["tokio", "uuid", "gvariant"] }
-nix = "0.26"
-once_cell = "1.16.0"
-zbus_systemd = { version = "0.0.10", features = ["systemd1"] }
-zbus_polkit = "3"
+zbus = { version = "4.4.0", default-features = false, features = [
+    "uuid",
+    "tokio",
+] }
 tokio = { version = "1.21", features = ["full"] }
+butterd = { version = "0.1.0", path = "butterd" }

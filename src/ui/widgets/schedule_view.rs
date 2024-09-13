@@ -2,15 +2,16 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gtk::{glib, CompositeTemplate};
 
-use crate::{rule::GRule, ui::store::Store};
+use crate::{object::Rule, ui::store::Store};
 
 use super::{ScheduleRuleEditDialog, ScheduleRuleRow};
 
 mod imp {
-    use glib::once_cell::sync::{Lazy, OnceCell};
+    use std::{cell::OnceCell, sync::LazyLock};
+
     use gtk::glib::{ParamSpec, Value};
 
-    use crate::{rule::GRule, ui::prelude::*};
+    use crate::{object::Rule, ui::prelude::*};
 
     use super::*;
 
@@ -40,7 +41,7 @@ mod imp {
 
     impl ObjectImpl for ScheduleView {
         fn properties() -> &'static [glib::ParamSpec] {
-            static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
+            static PROPERTIES: LazyLock<Vec<ParamSpec>> = LazyLock::new(|| {
                 vec![glib::ParamSpecObject::builder::<Store>("store")
                     .construct_only()
                     .build()]
@@ -60,27 +61,44 @@ mod imp {
             let obj = self.obj();
             self.rule_list.bind_model(
                 Some(self.store.get().unwrap().rule_model()),
-                glib::clone!(@weak obj => @default-panic, move |schedule| {
-                    let schedule = schedule.downcast_ref::<GRule>().unwrap();
-                    let row = ScheduleRuleRow::new(schedule);
-                    row.connect_activated(glib::clone!(@weak obj => move |row| {
-                        obj.show_edit_dialog(row.imp().rule.get());
-                    }));
-                    row.switch().connect_state_set(glib::clone!(@weak obj, @weak row => @default-return glib::Propagation::Stop, move |switch, state| {
-                        let store = obj.imp().store.get().unwrap();
-                        let rule = row.imp().rule.get().unwrap();
-                        let mut new_rule = rule.inner().clone();
-                        new_rule.is_enabled = state;
-                        if let Err(error) = store.update_rule(rule.inner(), &new_rule) {
-                            obj.alert(&error.to_string());
-                        } else {
-                            switch.set_state(state);
-                        }
-                        glib::Propagation::Stop
-                    }));
+                glib::clone!(
+                    #[weak]
+                    obj,
+                    #[upgrade_or_panic]
+                    move |schedule| {
+                        let schedule = schedule.downcast_ref::<Rule>().unwrap();
+                        let row = ScheduleRuleRow::new(schedule);
+                        row.connect_activated(glib::clone!(
+                            #[weak]
+                            obj,
+                            move |row| {
+                                obj.show_edit_dialog(row.imp().rule.get());
+                            }
+                        ));
+                        row.switch().connect_state_set(glib::clone!(
+                            #[weak]
+                            obj,
+                            #[weak]
+                            row,
+                            #[upgrade_or]
+                            glib::Propagation::Stop,
+                            move |switch, state| {
+                                let store = obj.imp().store.get().unwrap();
+                                let rule = row.imp().rule.get().unwrap();
+                                let new_rule = rule.deep_clone();
+                                new_rule.set_is_enabled(state);
+                                if let Err(error) = store.update_rule(&rule, &new_rule) {
+                                    obj.alert(&error.to_string());
+                                } else {
+                                    switch.set_state(state);
+                                }
+                                glib::Propagation::Stop
+                            }
+                        ));
 
-                    row.upcast()
-                }),
+                        row.upcast()
+                    }
+                ),
             );
         }
     }
@@ -100,7 +118,7 @@ impl ScheduleView {
         glib::Object::builder().property("store", store).build()
     }
 
-    pub fn show_edit_dialog(&self, schedule: Option<&GRule>) {
+    pub fn show_edit_dialog(&self, schedule: Option<&Rule>) {
         let win = self.root().and_then(|w| w.downcast::<gtk::Window>().ok());
         let dialog = ScheduleRuleEditDialog::new(self.imp().store.get().unwrap(), schedule);
         dialog.set_transient_for(win.as_ref());

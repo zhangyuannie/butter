@@ -3,7 +3,9 @@ use gtk::subclass::prelude::*;
 use gtk::{glib, prelude::*, CompositeTemplate};
 
 mod imp {
-    use gtk::glib::{once_cell::sync::Lazy, subclass::Signal};
+    use std::sync::LazyLock;
+
+    use gtk::glib::subclass::Signal;
 
     use super::*;
 
@@ -35,8 +37,8 @@ mod imp {
 
     impl ObjectImpl for SnapshotRenamePopover {
         fn signals() -> &'static [Signal] {
-            static SIGNALS: Lazy<Vec<Signal>> =
-                Lazy::new(|| vec![Signal::builder("clicked").build()]);
+            static SIGNALS: LazyLock<Vec<Signal>> =
+                LazyLock::new(|| vec![Signal::builder("clicked").build()]);
             SIGNALS.as_ref()
         }
     }

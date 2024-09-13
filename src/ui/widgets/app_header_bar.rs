@@ -1,8 +1,10 @@
 use gtk::{glib, subclass::prelude::*};
 
 mod imp {
+    use std::sync::LazyLock;
+
     use adw::subclass::prelude::*;
-    use gtk::glib::{self, once_cell::sync::Lazy};
+    use gtk::glib::{self};
     use gtk::{prelude::*, CompositeTemplate};
 
     #[allow(non_snake_case, non_upper_case_globals)]
@@ -43,7 +45,7 @@ mod imp {
 
     impl ObjectImpl for AppHeaderBar {
         fn properties() -> &'static [glib::ParamSpec] {
-            static PROPERTIES: Lazy<Vec<glib::ParamSpec>> = Lazy::new(|| {
+            static PROPERTIES: LazyLock<Vec<glib::ParamSpec>> = LazyLock::new(|| {
                 let ret = vec![
                     glib::ParamSpecString::builder("title-start").build(),
                     glib::ParamSpecString::builder("title-end").build(),

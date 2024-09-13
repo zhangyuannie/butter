@@ -1,6 +1,11 @@
+pub mod config;
 mod filesystem;
 mod mnt;
+mod rule;
+mod rule_config;
+mod schedule;
 mod storage;
+mod subvolume;
 mod zvariant;
 
 use std::collections::HashMap;
@@ -8,7 +13,11 @@ use zbus_polkit::policykit1::{AuthorityProxy, CheckAuthorizationFlags, Subject};
 
 pub use filesystem::*;
 pub use mnt::*;
+pub use rule::*;
+pub use rule_config::*;
+pub use schedule::*;
 pub use storage::*;
+pub use subvolume::*;
 pub use zvariant::*;
 
 pub(crate) trait ToFdo<T> {
@@ -21,8 +30,14 @@ impl<T> ToFdo<T> for anyhow::Result<T> {
     }
 }
 
+impl<T> ToFdo<T> for std::io::Result<T> {
+    fn to_fdo(self) -> zbus::fdo::Result<T> {
+        self.map_err(|err| zbus::fdo::Error::IOError(err.to_string()))
+    }
+}
+
 #[derive(Clone)]
-pub(crate) struct Polkit {
+pub struct Polkit {
     authority: AuthorityProxy<'static>,
 }
 
@@ -58,4 +73,21 @@ impl Polkit {
             ))
         }
     }
+}
+
+pub fn object_path_escape(bytes: &[u8]) -> String {
+    if bytes.is_empty() {
+        return "_".into();
+    }
+    let mut ret = String::with_capacity(bytes.len() * 2);
+    // alloc go brrrrr
+    for &b in bytes {
+        if b.is_ascii_alphanumeric() {
+            ret.push(b as char);
+        } else {
+            ret.push_str(&format!("_{:02x}", b));
+        }
+    }
+
+    ret
 }

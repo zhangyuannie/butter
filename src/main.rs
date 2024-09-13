@@ -1,10 +1,11 @@
-use butter::{
-    config,
-    rule::ReadRuleDir,
-    ui::{store::Store, Application},
-};
+mod object;
+mod schedule_exec;
+mod ui;
+
+use butterd::{config, ReadScheduleDir};
 use clap::{Parser, Subcommand};
 use gtk::{gio, prelude::*};
+use ui::{store::Store, Application};
 
 #[derive(Parser)]
 struct Cli {
@@ -55,17 +56,19 @@ fn gui() {
 }
 
 pub fn cmd_snapshot() {
-    for schedule in ReadRuleDir::new().expect("Failed to read config directory") {
-        if let Ok(schedule) = schedule {
-            schedule.snapshot();
-        }
+    for (_, config) in ReadScheduleDir::new()
+        .expect("Failed to read config directory")
+        .flatten()
+    {
+        schedule_exec::snapshot(&config);
     }
 }
 
 pub fn cmd_prune() {
-    for schedule in ReadRuleDir::new().expect("Failed to read config directory") {
-        if let Ok(schedule) = schedule {
-            schedule.prune();
-        }
+    for (_, config) in ReadScheduleDir::new()
+        .expect("Failed to read config directory")
+        .flatten()
+    {
+        schedule_exec::prune(&config);
     }
 }

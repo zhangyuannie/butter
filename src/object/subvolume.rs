@@ -1,41 +1,36 @@
-mod attribute;
-mod sorter;
-pub use attribute::Attribute;
-use once_cell::sync::Lazy;
+pub mod attribute;
+pub mod list;
+pub mod sorter;
 
-use std::{
-    borrow::Cow,
-    collections::HashSet,
-    path::{Path, PathBuf},
-};
+use attribute::Attribute;
+
+use std::{borrow::Cow, path::Path};
 
 use gtk::{glib, subclass::prelude::*};
 use uuid::Uuid;
 
-use crate::subvolume::Subvolume;
-
 mod imp {
-    use glib::{ParamSpec, Value, WeakRef};
-    use gtk::{glib, prelude::*, subclass::prelude::*};
-    use once_cell::sync::{Lazy, OnceCell};
+    use std::{cell::OnceCell, sync::LazyLock};
 
-    use crate::subvolume::{Attribute, Subvolume};
+    use glib::{ParamSpec, Value};
+    use gtk::{glib, prelude::*, subclass::prelude::*};
+
+    use crate::object::attribute::Attribute;
 
     #[derive(Default)]
-    pub struct GSubvolume {
-        pub data: OnceCell<Subvolume>,
-        pub parent: WeakRef<super::GSubvolume>,
+    pub struct Subvolume {
+        pub data: OnceCell<butterd::Subvolume>,
     }
 
     #[glib::object_subclass]
-    impl ObjectSubclass for GSubvolume {
+    impl ObjectSubclass for Subvolume {
         const NAME: &'static str = "BtrSubvolume";
-        type Type = super::GSubvolume;
+        type Type = super::Subvolume;
     }
 
-    impl ObjectImpl for GSubvolume {
+    impl ObjectImpl for Subvolume {
         fn properties() -> &'static [ParamSpec] {
-            static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
+            static PROPERTIES: LazyLock<Vec<ParamSpec>> = LazyLock::new(|| {
                 vec![
                     glib::ParamSpecString::builder(Attribute::NAME)
                         .read_only()
@@ -72,22 +67,22 @@ mod imp {
 }
 
 glib::wrapper! {
-    pub struct GSubvolume(ObjectSubclass<imp::GSubvolume>);
+    pub struct Subvolume(ObjectSubclass<imp::Subvolume>);
 }
 
-impl GSubvolume {
-    pub fn new(subvol: Subvolume) -> Self {
+impl Subvolume {
+    pub fn new(subvol: butterd::Subvolume) -> Self {
         let obj: Self = glib::Object::new();
         obj.imp().data.set(subvol).unwrap();
         obj
     }
 
-    fn data(&self) -> &Subvolume {
+    fn data(&self) -> &butterd::Subvolume {
         self.imp().data.get().unwrap()
     }
 
     pub fn uuid(&self) -> Uuid {
-        self.data().uuid
+        self.data().uuid.into()
     }
 
     pub fn name(&self) -> Cow<str> {
@@ -95,64 +90,31 @@ impl GSubvolume {
     }
 
     pub fn subvol_path(&self) -> &Path {
-        &self.data().subvol_path
+        self.data().root_path.as_path()
     }
 
     pub fn mount_path(&self) -> Option<&Path> {
-        self.data()
-            .mount_path
-            .as_ref()
-            .and_then(|p| Some(p.as_path()))
+        self.data().paths.first().map(|p| p.as_path())
     }
 
     /// Subvolume that are generally stable and should not be deleted
     pub fn is_protected(&self) -> bool {
-        // some hardcoded paths that are extremly often to be their own subvolume
-        // and important for the system. This is not meant to be exhaustive
-        static IMPORTANT_PATHS: Lazy<HashSet<PathBuf>> = Lazy::new(|| {
-            HashSet::from([
-                PathBuf::from("/"),
-                PathBuf::from("/boot"),
-                PathBuf::from("/home"),
-                PathBuf::from("/var"),
-            ])
-        });
-
-        let ret = self.data().is_mountpoint
-            || self.data().snapshot_source_uuid.is_none()
-            || self.data().subvol_path == Path::new("/");
-        if ret {
-            return ret;
-        }
-        if let Some(mnt) = &*self.data().mount_path {
-            return IMPORTANT_PATHS.contains(mnt);
-        }
-        false
+        self.data().is_likely_primary()
     }
 
     pub fn created(&self) -> glib::DateTime {
         glib::DateTime::from_unix_local(self.data().created_unix_secs).unwrap()
     }
 
-    pub fn parent_uuid(&self) -> Option<Uuid> {
-        *self.data().snapshot_source_uuid
-    }
-
-    pub fn parent(&self) -> Option<GSubvolume> {
-        self.imp().parent.upgrade()
-    }
-
-    pub fn set_parent(&self, subvol: Option<&GSubvolume>) {
-        self.imp().parent.set(subvol)
-    }
-
     pub fn attribute_str(&self, attribute: Attribute) -> String {
         match attribute {
             Attribute::Name => self.name().to_string(),
             Attribute::Path => self.subvol_path().to_string_lossy().to_string(),
-            Attribute::ParentPath => self.parent().map_or("".to_string(), |parent| {
-                parent.subvol_path().to_string_lossy().to_string()
-            }),
+            Attribute::ParentPath => self
+                .data()
+                .created_from_root_path
+                .clone()
+                .map_or(String::new(), |p| p.as_path().to_string_lossy().into()),
             Attribute::Created => self.created().format("%c").unwrap().into(),
             Attribute::Uuid => self.uuid().to_string(),
         }

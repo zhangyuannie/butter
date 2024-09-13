@@ -1,10 +1,11 @@
 use adw::subclass::prelude::*;
+use butterd::ZPathBuf;
 use gtk::{
     gdk, gio, glib, BitsetIter, ColumnView, ColumnViewColumn, SignalListItemFactory, Widget,
 };
 
 use crate::{
-    subvolume::{Attribute, GSubvolume},
+    object::{attribute::Attribute, Subvolume},
     ui::{
         prelude::*,
         store::Store,
@@ -16,18 +17,20 @@ mod imp {
     use adw::subclass::prelude::*;
     use gettext::gettext;
     use glib::object::WeakRef;
-    use glib::once_cell::sync::OnceCell;
     use gtk::{
         gdk, gio,
         gio::SimpleAction,
-        glib::{self, once_cell::sync::Lazy, ParamSpec, ParamSpecObject, Value},
+        glib::{self, ParamSpec, ParamSpecObject, Value},
         prelude::*,
         CompositeTemplate,
     };
-    use std::cell::RefCell;
+    use std::{
+        cell::{OnceCell, RefCell},
+        sync::LazyLock,
+    };
 
     use crate::{
-        subvolume::{Attribute, GSubvolume},
+        object::{attribute::Attribute, Subvolume},
         ui::{store::Store, widgets::SnapshotRenamePopover},
     };
 
@@ -109,7 +112,7 @@ mod imp {
         }
 
         fn properties() -> &'static [ParamSpec] {
-            static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
+            static PROPERTIES: LazyLock<Vec<ParamSpec>> = LazyLock::new(|| {
                 vec![ParamSpecObject::builder::<Store>("store")
                     .construct_only()
                     .build()]
@@ -134,7 +137,7 @@ mod imp {
     impl SnapshotView {
         fn setup_model(&self) {
             let filter = gtk::CustomFilter::new(|obj| {
-                !obj.downcast_ref::<GSubvolume>().unwrap().is_protected()
+                !obj.downcast_ref::<Subvolume>().unwrap().is_protected()
             });
             let model = gtk::FilterListModel::new(Some(self.store().model()), Some(filter));
 
@@ -193,7 +196,7 @@ impl SnapshotView {
         });
         factory.connect_bind(move |_, item| {
             let item = item.downcast_ref::<gtk::ListItem>().unwrap();
-            let obj: GSubvolume = item.item().unwrap().downcast().unwrap();
+            let obj: Subvolume = item.item().unwrap().downcast().unwrap();
             let cell: SubvolumeLabelCell = item.child().unwrap().downcast().unwrap();
             cell.label().set_label(&obj.attribute_str(attribute));
         });
@@ -232,7 +235,7 @@ impl SnapshotView {
             .model()
             .item(idx)
             .expect("Item must exist")
-            .downcast::<GSubvolume>()
+            .downcast::<Subvolume>()
             .unwrap();
         if let Some(path) = obj.mount_path() {
             println!("gtk_file_launcher_new: {}", path.display());
@@ -270,7 +273,7 @@ impl SnapshotView {
             }
             let idx = selection.nth(0);
             let item = extract_ith_list_item(&col_view, idx).unwrap();
-            let subvol: GSubvolume = selection_model.item(idx).unwrap().downcast().unwrap();
+            let subvol: Subvolume = selection_model.item(idx).unwrap().downcast().unwrap();
             imp.show_rename_popover(&item.allocation(), &subvol.name());
         }));
 
@@ -279,16 +282,16 @@ impl SnapshotView {
             glib::clone!(@weak col_view, @weak self as view => move |_, _| {
                 let selection_model = col_view.model().unwrap();
                 let selection = selection_model.selection().copy();
-                let mut to_delete = Vec::new();
+                let mut to_delete = Vec::<ZPathBuf>::new();
                 if let Some((mut it, mut idx)) =  BitsetIter::init_first(&selection) {
                     loop {
                         println!("{}", idx);
-                        let obj: GSubvolume = selection_model
+                        let obj: Subvolume = selection_model
                         .item(idx)
                         .expect("Item must exist")
                         .downcast()
                         .unwrap();
-                        to_delete.push(obj.mount_path().map(|x| x.to_path_buf()).unwrap());
+                        to_delete.push(obj.mount_path().map(|x| x.to_path_buf().into()).unwrap());
                         if let Some(next) = it.next() {
                             idx = next;
                         } else {
@@ -298,7 +301,7 @@ impl SnapshotView {
                 }
                 if !to_delete.is_empty() {
                     println!("delete: {:?}", to_delete);
-                    view.store().delete_snapshots(&to_delete).unwrap();
+                    view.store().delete_snapshots(to_delete).unwrap();
                 }
             }),
         );
@@ -326,7 +329,7 @@ impl SnapshotView {
                 println!("rename: selection size should be 1");
                 return;
             }
-            let obj: GSubvolume = selection_model
+            let obj: Subvolume = selection_model
                 .item(selection.nth(0))
                 .expect("Item must exist")
                 .downcast()
@@ -339,7 +342,7 @@ impl SnapshotView {
 
             let res = view
                 .store()
-                .rename_snapshot(obj.mount_path().unwrap(), new_path.as_path());
+                .rename_snapshot(obj.mount_path().unwrap().to_owned().into(), new_path.into());
 
             if let Err(error) = res {
                 let win = view.root().unwrap().downcast::<AppWindow>().unwrap();
@@ -369,7 +372,7 @@ impl SnapshotView {
             .build();
         gesture.connect_pressed(
             glib::clone!(@weak selection_menu, @weak self as view => move |gesture, _, x, y| {
-                let col_view: ColumnView = gesture.widget().downcast().unwrap();
+                let col_view: ColumnView = gesture.widget().unwrap().downcast().unwrap();
 
                 let header_rect = extract_header(&col_view).allocation();
                 let clv_y = y - header_rect.y() as f64 - header_rect.height() as f64;
