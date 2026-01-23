@@ -75,7 +75,10 @@ mod imp {
 
             let header_bar = self.header_bar.get();
             self.view_stack.connect_visible_child_name_notify(
-                glib::clone!(@weak header_bar => move |vs| {
+                glib::clone!(
+                    #[weak]
+                    header_bar,
+                    move |vs| {
                     if let Some(view) = vs.visible_child_name() {
                         match view.as_str() {
                             "snapshot" => {

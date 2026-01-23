@@ -57,12 +57,18 @@ mod imp {
             let obj = self.obj();
             self.create_button.set_sensitive(false);
             self.name_entry
-                .connect_text_notify(glib::clone!(@weak obj => move |entry| {
+                .connect_text_notify(glib::clone!(
+                        #[weak]
+                        obj,
+                        move |entry| {
                     obj.create_button().set_sensitive(entry.text_length() > 0);
                 }));
             obj.setup_dropdown();
             self.location_entry.set_text("/var/snapshots");
-            self.create_button.connect_clicked(glib::clone!(@weak obj => move |_| {
+            self.create_button.connect_clicked(glib::clone!(
+                    #[weak]
+                    obj,
+                    move |_| {
                 let imp = obj.imp();
                 let item = imp.subvol_dropdown.selected_item().unwrap().downcast::<Subvolume>().unwrap();
                 let res = obj.store().create_snapshot(

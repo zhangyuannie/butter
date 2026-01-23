@@ -252,7 +252,11 @@ impl SnapshotView {
         let col_view = &imp.column_view.get();
 
         let open_action = gio::SimpleAction::new("open", None);
-        open_action.connect_activate(glib::clone!(@weak self as view => move |_, _| {
+        open_action.connect_activate(
+            glib::clone!(
+                #[weak(rename_to = view)]
+                self,
+                move |_, _| {
             let selection_model = view.imp().column_view.get().model().unwrap();
             let selection = selection_model.selection();
             if selection.size() != 1 {
@@ -263,7 +267,11 @@ impl SnapshotView {
         }));
 
         let rename_action = gio::SimpleAction::new("rename", None);
-        rename_action.connect_activate(glib::clone!(@weak self as view => move |_, _| {
+        rename_action.connect_activate(
+            glib::clone!(
+                #[weak(rename_to = view)]
+                self,
+                move |_, _| {
             let imp = view.imp();
             let col_view = imp.column_view.get();
             let selection_model = col_view.model().unwrap();
@@ -279,7 +287,12 @@ impl SnapshotView {
 
         let delete_action = gio::SimpleAction::new("delete", None);
         delete_action.connect_activate(
-            glib::clone!(@weak col_view, @weak self as view => move |_, _| {
+            glib::clone!(
+                #[weak]
+                col_view,
+                #[weak(rename_to = view)]
+                self,
+                move |_, _| {
                 let selection_model = col_view.model().unwrap();
                 let selection = selection_model.selection().copy();
                 let mut to_delete = Vec::<ZPathBuf>::new();
@@ -322,7 +335,11 @@ impl SnapshotView {
         let popover = &imp.rename_popover;
         let col_view = imp.column_view.get();
         popover.set_parent(&extract_column_list_view(&col_view));
-        popover.connect_clicked(glib::clone!(@weak self as view => move |popover| {
+        popover.connect_clicked(
+            glib::clone!(
+                #[weak(rename_to = view)]
+                self,
+                move |popover| {
             let selection_model = view.imp().column_view.model().unwrap();
             let selection = selection_model.selection();
             if selection.size() != 1 {
@@ -362,7 +379,11 @@ impl SnapshotView {
         let selection_menu = imp.selection_menu.get();
 
         // double click
-        col_view.connect_activate(glib::clone!(@weak self as view => move |_, idx| {
+        col_view.connect_activate(
+            glib::clone!(
+                #[weak(rename_to = view)]
+                self,
+                move |_, idx| {
             view.open_snapshot(idx);
         }));
 
@@ -371,7 +392,12 @@ impl SnapshotView {
             .button(gdk::BUTTON_SECONDARY)
             .build();
         gesture.connect_pressed(
-            glib::clone!(@weak selection_menu, @weak self as view => move |gesture, _, x, y| {
+            glib::clone!(
+                #[weak]
+                selection_menu,
+                #[weak(rename_to = view)]
+                self,
+                move |gesture, _, x, y| {
                 let col_view: ColumnView = gesture.widget().unwrap().downcast().unwrap();
 
                 let header_rect = extract_header(&col_view).allocation();
