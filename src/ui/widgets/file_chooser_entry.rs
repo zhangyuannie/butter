@@ -36,14 +36,21 @@ mod imp {
             self.parent_constructed();
             let obj = self.obj();
             self.browse_button
-                .connect_clicked(glib::clone!(@weak obj => move |_| {
+                .connect_clicked(
+                    glib::clone!(
+                        #[weak]
+                        obj,
+                        move |_| {
                     let window = obj.root().unwrap().downcast::<gtk::Window>().unwrap();
                     let file_chooser = gtk::FileDialog::builder().modal(true).build();
 
                     file_chooser.select_folder(
                         Some(&window),
                         gio::Cancellable::NONE,
-                        glib::clone!(@weak obj => move |response| {
+                        glib::clone!(
+                            #[weak]
+                            obj,
+                            move |response| {
                             match response {
                                 Ok(file) => {
                                     let path = file.path().unwrap();

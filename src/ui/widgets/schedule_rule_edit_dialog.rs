@@ -175,7 +175,10 @@ impl ScheduleRuleEditDialog {
                 .valign(gtk::Align::Center)
                 .css_classes(vec!["flat".to_string(), "circular".to_string()])
                 .build();
-            remove_btn.connect_clicked(glib::clone!(@weak self as dialog => move |_| {
+            remove_btn.connect_clicked(glib::clone!(
+                    #[weak(rename_to = dialog)]
+                    self,
+                    move |_| {
                 dialog.imp().rule.borrow().config().subvolumes.remove(idx);
                 dialog.reload_subvolume_list();
             }));
