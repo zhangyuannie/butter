@@ -85,7 +85,7 @@ impl Subvolume {
         self.data().uuid.into()
     }
 
-    pub fn name(&self) -> Cow<str> {
+    pub fn name(&self) -> Cow<'_, str> {
         self.subvol_path().file_name().unwrap().to_string_lossy()
     }
 

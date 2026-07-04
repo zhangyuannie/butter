@@ -1,8 +1,6 @@
 use butterd::RuleSubvolumeConfig;
 use gtk::glib;
-use std::path::PathBuf;
 
-use crate::config;
 use crate::object::Rule;
 use crate::ui::prelude::*;
 use crate::ui::store::Store;
@@ -176,12 +174,13 @@ impl ScheduleRuleEditDialog {
                 .css_classes(vec!["flat".to_string(), "circular".to_string()])
                 .build();
             remove_btn.connect_clicked(glib::clone!(
-                    #[weak(rename_to = dialog)]
-                    self,
-                    move |_| {
-                dialog.imp().rule.borrow().config().subvolumes.remove(idx);
-                dialog.reload_subvolume_list();
-            }));
+                #[weak(rename_to = dialog)]
+                self,
+                move |_| {
+                    dialog.imp().rule.borrow().config().subvolumes.remove(idx);
+                    dialog.reload_subvolume_list();
+                }
+            ));
             let row = adw::ActionRow::builder()
                 .title(subvol.path.to_string_lossy())
                 .subtitle(subvol.target_dir.to_string_lossy())
@@ -201,7 +200,7 @@ impl ScheduleRuleEditDialog {
         if name.contains('/') {
             return Some("Name cannot contain '/'.");
         }
-        return None;
+        None
     }
 
     #[template_callback]
@@ -263,7 +262,7 @@ impl ScheduleRuleEditDialog {
     #[template_callback]
     fn on_add_subvolume_clicked(&self) {
         let imp = self.imp();
-        if imp.subvol_path_entry.text().len() > 0 && imp.target_dir_entry.text().len() > 0 {
+        if !imp.subvol_path_entry.text().is_empty() && !imp.target_dir_entry.text().is_empty() {
             imp.rule
                 .borrow()
                 .config()

@@ -9,8 +9,8 @@ authors = ["Zhangyuan Nie"]
 license = "GPL-3.0-only"
 
 [dependencies]
-gtk = { version = "0.10.0", package = "gtk4", features = ["gnome_46"] }
-adw = { version = "0.8.0", package = "libadwaita", features = [
+gtk = { version = "0.11.3", package = "gtk4", features = ["gnome_46"] }
+adw = { version = "0.9.1", package = "libadwaita", features = [
     "v1_5",
     "gio_v2_80",
     "gtk_v4_6",
@@ -26,11 +26,11 @@ log = "0.4"
 env_logger = "0.11"
 
 anyhow = "1.0.57"
-libbtrfsutil = "0.7"
+libbtrfsutil = "0.8"
 indexmap = "2"
 chrono = "0.4.31"
 clap = { version = "4", features = ["derive"] }
-rand = "0.8.5"
+rand = "0.10"
 zbus = { version = "4.4.0", default-features = false, features = [
     "uuid",
     "tokio",

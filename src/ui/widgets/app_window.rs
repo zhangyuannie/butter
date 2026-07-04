@@ -74,26 +74,26 @@ mod imp {
             obj.add_action(&new_action);
 
             let header_bar = self.header_bar.get();
-            self.view_stack.connect_visible_child_name_notify(
-                glib::clone!(
+            self.view_stack
+                .connect_visible_child_name_notify(glib::clone!(
                     #[weak]
                     header_bar,
                     move |vs| {
-                    if let Some(view) = vs.visible_child_name() {
-                        match view.as_str() {
-                            "snapshot" => {
-                                header_bar.set_property("title-start", "add");
-                                header_bar.set_property("title-end", "fs");
+                        if let Some(view) = vs.visible_child_name() {
+                            match view.as_str() {
+                                "snapshot" => {
+                                    header_bar.set_property("title-start", "add");
+                                    header_bar.set_property("title-end", "fs");
+                                }
+                                "schedule" => {
+                                    header_bar.set_property("title-start", "none");
+                                    header_bar.set_property("title-end", "switch");
+                                }
+                                _ => unimplemented!(),
                             }
-                            "schedule" => {
-                                header_bar.set_property("title-start", "none");
-                                header_bar.set_property("title-end", "switch");
-                            }
-                            _ => unimplemented!(),
                         }
                     }
-                }),
-            );
+                ));
         }
     }
     impl WidgetImpl for AppWindow {}
@@ -150,7 +150,7 @@ impl AppWindow {
         let imp = self.imp();
 
         let size = self.default_size();
-        imp.settings.set("window-size", &size)?;
+        imp.settings.set("window-size", size)?;
 
         imp.settings
             .set_boolean("window-is-maximized", self.is_maximized())?;

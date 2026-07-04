@@ -71,25 +71,25 @@ impl Store {
         self.imp().model.clone()
     }
 
-    fn storage(&self) -> anyhow::Result<StorageProxyBlocking> {
-        Ok(StorageProxyBlocking::new(&self.imp().conn.get().unwrap())?)
+    fn storage(&self) -> anyhow::Result<StorageProxyBlocking<'_>> {
+        Ok(StorageProxyBlocking::new(self.imp().conn.get().unwrap())?)
     }
 
-    fn filesystem_manager(&self) -> anyhow::Result<ObjectManagerProxy> {
+    fn filesystem_manager(&self) -> anyhow::Result<ObjectManagerProxy<'_>> {
         Ok(ObjectManagerProxy::new(
-            &self.imp().conn.get().unwrap(),
+            self.imp().conn.get().unwrap(),
             StorageProxyBlocking::DESTINATION.unwrap(),
             StorageProxyBlocking::PATH.unwrap(),
         )?)
     }
 
-    fn schedule(&self) -> anyhow::Result<ScheduleProxyBlocking> {
-        Ok(ScheduleProxyBlocking::new(&self.imp().conn.get().unwrap())?)
+    fn schedule(&self) -> anyhow::Result<ScheduleProxyBlocking<'_>> {
+        Ok(ScheduleProxyBlocking::new(self.imp().conn.get().unwrap())?)
     }
 
-    fn rule_manager(&self) -> anyhow::Result<ObjectManagerProxy> {
+    fn rule_manager(&self) -> anyhow::Result<ObjectManagerProxy<'_>> {
         Ok(ObjectManagerProxy::new(
-            &self.imp().conn.get().unwrap(),
+            self.imp().conn.get().unwrap(),
             ScheduleProxyBlocking::DESTINATION.unwrap(),
             ScheduleProxyBlocking::PATH.unwrap(),
         )?)
@@ -130,8 +130,8 @@ impl Store {
         let model = &self.imp().filesystems;
         model.remove_all();
         for path in filesystems {
-            let proxy = FilesystemProxyBlocking::new(&self.imp().conn.get().unwrap(), path.clone())
-                .unwrap();
+            let proxy =
+                FilesystemProxyBlocking::new(self.imp().conn.get().unwrap(), path.clone()).unwrap();
             model.append(&Filesystem::new(
                 path,
                 proxy.uuid().unwrap().as_uuid().as_hyphenated().to_string(),
@@ -160,7 +160,7 @@ impl Store {
         &self.imp().filesystems
     }
 
-    pub fn filesystem(&self) -> Option<FilesystemProxyBlocking> {
+    pub fn filesystem(&self) -> Option<FilesystemProxyBlocking<'_>> {
         self.imp().cur_fs.borrow().clone()
     }
 
@@ -171,7 +171,7 @@ impl Store {
             }
         }
         self.imp().cur_fs.replace(Some(FilesystemProxyBlocking::new(
-            &self.imp().conn.get().unwrap(),
+            self.imp().conn.get().unwrap(),
             fs.object_path().clone(),
         )?));
         self.refresh_subvolumes()?;
@@ -226,7 +226,7 @@ impl Store {
         let model = self.rule_model();
         model.remove_all();
         for path in rules {
-            let proxy = RuleProxyBlocking::new(&self.imp().conn.get().unwrap(), path.clone())?;
+            let proxy = RuleProxyBlocking::new(self.imp().conn.get().unwrap(), path.clone())?;
             let name = proxy.name()?;
             let is_enabled = proxy.is_enabled()?;
             let config = proxy.config()?;
@@ -255,7 +255,7 @@ impl Store {
             prev.object_path().clone()
         };
 
-        let proxy = RuleProxyBlocking::new(&self.imp().conn.get().unwrap(), path)?;
+        let proxy = RuleProxyBlocking::new(self.imp().conn.get().unwrap(), path)?;
         if *prev.config() != *next.config() {
             proxy.set_config(next.config().clone())?;
         }

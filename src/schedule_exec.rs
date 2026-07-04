@@ -3,10 +3,9 @@ use butterd::{create_snapshot, RuleConfig, RuleSubvolumeConfig, SnapshotMetadata
 use std::{cmp, fs, io, os::unix::prelude::OsStrExt, path::PathBuf};
 
 use chrono::{DateTime, Datelike, NaiveDateTime, Timelike, Utc};
-use log;
 
 mod name {
-    use rand::{prelude::ThreadRng, Rng, RngCore};
+    use rand::{rngs::ThreadRng, Rng, RngExt};
 
     const ADJECTIVES: &[&str] = &[
         "amazing", "aquatic", "artistic", "awesome", "big", "bold", "brave", "busy", "calm",
@@ -31,9 +30,9 @@ mod name {
 
     impl RandomName {
         pub fn new() -> Self {
-            let mut rng = rand::thread_rng();
-            let adj = ADJECTIVES[rng.gen_range(0..ADJECTIVES.len())];
-            let name = NAMES[rng.gen_range(0..NAMES.len())];
+            let mut rng = rand::rng();
+            let adj = ADJECTIVES[rng.random_range(0..ADJECTIVES.len())];
+            let name = NAMES[rng.random_range(0..NAMES.len())];
 
             let mut buf = String::with_capacity(adj.len() + name.len() + 1);
 
@@ -151,7 +150,7 @@ fn prune_subvol(subvol_cfg: &RuleSubvolumeConfig, rule_cfg: &RuleConfig) -> anyh
                     });
                 }
             }
-            return None;
+            None
         })
         .collect();
     snapshots.sort_by_key(|e| cmp::Reverse(e.created));

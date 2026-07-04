@@ -87,7 +87,7 @@ mod imp {
                                 let rule = row.imp().rule.get().unwrap();
                                 let new_rule = rule.deep_clone();
                                 new_rule.set_is_enabled(state);
-                                if let Err(error) = store.update_rule(&rule, &new_rule) {
+                                if let Err(error) = store.update_rule(rule, &new_rule) {
                                     obj.alert(&error.to_string());
                                 } else {
                                     switch.set_state(state);

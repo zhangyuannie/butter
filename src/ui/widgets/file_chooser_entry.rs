@@ -35,12 +35,10 @@ mod imp {
         fn constructed(&self) {
             self.parent_constructed();
             let obj = self.obj();
-            self.browse_button
-                .connect_clicked(
-                    glib::clone!(
-                        #[weak]
-                        obj,
-                        move |_| {
+            self.browse_button.connect_clicked(glib::clone!(
+                #[weak]
+                obj,
+                move |_| {
                     let window = obj.root().unwrap().downcast::<gtk::Window>().unwrap();
                     let file_chooser = gtk::FileDialog::builder().modal(true).build();
 
@@ -51,21 +49,25 @@ mod imp {
                             #[weak]
                             obj,
                             move |response| {
-                            match response {
-                                Ok(file) => {
-                                    let path = file.path().unwrap();
-                                    obj.set_text(path.to_str().unwrap());
-                                }
-                                Err(err) => {
-                                    if err.matches(gtk::DialogError::Dismissed) || err.matches(gtk::DialogError::Cancelled) {
-                                        return;
+                                match response {
+                                    Ok(file) => {
+                                        let path = file.path().unwrap();
+                                        obj.set_text(path.to_str().unwrap());
                                     }
-                                    obj.alert(err.message());
+                                    Err(err) => {
+                                        if err.matches(gtk::DialogError::Dismissed)
+                                            || err.matches(gtk::DialogError::Cancelled)
+                                        {
+                                            return;
+                                        }
+                                        obj.alert(err.message());
+                                    }
                                 }
                             }
-                        }),
+                        ),
                     );
-                }));
+                }
+            ));
         }
     }
     impl WidgetImpl for FileChooserEntry {}

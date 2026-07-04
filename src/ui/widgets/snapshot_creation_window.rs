@@ -56,32 +56,38 @@ mod imp {
             self.parent_constructed();
             let obj = self.obj();
             self.create_button.set_sensitive(false);
-            self.name_entry
-                .connect_text_notify(glib::clone!(
-                        #[weak]
-                        obj,
-                        move |entry| {
+            self.name_entry.connect_text_notify(glib::clone!(
+                #[weak]
+                obj,
+                move |entry| {
                     obj.create_button().set_sensitive(entry.text_length() > 0);
-                }));
+                }
+            ));
             obj.setup_dropdown();
             self.location_entry.set_text("/var/snapshots");
             self.create_button.connect_clicked(glib::clone!(
-                    #[weak]
-                    obj,
-                    move |_| {
-                let imp = obj.imp();
-                let item = imp.subvol_dropdown.selected_item().unwrap().downcast::<Subvolume>().unwrap();
-                let res = obj.store().create_snapshot(
-                    item.mount_path().unwrap().to_owned().into(),
-                    obj.target_path().into(),
-                    imp.readonly_switch.is_active(),
-                );
+                #[weak]
+                obj,
+                move |_| {
+                    let imp = obj.imp();
+                    let item = imp
+                        .subvol_dropdown
+                        .selected_item()
+                        .unwrap()
+                        .downcast::<Subvolume>()
+                        .unwrap();
+                    let res = obj.store().create_snapshot(
+                        item.mount_path().unwrap().to_owned().into(),
+                        obj.target_path().into(),
+                        imp.readonly_switch.is_active(),
+                    );
 
-                match res {
-                    Ok(_) => obj.close(),
-                    Err(error) => obj.alert(&error.to_string()),
+                    match res {
+                        Ok(_) => obj.close(),
+                        Err(error) => obj.alert(&error.to_string()),
+                    }
                 }
-            }));
+            ));
         }
 
         fn properties() -> &'static [ParamSpec] {
@@ -147,7 +153,7 @@ impl SnapshotCreationWindow {
     fn target_path(&self) -> PathBuf {
         let imp = self.imp();
         let mut ret = PathBuf::from(imp.location_entry.text().to_string());
-        ret.push(imp.name_entry.text().to_string());
+        ret.push(imp.name_entry.text());
         ret
     }
 

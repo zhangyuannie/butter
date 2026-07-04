@@ -11,7 +11,6 @@ use super::widgets::{AppWindow, ScheduleView, SnapshotView};
 mod imp {
     use std::cell::OnceCell;
 
-    use glib::{ParamSpec, ParamSpecObject, Value};
     use gtk::glib;
 
     use crate::ui::{prelude::*, store::Store};
@@ -52,9 +51,9 @@ glib::wrapper! {
 impl Application {
     pub fn new(store: &Store) -> Self {
         glib::Object::builder()
-            .property("application-id", &Some(config::APP_ID))
-            .property("flags", &gio::ApplicationFlags::empty())
-            .property("store", &Some(store))
+            .property("application-id", Some(config::APP_ID))
+            .property("flags", gio::ApplicationFlags::empty())
+            .property("store", Some(store))
             .build()
     }
 
@@ -103,21 +102,21 @@ impl Application {
 
             let switch = header_bar.switch();
             switch.set_state(self.store().is_schedule_enabled());
-            switch.connect_state_set(
-                glib::clone!(
-                    #[weak]
-                    window,
-                    #[weak]
-                    store,
-                    #[upgrade_or]
-                    glib::Propagation::Proceed,
-                    move |switch, state| {
-                if let Err(error) = store.set_is_schedule_enabled(state) {
-                    window.alert(&error.to_string());
+            switch.connect_state_set(glib::clone!(
+                #[weak]
+                window,
+                #[weak]
+                store,
+                #[upgrade_or]
+                glib::Propagation::Proceed,
+                move |switch, state| {
+                    if let Err(error) = store.set_is_schedule_enabled(state) {
+                        window.alert(&error.to_string());
+                    }
+                    switch.set_state(store.is_schedule_enabled());
+                    glib::Propagation::Stop
                 }
-                switch.set_state(store.is_schedule_enabled());
-                glib::Propagation::Stop
-            }));
+            ));
         }
 
         window.present();
@@ -134,7 +133,7 @@ impl Application {
                 .developers(vec!["Zhangyuan Nie"])
                 .transient_for(&window)
                 .modal(true)
-                .translator_credits(&gettext("translator-credits"))
+                .translator_credits(gettext("translator-credits"))
                 .build();
 
             about_window.set_visible(true);

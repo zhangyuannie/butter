@@ -52,7 +52,7 @@ impl SubvolList {
 
     pub fn by_id(&self, id: &Uuid) -> Option<Subvolume> {
         let subvols = self.imp().subvols.borrow();
-        subvols.get(id).and_then(|subvol| Some(subvol.clone()))
+        subvols.get(id).cloned()
     }
 
     pub fn clear(&self) {

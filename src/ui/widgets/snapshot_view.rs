@@ -252,58 +252,57 @@ impl SnapshotView {
         let col_view = &imp.column_view.get();
 
         let open_action = gio::SimpleAction::new("open", None);
-        open_action.connect_activate(
-            glib::clone!(
-                #[weak(rename_to = view)]
-                self,
-                move |_, _| {
-            let selection_model = view.imp().column_view.get().model().unwrap();
-            let selection = selection_model.selection();
-            if selection.size() != 1 {
-                println!("open: selection size should be 1");
+        open_action.connect_activate(glib::clone!(
+            #[weak(rename_to = view)]
+            self,
+            move |_, _| {
+                let selection_model = view.imp().column_view.get().model().unwrap();
+                let selection = selection_model.selection();
+                if selection.size() != 1 {
+                    println!("open: selection size should be 1");
+                }
+                let idx = selection.nth(0);
+                view.open_snapshot(idx);
             }
-            let idx = selection.nth(0);
-            view.open_snapshot(idx);
-        }));
+        ));
 
         let rename_action = gio::SimpleAction::new("rename", None);
-        rename_action.connect_activate(
-            glib::clone!(
-                #[weak(rename_to = view)]
-                self,
-                move |_, _| {
-            let imp = view.imp();
-            let col_view = imp.column_view.get();
-            let selection_model = col_view.model().unwrap();
-            let selection = selection_model.selection();
-            if selection.size() != 1 {
-                println!("rename: selection size should be 1");
+        rename_action.connect_activate(glib::clone!(
+            #[weak(rename_to = view)]
+            self,
+            move |_, _| {
+                let imp = view.imp();
+                let col_view = imp.column_view.get();
+                let selection_model = col_view.model().unwrap();
+                let selection = selection_model.selection();
+                if selection.size() != 1 {
+                    println!("rename: selection size should be 1");
+                }
+                let idx = selection.nth(0);
+                let item = extract_ith_list_item(&col_view, idx).unwrap();
+                let subvol: Subvolume = selection_model.item(idx).unwrap().downcast().unwrap();
+                imp.show_rename_popover(&item.allocation(), &subvol.name());
             }
-            let idx = selection.nth(0);
-            let item = extract_ith_list_item(&col_view, idx).unwrap();
-            let subvol: Subvolume = selection_model.item(idx).unwrap().downcast().unwrap();
-            imp.show_rename_popover(&item.allocation(), &subvol.name());
-        }));
+        ));
 
         let delete_action = gio::SimpleAction::new("delete", None);
-        delete_action.connect_activate(
-            glib::clone!(
-                #[weak]
-                col_view,
-                #[weak(rename_to = view)]
-                self,
-                move |_, _| {
+        delete_action.connect_activate(glib::clone!(
+            #[weak]
+            col_view,
+            #[weak(rename_to = view)]
+            self,
+            move |_, _| {
                 let selection_model = col_view.model().unwrap();
                 let selection = selection_model.selection().copy();
                 let mut to_delete = Vec::<ZPathBuf>::new();
-                if let Some((mut it, mut idx)) =  BitsetIter::init_first(&selection) {
+                if let Some((mut it, mut idx)) = BitsetIter::init_first(&selection) {
                     loop {
                         println!("{}", idx);
                         let obj: Subvolume = selection_model
-                        .item(idx)
-                        .expect("Item must exist")
-                        .downcast()
-                        .unwrap();
+                            .item(idx)
+                            .expect("Item must exist")
+                            .downcast()
+                            .unwrap();
                         to_delete.push(obj.mount_path().map(|x| x.to_path_buf().into()).unwrap());
                         if let Some(next) = it.next() {
                             idx = next;
@@ -316,8 +315,8 @@ impl SnapshotView {
                     println!("delete: {:?}", to_delete);
                     view.store().delete_snapshots(to_delete).unwrap();
                 }
-            }),
-        );
+            }
+        ));
 
         let actions = &imp.actions;
         actions.add_action(&open_action);
@@ -335,37 +334,37 @@ impl SnapshotView {
         let popover = &imp.rename_popover;
         let col_view = imp.column_view.get();
         popover.set_parent(&extract_column_list_view(&col_view));
-        popover.connect_clicked(
-            glib::clone!(
-                #[weak(rename_to = view)]
-                self,
-                move |popover| {
-            let selection_model = view.imp().column_view.model().unwrap();
-            let selection = selection_model.selection();
-            if selection.size() != 1 {
-                println!("rename: selection size should be 1");
-                return;
+        popover.connect_clicked(glib::clone!(
+            #[weak(rename_to = view)]
+            self,
+            move |popover| {
+                let selection_model = view.imp().column_view.model().unwrap();
+                let selection = selection_model.selection();
+                if selection.size() != 1 {
+                    println!("rename: selection size should be 1");
+                    return;
+                }
+                let obj: Subvolume = selection_model
+                    .item(selection.nth(0))
+                    .expect("Item must exist")
+                    .downcast()
+                    .unwrap();
+
+                let mut new_path = obj.mount_path().unwrap().to_path_buf();
+                new_path.set_file_name(popover.text());
+
+                popover.popdown();
+
+                let res = view
+                    .store()
+                    .rename_snapshot(obj.mount_path().unwrap().to_owned().into(), new_path.into());
+
+                if let Err(error) = res {
+                    let win = view.root().unwrap().downcast::<AppWindow>().unwrap();
+                    win.alert(&error.to_string());
+                }
             }
-            let obj: Subvolume = selection_model
-                .item(selection.nth(0))
-                .expect("Item must exist")
-                .downcast()
-                .unwrap();
-
-            let mut new_path = obj.mount_path().unwrap().to_path_buf();
-            new_path.set_file_name(popover.text());
-
-            popover.popdown();
-
-            let res = view
-                .store()
-                .rename_snapshot(obj.mount_path().unwrap().to_owned().into(), new_path.into());
-
-            if let Err(error) = res {
-                let win = view.root().unwrap().downcast::<AppWindow>().unwrap();
-                win.alert(&error.to_string());
-            }
-        }));
+        ));
     }
 
     fn teardown_rename_popover(&self) {
@@ -379,31 +378,32 @@ impl SnapshotView {
         let selection_menu = imp.selection_menu.get();
 
         // double click
-        col_view.connect_activate(
-            glib::clone!(
-                #[weak(rename_to = view)]
-                self,
-                move |_, idx| {
-            view.open_snapshot(idx);
-        }));
+        col_view.connect_activate(glib::clone!(
+            #[weak(rename_to = view)]
+            self,
+            move |_, idx| {
+                view.open_snapshot(idx);
+            }
+        ));
 
         // right click
         let gesture = gtk::GestureClick::builder()
             .button(gdk::BUTTON_SECONDARY)
             .build();
-        gesture.connect_pressed(
-            glib::clone!(
-                #[weak]
-                selection_menu,
-                #[weak(rename_to = view)]
-                self,
-                move |gesture, _, x, y| {
+        gesture.connect_pressed(glib::clone!(
+            #[weak]
+            selection_menu,
+            #[weak(rename_to = view)]
+            self,
+            move |gesture, _, x, y| {
                 let col_view: ColumnView = gesture.widget().unwrap().downcast().unwrap();
 
                 let header_rect = extract_header(&col_view).allocation();
                 let clv_y = y - header_rect.y() as f64 - header_rect.height() as f64;
 
-                if let Some(idx) = extract_row_from_column_list_view(&extract_column_list_view(&col_view), clv_y) {
+                if let Some(idx) =
+                    extract_row_from_column_list_view(&extract_column_list_view(&col_view), clv_y)
+                {
                     gesture.set_state(gtk::EventSequenceState::Claimed);
                     let model = col_view.model().unwrap();
                     if !model.is_selected(idx) {
@@ -419,8 +419,8 @@ impl SnapshotView {
                     selection_menu.set_pointing_to(Some(&rect));
                     selection_menu.popup();
                 }
-            }),
-        );
+            }
+        ));
         selection_menu.set_parent(&col_view);
         col_view.add_controller(gesture);
     }
@@ -477,7 +477,7 @@ fn extract_ith_list_item(col_view: &ColumnView, idx: u32) -> Option<Widget> {
     for _ in 0..idx {
         cur = cur.next_sibling()?;
     }
-    return Some(cur);
+    Some(cur)
 }
 
 /// y: relative to column_list_view, not column_view

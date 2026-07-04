@@ -56,6 +56,6 @@ impl Filesystem {
     }
 
     pub fn object_path(&self) -> &OwnedObjectPath {
-        &self.imp().path.get().unwrap()
+        self.imp().path.get().unwrap()
     }
 }
